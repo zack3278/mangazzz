@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  isPremium Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  premiumOrders PremiumOrder[]
+}
+
+model PremiumOrder {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  amount    Int
+  status    String   @default("PENDING")
+  invoiceId String   @unique
+  qrText    String
+  createdAt DateTime @default(now())
+  paidAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Comic {
+  id          Int      @id @default(autoincrement())
+  title       String
+  slug        String   @unique
+  description String
+  coverImage  String
+  author      String?
+  genre       String   @default("Other")
+  genre2      String?
+  genre3      String?
+  status      String   @default("ONGOING")
+  views       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  chapters Chapter[]
+}
+
+model Chapter {
+  id        Int      @id @default(autoincrement())
+  title     String
+  number    Int
+  comicId   Int
+  createdAt DateTime @default(now())
+
+  comic  Comic @relation(fields: [comicId], references: [id], onDelete: Cascade)
+  images ChapterImage[]
+
+  @@unique([comicId, number])
+}
+
+model ChapterImage {
+  id        Int    @id @default(autoincrement())
+  imageUrl  String
+  order     Int
+  chapterId Int
+
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+}
+
+enum Role {
+  USER
+  EDITOR
+  ADMIN
+}
