@@ -4,208 +4,203 @@ import Link from "next/link";
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 
-type Order = {
-  id: number;
-  amount: number;
-  status: string;
-  invoiceId: string;
-  qrText: string;
-};
+type PaymentMethod = "bank" | "qpay" | null;
 
 export default function PremiumPage() {
-  const [order, setOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [confirming, setConfirming] = useState(false);
+  const [method, setMethod] = useState<PaymentMethod>(null);
+  const [note, setNote] = useState("");
 
-  async function createOrder() {
-    setLoading(true);
-
-    try {
-      const res = await fetch("/api/premium/create-order", {
-        method: "POST",
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.message || "Order үүсгэхэд алдаа гарлаа");
-        return;
-      }
-
-      setOrder(data.order);
-    } finally {
-      setLoading(false);
+  function sendBankRequest() {
+    if (!note.trim()) {
+      alert("Гүйлгээний мэдээлэл эсвэл өөрийн имэйл/нэрээ бичнэ үү.");
+      return;
     }
-  }
 
-  async function confirmPayment() {
-    if (!order) return;
+    alert(
+      "Таны хүсэлт бүртгэгдлээ. Админ төлбөрийг шалгасны дараа premium эрхийг идэвхжүүлнэ."
+    );
 
-    setConfirming(true);
-
-    try {
-      const res = await fetch("/api/premium/confirm", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          orderId: order.id,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.message || "Төлбөр шалгахад алдаа гарлаа");
-        return;
-      }
-
-      alert(data.message || "Premium эрх идэвхжлээ");
-      location.href = "/profile";
-    } finally {
-      setConfirming(false);
-    }
+    setNote("");
   }
 
   return (
-    <main className="min-h-screen text-white">
+    <main className="min-h-screen bg-zinc-950 text-white">
       <Navbar />
 
-      <section className="mx-auto max-w-6xl px-6 py-10">
-        <div className="relative overflow-hidden rounded-[2rem] border border-yellow-500/20 bg-zinc-950/80 p-8 shadow-2xl shadow-black/50">
-          <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-yellow-500/20 blur-3xl" />
-          <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-red-600/10 blur-3xl" />
+      <section className="mx-auto max-w-6xl px-6 py-12">
+        <div className="mb-10 rounded-[2rem] border border-white/10 bg-white/[0.04] p-8 shadow-2xl shadow-black/40">
+          <span className="rounded-full border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-200">
+            Premium эрх
+          </span>
 
-          <div className="relative z-10 grid gap-8 lg:grid-cols-[1fr_420px]">
-            <div>
-              <p className="inline-flex rounded-full border border-yellow-500/30 bg-yellow-500/10 px-4 py-2 text-sm font-semibold text-yellow-300">
-                👑 Premium эрх
+          <h1 className="mt-6 text-4xl font-black md:text-6xl">
+            Premium эрх аваад хязгааргүй унш
+          </h1>
+
+          <p className="mt-5 max-w-2xl text-lg text-zinc-300">
+            Premium эрхтэй хэрэглэгч бүх манга, манхва, комикийн бүлгийг
+            хязгааргүй унших боломжтой.
+          </p>
+
+          <div className="mt-8 grid gap-5 md:grid-cols-3">
+            <div className="rounded-2xl bg-zinc-900 p-5">
+              <h3 className="text-xl font-bold">Бүх зурагт ном</h3>
+              <p className="mt-2 text-zinc-400">
+                Бүх бүлгийг хязгааргүй унших эрх.
               </p>
+            </div>
 
-              <h1 className="mt-5 text-4xl font-black md:text-6xl">
-                Premium ээ нээгээд хязгааргүйт унш.
-              </h1>
-
-              <p className="mt-5 max-w-2xl text-zinc-300 leading-7">
-                Premium эрхтэй хэрэглэгч бүх мангаг унших боломжтой
+            <div className="rounded-2xl bg-zinc-900 p-5">
+              <h3 className="text-xl font-bold">Дансаар шилжүүлэх</h3>
+              <p className="mt-2 text-zinc-400">
+                Төлбөрөө шилжүүлээд мэдээллээ илгээнэ.
               </p>
+            </div>
 
-              <div className="mt-8 grid gap-4 md:grid-cols-3">
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-                  <p className="text-3xl">📚</p>
-                  <h3 className="mt-3 font-bold">Бүх зурагт ном</h3>
-                  <p className="mt-1 text-sm text-zinc-400">
-                    Бүх бүлгийг хязгааргүй унших эрх.
-                  </p>
-                </div>
+            <div className="rounded-2xl bg-zinc-900 p-5">
+              <h3 className="text-xl font-bold">Premium badge</h3>
+              <p className="mt-2 text-zinc-400">
+                Profile дээр premium badge харагдана.
+              </p>
+            </div>
+          </div>
+        </div>
 
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-                  <p className="text-3xl">⚡</p>
-                  <h3 className="mt-3 font-bold">Шуурхай төлбөр</h3>
-                  <p className="mt-1 text-sm text-zinc-400">
-                    Төлсний дараа шууд premium эрх нээгдэнэ.
-                  </p>
-                </div>
+        <div className="grid gap-8 lg:grid-cols-[1fr_420px]">
+          <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-8">
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-red-400">
+              Үнэ
+            </p>
 
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-                  <p className="text-3xl">👑</p>
-                  <h3 className="mt-3 font-bold">Premium badge</h3>
-                  <p className="mt-1 text-sm text-zinc-400">
-                    Profile дээр premium badge харагдана.
-                  </p>
-                </div>
-              </div>
+            <h2 className="mt-3 text-5xl font-black">9,900₮</h2>
 
-              <div className="mt-8 rounded-3xl border border-yellow-500/20 bg-yellow-500/10 p-6">
-                <p className="text-sm text-yellow-200">Үнэ</p>
-                <h2 className="mt-2 text-4xl font-black">9,900₮</h2>
+            <p className="mt-4 text-zinc-400">
+              Premium эрхийг идэвхжүүлэхийн тулд доорх төлбөрийн аргуудаас
+              сонгоно уу.
+            </p>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-2">
+              <button
+                onClick={() => setMethod("bank")}
+                className={`rounded-2xl border px-5 py-5 text-left transition ${
+                  method === "bank"
+                    ? "border-red-500 bg-red-500/10"
+                    : "border-white/10 bg-zinc-900 hover:bg-zinc-800"
+                }`}
+              >
+                <h3 className="text-xl font-bold">Дансаар шилжүүлэх</h3>
                 <p className="mt-2 text-sm text-zinc-400">
-                  Demo premium төлбөрийн хувилбар.
+                  Банкны данс руу шилжүүлээд гүйлгээний мэдээллээ бичнэ.
+                </p>
+              </button>
+
+              <button
+                onClick={() => setMethod("qpay")}
+                className={`rounded-2xl border px-5 py-5 text-left transition ${
+                  method === "qpay"
+                    ? "border-red-500 bg-red-500/10"
+                    : "border-white/10 bg-zinc-900 hover:bg-zinc-800"
+                }`}
+              >
+                <h3 className="text-xl font-bold">QPay</h3>
+                <p className="mt-2 text-sm text-zinc-400">
+                  QPay төлбөрийн хэсэг удахгүй нэмэгдэнэ.
+                </p>
+              </button>
+            </div>
+
+            <div className="mt-8">
+              <Link
+                href="/profile"
+                className="inline-flex rounded-xl bg-zinc-800 px-5 py-3 font-semibold hover:bg-zinc-700"
+              >
+                Profile руу буцах
+              </Link>
+            </div>
+          </div>
+
+          <div className="rounded-[2rem] border border-white/10 bg-zinc-900 p-8">
+            {!method && (
+              <div>
+                <h2 className="text-2xl font-bold">Төлбөрийн арга сонгоно уу</h2>
+                <p className="mt-3 text-zinc-400">
+                  Дансаар шилжүүлэх эсвэл QPay сонголтоос нэгийг дарна уу.
                 </p>
               </div>
-            </div>
+            )}
 
-            <div className="rounded-[2rem] border border-white/10 bg-black/40 p-6">
-              <h2 className="text-2xl font-black">Төлбөр төлөх</h2>
+            {method === "bank" && (
+              <div>
+                <h2 className="text-2xl font-bold">Дансаар шилжүүлэх</h2>
 
-              {!order ? (
-                <>
-                  <p className="mt-3 text-sm leading-6 text-zinc-400">
-                    Доорх товч дээр дарахад QPay төлбөрийн нэхэмжлэл
-                    үүснэ.
-                  </p>
-
-                  <button
-                    onClick={createOrder}
-                    disabled={loading}
-                    className="mt-6 w-full rounded-2xl bg-yellow-500 py-4 font-black text-black hover:bg-yellow-400 disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400"
-                  >
-                    {loading ? "Үүсгэж байна..." : "QPay төлбөр үүсгэх"}
-                  </button>
-
-                  <Link
-                    href="/profile"
-                    className="mt-3 block rounded-2xl border border-white/10 bg-white/5 py-4 text-center font-bold hover:bg-white/10"
-                  >
-                    Profile руу буцах
-                  </Link>
-                </>
-              ) : (
-                <div className="mt-5">
-                  <div className="rounded-3xl bg-white p-5 text-black">
-                    <div className="flex h-64 items-center justify-center rounded-2xl border-4 border-black text-center">
-                      <div>
-                        <p className="text-5xl">▦</p>
-                        <p className="mt-3 font-black">QPay QR Demo</p>
-                        <p className="mt-1 text-xs text-zinc-600">
-                        </p>
-                      </div>
-                    </div>
+                <div className="mt-5 space-y-3 rounded-2xl bg-zinc-800 p-5">
+                  <div>
+                    <p className="text-sm text-zinc-400">Банк</p>
+                    <p className="text-lg font-bold">Хаан банк</p>
                   </div>
 
-                  <div className="mt-5 space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                    <div className="flex justify-between gap-3 text-sm">
-                      <span className="text-zinc-400">Invoice</span>
-                      <span className="text-right font-semibold">
-                        {order.invoiceId}
-                      </span>
-                    </div>
-
-                    <div className="flex justify-between gap-3 text-sm">
-                      <span className="text-zinc-400">Дүн</span>
-                      <span className="font-semibold">{order.amount}₮</span>
-                    </div>
-
-                    <div className="flex justify-between gap-3 text-sm">
-                      <span className="text-zinc-400">Статус</span>
-                      <span className="font-semibold text-yellow-300">
-                        {order.status}
-                      </span>
-                    </div>
+                  <div>
+                    <p className="text-sm text-zinc-400">Дансны дугаар</p>
+                    <p className="text-lg font-bold">Khanbank 5779514888</p>
                   </div>
 
-                  <div className="mt-4 rounded-2xl border border-white/10 bg-zinc-900 p-4">
-                    <p className="text-xs leading-5 text-zinc-400 whitespace-pre-line">
-                      {order.qrText}
-                    </p>
+                  <div>
+                    <p className="text-sm text-zinc-400">Хүлээн авагч М.Зангар</p>
+                    <p className="text-lg font-bold">Mangazet</p>
                   </div>
 
-                  <button
-                    onClick={confirmPayment}
-                    disabled={confirming}
-                    className="mt-5 w-full rounded-2xl bg-red-600 py-4 font-black shadow-lg shadow-red-600/30 hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:shadow-none"
-                  >
-                    {confirming
-                      ? "Шалгаж байна..."
-                      : "Шалгах"}
-                  </button>
-
-                  <p className="mt-4 text-center text-xs leading-5 text-zinc-500">
-                  </p>
+                  <div>
+                    <p className="text-sm text-zinc-400">Дүн</p>
+                    <p className="text-lg font-bold">5,000₮</p>
+                  </div>
                 </div>
-              )}
-            </div>
+
+                <label className="mt-6 block text-sm text-zinc-400">
+                  Гүйлгээний утга, нэр, имэйл эсвэл тайлбар бичнэ үү
+                </label>
+
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Жишээ: bayar@gmail.com — Premium эрх авах төлбөр шилжүүлсэн."
+                  className="mt-3 h-36 w-full rounded-2xl border border-white/10 bg-zinc-800 px-4 py-3 text-white outline-none placeholder:text-zinc-500 focus:border-red-500"
+                />
+
+                <button
+                  onClick={sendBankRequest}
+                  className="mt-5 w-full rounded-xl bg-red-600 py-3 font-bold hover:bg-red-700"
+                >
+                  Илгээх
+                </button>
+
+                <p className="mt-4 text-sm text-zinc-500">
+                  Админ төлбөрийг шалгасны дараа premium эрхийг гараар
+                  идэвхжүүлнэ.
+                </p>
+              </div>
+            )}
+
+            {method === "qpay" && (
+              <div className="flex min-h-[320px] flex-col items-center justify-center text-center">
+                <div className="rounded-full bg-red-500/10 px-5 py-3 text-red-300">
+                  Coming soon
+                </div>
+
+                <h2 className="mt-5 text-3xl font-black">QPay удахгүй</h2>
+
+                <p className="mt-3 text-zinc-400">
+                  QPay төлбөрийн системийг дараа нь жинхэнэ байдлаар холбоно.
+                  Одоогоор дансаар шилжүүлэх аргыг ашиглана уу.
+                </p>
+
+                <button
+                  onClick={() => setMethod("bank")}
+                  className="mt-6 rounded-xl bg-zinc-800 px-5 py-3 font-semibold hover:bg-zinc-700"
+                >
+                  Дансаар шилжүүлэх рүү очих
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </section>
