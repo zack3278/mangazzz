@@ -24,7 +24,7 @@ export default function LoginPage() {
     const data = await res.json();
 
     if (!res.ok) {
-      alert(data.message || "Login хийхэд алдаа гарлаа");
+      alert(data.message || "Нэвтрэхэд алдаа гарлаа");
       return;
     }
 
@@ -67,7 +67,7 @@ export default function LoginPage() {
             </p>
 
             <h2 className="text-5xl font-black leading-tight">
-                ЗАР СУРТЧИЛГАА
+                ЭНД НЭГ ЮМ ОРУУЛНА.
             </h2>
 
             <p className="mt-5 leading-7 text-red-100">

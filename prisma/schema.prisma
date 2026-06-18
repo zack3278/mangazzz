@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  output   = "../components/generated/prisma"
 }
 
 datasource db {
@@ -8,26 +8,30 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @default(USER)
-  isPremium Boolean  @default(false)
-  createdAt DateTime @default(now())
+  id               Int       @id @default(autoincrement())
+  name             String
+  email            String    @unique
+  password         String
+  role             Role      @default(USER)
+  isPremium        Boolean   @default(false)
+  premiumExpiresAt DateTime?
+  createdAt        DateTime  @default(now())
 
   premiumOrders PremiumOrder[]
 }
 
 model PremiumOrder {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  amount    Int
-  status    String   @default("PENDING")
-  invoiceId String   @unique
-  qrText    String
-  createdAt DateTime @default(now())
-  paidAt    DateTime?
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  amount        Int
+  planMonths    Int       @default(1)
+  paymentMethod String    @default("BANK")
+  transferInfo  String?
+  status        String    @default("PENDING")
+  invoiceId     String?   @unique
+  qrText        String?
+  createdAt     DateTime  @default(now())
+  paidAt        DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -57,7 +61,7 @@ model Chapter {
   comicId   Int
   createdAt DateTime @default(now())
 
-  comic  Comic @relation(fields: [comicId], references: [id], onDelete: Cascade)
+  comic  Comic          @relation(fields: [comicId], references: [id], onDelete: Cascade)
   images ChapterImage[]
 
   @@unique([comicId, number])

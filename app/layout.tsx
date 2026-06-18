@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Mangazet",
-  description: "Манга, манхва, комик унших сайт",
+  description: "Manga унших сайт",
 };
 
 export default function RootLayout({
@@ -11,5 +11,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <>{children}</>;
+  return (
+    <html lang="mn">
+      <body>{children}</body>
+    </html>
+  );
 }

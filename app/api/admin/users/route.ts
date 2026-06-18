@@ -2,39 +2,25 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 
-type Props = {
-  params: Promise<{
-    id: string;
-  }>;
-};
+function isExpired(date: Date | null) {
+  if (!date) return false;
+  return date.getTime() <= Date.now();
+}
 
-export async function PATCH(req: Request, { params }: Props) {
+export async function GET() {
   try {
     const admin = await requireAdmin();
 
     if (!admin) {
       return NextResponse.json(
-        { message: "Зөвхөн ADMIN premium эрх өөрчилнө" },
+        { message: "Зөвхөн ADMIN хэрэглэгч харна" },
         { status: 403 }
       );
     }
 
-    const { id } = await params;
-    const { isPremium } = await req.json();
-
-    if (typeof isPremium !== "boolean") {
-      return NextResponse.json(
-        { message: "Premium утга буруу байна" },
-        { status: 400 }
-      );
-    }
-
-    const user = await prisma.user.update({
-      where: {
-        id: Number(id),
-      },
-      data: {
-        isPremium,
+    const users = await prisma.user.findMany({
+      orderBy: {
+        createdAt: "desc",
       },
       select: {
         id: true,
@@ -42,20 +28,47 @@ export async function PATCH(req: Request, { params }: Props) {
         email: true,
         role: true,
         isPremium: true,
+        premiumExpiresAt: true,
+        createdAt: true,
       },
     });
 
-    return NextResponse.json({
-      message: isPremium
-        ? "Premium эрх амжилттай олголоо"
-        : "Premium эрхийг цуцаллаа",
-      user,
+    const expiredPremiumUserIds = users
+      .filter((user) => user.isPremium && isExpired(user.premiumExpiresAt))
+      .map((user) => user.id);
+
+    if (expiredPremiumUserIds.length > 0) {
+      await prisma.user.updateMany({
+        where: {
+          id: {
+            in: expiredPremiumUserIds,
+          },
+        },
+        data: {
+          isPremium: false,
+          premiumExpiresAt: null,
+        },
+      });
+    }
+
+    const fixedUsers = users.map((user) => {
+      if (user.isPremium && isExpired(user.premiumExpiresAt)) {
+        return {
+          ...user,
+          isPremium: false,
+          premiumExpiresAt: null,
+        };
+      }
+
+      return user;
     });
+
+    return NextResponse.json(fixedUsers);
   } catch (error) {
     console.error(error);
 
     return NextResponse.json(
-      { message: "Premium эрх өөрчлөхөд алдаа гарлаа" },
+      { message: "User жагсаалт авахад алдаа гарлаа" },
       { status: 500 }
     );
   }

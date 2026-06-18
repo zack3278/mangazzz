@@ -9,6 +9,7 @@ type User = {
   email: string;
   role: "USER" | "EDITOR" | "ADMIN";
   isPremium: boolean;
+  premiumExpiresAt: string | null;
   createdAt: string;
 };
 
@@ -37,26 +38,35 @@ type Comic = {
 };
 
 const genreOptions = [
-  "Action",
-  "Romance",
-  "Fantasy",
-  "Comedy",
-  "Drama",
-  "Horror",
-  "Adventure",
-  "Manhwa",
-  "Manga",
-  "Manhua",
-  "School",
+  "Тулаант",
+  "Романс",
+  "Фантази",
+  "Инээдэм",
+  "Драма",
+  "Аймшиг",
+  "Адал Явдал",
+  "Солонгос",
+  "Япон",
+  "Хятад",
+  "Сургааль",
   "Isekai",
-  "Martial Arts",
-  "Slice of Life",
-  "Supernatural",
-  "Mystery",
-  "Sports",
-  "Historical",
-  "Other",
+  "Мурим",
+  "Охидийн",
+  "Түүхэн",
+  "Нууцлаг",
+  "Спорт",
+  "Бусад",
 ];
+
+function formatPremiumDate(date: string | null) {
+  if (!date) return "Хугацаа байхгүй";
+
+  return new Date(date).toLocaleDateString("mn-MN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+}
 
 export default function AdminPage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -164,13 +174,16 @@ export default function AdminPage() {
     loadUsers();
   }
 
-  async function changePremium(userId: number, isPremium: boolean) {
+  async function changePremium(userId: number, months: 1 | 3 | 6 | 12) {
     const res = await fetch(`/api/admin/users/${userId}/premium`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ isPremium }),
+      body: JSON.stringify({
+        action: "grant",
+        months,
+      }),
     });
 
     const data = await res.json();
@@ -181,6 +194,32 @@ export default function AdminPage() {
     }
 
     alert(data.message || "Premium эрх амжилттай өөрчлөгдлөө");
+    loadUsers();
+  }
+
+  async function cancelPremium(userId: number) {
+    const ok = confirm("Энэ хэрэглэгчийн premium эрхийг цуцлах уу?");
+
+    if (!ok) return;
+
+    const res = await fetch(`/api/admin/users/${userId}/premium`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action: "cancel",
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Premium эрх цуцлахад алдаа гарлаа");
+      return;
+    }
+
+    alert(data.message || "Premium эрхийг цуцаллаа");
     loadUsers();
   }
 
@@ -857,9 +896,9 @@ export default function AdminPage() {
 
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">MangaZet Admin Panel</h1>
+          <h1 className="text-3xl font-bold">Admin Panel</h1>
           <p className="mt-2 text-zinc-400">
-            Admin user, comic, genre, chapter-ийг удирдана.
+            User, role, premium, comic, chapter удирдах хэсэг
           </p>
         </div>
 
@@ -868,14 +907,14 @@ export default function AdminPage() {
             href="/"
             className="rounded-lg bg-zinc-800 px-4 py-2 hover:bg-zinc-700"
           >
-            Home
+            Нүүр
           </Link>
 
           <button
             onClick={logout}
             className="rounded-lg bg-red-600 px-4 py-2 hover:bg-red-700"
           >
-            Logout
+            Гарах
           </button>
         </div>
       </div>
@@ -905,13 +944,13 @@ export default function AdminPage() {
       </div>
 
       <div className="mb-8 rounded-2xl bg-zinc-900 p-6">
-        <h2 className="mb-5 text-2xl font-bold">User role удирдах</h2>
+        <h2 className="mb-5 text-2xl font-bold">User role / premium удирдах</h2>
 
         {users.length === 0 ? (
           <p className="text-zinc-400">User байхгүй байна.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left">
+            <table className="w-full min-w-[1000px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-zinc-800 text-zinc-400">
                   <th className="py-3">ID</th>
@@ -930,33 +969,70 @@ export default function AdminPage() {
                     <td className="py-3">{user.name}</td>
                     <td className="py-3">{user.email}</td>
                     <td className="py-3">{user.role}</td>
+
                     <td className="py-3">
-                      <div className="flex flex-col gap-2">
+                      <div className="flex min-w-[280px] flex-col gap-2">
                         {user.isPremium ? (
-                          <span className="w-fit rounded-full bg-yellow-500/20 px-3 py-1 text-sm text-yellow-300">
-                            Premium
-                          </span>
+                          <div>
+                            <span className="w-fit rounded-full bg-yellow-500/20 px-3 py-1 text-sm text-yellow-300">
+                              Premium
+                            </span>
+
+                            <p className="mt-2 text-xs text-zinc-400">
+                              Дуусах огноо:{" "}
+                              {formatPremiumDate(user.premiumExpiresAt)}
+                            </p>
+                          </div>
                         ) : (
                           <span className="w-fit rounded-full bg-zinc-800 px-3 py-1 text-sm text-zinc-400">
                             Free
                           </span>
                         )}
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            changePremium(user.id, !user.isPremium)
-                          }
-                          className={`w-fit rounded-lg px-3 py-2 text-sm font-semibold ${
-                            user.isPremium
-                              ? "bg-zinc-700 hover:bg-zinc-600"
-                              : "bg-yellow-600 hover:bg-yellow-700"
-                          }`}
-                        >
-                          {user.isPremium ? "Premium цуцлах" : "Premium өгөх"}
-                        </button>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => changePremium(user.id, 1)}
+                            className="rounded-lg bg-yellow-600 px-3 py-2 text-xs font-semibold hover:bg-yellow-700"
+                          >
+                            1 сар
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => changePremium(user.id, 3)}
+                            className="rounded-lg bg-yellow-600 px-3 py-2 text-xs font-semibold hover:bg-yellow-700"
+                          >
+                            3 сар
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => changePremium(user.id, 6)}
+                            className="rounded-lg bg-yellow-600 px-3 py-2 text-xs font-semibold hover:bg-yellow-700"
+                          >
+                            6 сар
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => changePremium(user.id, 12)}
+                            className="rounded-lg bg-yellow-600 px-3 py-2 text-xs font-semibold hover:bg-yellow-700"
+                          >
+                            1 жил
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => cancelPremium(user.id)}
+                            className="rounded-lg bg-zinc-700 px-3 py-2 text-xs font-semibold hover:bg-zinc-600"
+                          >
+                            Цуцлах
+                          </button>
+                        </div>
                       </div>
                     </td>
+
                     <td className="py-3">
                       <select
                         className="rounded-lg bg-zinc-800 px-3 py-2 outline-none"

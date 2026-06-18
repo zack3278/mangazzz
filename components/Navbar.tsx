@@ -57,7 +57,7 @@ export default function Navbar() {
 
           <div>
             <h1 className="text-xl font-black leading-none">MangaZet</h1>
-            <p className="text-xs text-zinc-400">Comic Reader</p>
+            <p className="text-xs text-zinc-400">MangaTeam</p>
           </div>
         </Link>
 
@@ -66,7 +66,7 @@ export default function Navbar() {
             href="/"
             className="rounded-full px-4 py-2 text-sm font-medium text-zinc-300 hover:bg-white/10 hover:text-white"
           >
-            Home
+            Нүүр
           </Link>
 
           {!loading && user?.role === "ADMIN" && (
@@ -74,7 +74,7 @@ export default function Navbar() {
               href="/admin"
               className="rounded-full bg-red-600/20 px-4 py-2 text-sm font-semibold text-red-300 hover:bg-red-600/30"
             >
-              Admin
+              Админ
             </Link>
           )}
 
@@ -83,7 +83,7 @@ export default function Navbar() {
               href="/editor"
               className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-zinc-200 hover:bg-white/20"
             >
-              Editor
+              Эдитор
             </Link>
           )}
 
@@ -125,7 +125,7 @@ export default function Navbar() {
                 onClick={logout}
                 className="rounded-full bg-zinc-800 px-4 py-2 text-sm font-semibold text-zinc-200 hover:bg-red-600"
               >
-                Logout
+                Гарах
               </button>
             </>
           ) : (
@@ -134,14 +134,14 @@ export default function Navbar() {
                 href="/login"
                 className="rounded-full px-4 py-2 text-sm font-medium text-zinc-300 hover:bg-white/10 hover:text-white"
               >
-                Login
+                Нэвтрэх
               </Link>
 
               <Link
                 href="/register"
                 className="rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-red-600/30 hover:bg-red-700"
               >
-                Register
+                Бүртгүүлэх
               </Link>
             </>
           )}
