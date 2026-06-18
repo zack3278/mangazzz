@@ -29,57 +29,66 @@ export type AggregatePremiumOrder = {
 export type PremiumOrderAvgAggregateOutputType = {
   id: number | null
   userId: number | null
+  months: number | null
   amount: number | null
-  planMonths: number | null
 }
 
 export type PremiumOrderSumAggregateOutputType = {
   id: number | null
   userId: number | null
+  months: number | null
   amount: number | null
-  planMonths: number | null
 }
 
 export type PremiumOrderMinAggregateOutputType = {
   id: number | null
   userId: number | null
+  months: number | null
+  planName: string | null
   amount: number | null
-  planMonths: number | null
-  paymentMethod: string | null
-  transferInfo: string | null
-  status: string | null
+  status: $Enums.PremiumOrderStatus | null
   invoiceId: string | null
-  qrText: string | null
+  bankName: string | null
+  payerName: string | null
+  payerPhone: string | null
+  transferNote: string | null
   createdAt: Date | null
-  paidAt: Date | null
+  approvedAt: Date | null
+  rejectedAt: Date | null
 }
 
 export type PremiumOrderMaxAggregateOutputType = {
   id: number | null
   userId: number | null
+  months: number | null
+  planName: string | null
   amount: number | null
-  planMonths: number | null
-  paymentMethod: string | null
-  transferInfo: string | null
-  status: string | null
+  status: $Enums.PremiumOrderStatus | null
   invoiceId: string | null
-  qrText: string | null
+  bankName: string | null
+  payerName: string | null
+  payerPhone: string | null
+  transferNote: string | null
   createdAt: Date | null
-  paidAt: Date | null
+  approvedAt: Date | null
+  rejectedAt: Date | null
 }
 
 export type PremiumOrderCountAggregateOutputType = {
   id: number
   userId: number
+  months: number
+  planName: number
   amount: number
-  planMonths: number
-  paymentMethod: number
-  transferInfo: number
   status: number
   invoiceId: number
-  qrText: number
+  bankName: number
+  payerName: number
+  payerPhone: number
+  transferNote: number
   createdAt: number
-  paidAt: number
+  approvedAt: number
+  rejectedAt: number
   _all: number
 }
 
@@ -87,57 +96,66 @@ export type PremiumOrderCountAggregateOutputType = {
 export type PremiumOrderAvgAggregateInputType = {
   id?: true
   userId?: true
+  months?: true
   amount?: true
-  planMonths?: true
 }
 
 export type PremiumOrderSumAggregateInputType = {
   id?: true
   userId?: true
+  months?: true
   amount?: true
-  planMonths?: true
 }
 
 export type PremiumOrderMinAggregateInputType = {
   id?: true
   userId?: true
+  months?: true
+  planName?: true
   amount?: true
-  planMonths?: true
-  paymentMethod?: true
-  transferInfo?: true
   status?: true
   invoiceId?: true
-  qrText?: true
+  bankName?: true
+  payerName?: true
+  payerPhone?: true
+  transferNote?: true
   createdAt?: true
-  paidAt?: true
+  approvedAt?: true
+  rejectedAt?: true
 }
 
 export type PremiumOrderMaxAggregateInputType = {
   id?: true
   userId?: true
+  months?: true
+  planName?: true
   amount?: true
-  planMonths?: true
-  paymentMethod?: true
-  transferInfo?: true
   status?: true
   invoiceId?: true
-  qrText?: true
+  bankName?: true
+  payerName?: true
+  payerPhone?: true
+  transferNote?: true
   createdAt?: true
-  paidAt?: true
+  approvedAt?: true
+  rejectedAt?: true
 }
 
 export type PremiumOrderCountAggregateInputType = {
   id?: true
   userId?: true
+  months?: true
+  planName?: true
   amount?: true
-  planMonths?: true
-  paymentMethod?: true
-  transferInfo?: true
   status?: true
   invoiceId?: true
-  qrText?: true
+  bankName?: true
+  payerName?: true
+  payerPhone?: true
+  transferNote?: true
   createdAt?: true
-  paidAt?: true
+  approvedAt?: true
+  rejectedAt?: true
   _all?: true
 }
 
@@ -230,15 +248,18 @@ export type PremiumOrderGroupByArgs<ExtArgs extends runtime.Types.Extensions.Int
 export type PremiumOrderGroupByOutputType = {
   id: number
   userId: number
+  months: number
+  planName: string
   amount: number
-  planMonths: number
-  paymentMethod: string
-  transferInfo: string | null
-  status: string
-  invoiceId: string | null
-  qrText: string | null
+  status: $Enums.PremiumOrderStatus
+  invoiceId: string
+  bankName: string | null
+  payerName: string | null
+  payerPhone: string | null
+  transferNote: string | null
   createdAt: Date
-  paidAt: Date | null
+  approvedAt: Date | null
+  rejectedAt: Date | null
   _count: PremiumOrderCountAggregateOutputType | null
   _avg: PremiumOrderAvgAggregateOutputType | null
   _sum: PremiumOrderSumAggregateOutputType | null
@@ -267,30 +288,36 @@ export type PremiumOrderWhereInput = {
   NOT?: Prisma.PremiumOrderWhereInput | Prisma.PremiumOrderWhereInput[]
   id?: Prisma.IntFilter<"PremiumOrder"> | number
   userId?: Prisma.IntFilter<"PremiumOrder"> | number
+  months?: Prisma.IntFilter<"PremiumOrder"> | number
+  planName?: Prisma.StringFilter<"PremiumOrder"> | string
   amount?: Prisma.IntFilter<"PremiumOrder"> | number
-  planMonths?: Prisma.IntFilter<"PremiumOrder"> | number
-  paymentMethod?: Prisma.StringFilter<"PremiumOrder"> | string
-  transferInfo?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
-  status?: Prisma.StringFilter<"PremiumOrder"> | string
-  invoiceId?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
-  qrText?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  status?: Prisma.EnumPremiumOrderStatusFilter<"PremiumOrder"> | $Enums.PremiumOrderStatus
+  invoiceId?: Prisma.StringFilter<"PremiumOrder"> | string
+  bankName?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  payerName?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  payerPhone?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  transferNote?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
   createdAt?: Prisma.DateTimeFilter<"PremiumOrder"> | Date | string
-  paidAt?: Prisma.DateTimeNullableFilter<"PremiumOrder"> | Date | string | null
+  approvedAt?: Prisma.DateTimeNullableFilter<"PremiumOrder"> | Date | string | null
+  rejectedAt?: Prisma.DateTimeNullableFilter<"PremiumOrder"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
 
 export type PremiumOrderOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  months?: Prisma.SortOrder
+  planName?: Prisma.SortOrder
   amount?: Prisma.SortOrder
-  planMonths?: Prisma.SortOrder
-  paymentMethod?: Prisma.SortOrder
-  transferInfo?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
-  invoiceId?: Prisma.SortOrderInput | Prisma.SortOrder
-  qrText?: Prisma.SortOrderInput | Prisma.SortOrder
+  invoiceId?: Prisma.SortOrder
+  bankName?: Prisma.SortOrderInput | Prisma.SortOrder
+  payerName?: Prisma.SortOrderInput | Prisma.SortOrder
+  payerPhone?: Prisma.SortOrderInput | Prisma.SortOrder
+  transferNote?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  paidAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  approvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  rejectedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
 }
 
@@ -301,29 +328,35 @@ export type PremiumOrderWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.PremiumOrderWhereInput[]
   NOT?: Prisma.PremiumOrderWhereInput | Prisma.PremiumOrderWhereInput[]
   userId?: Prisma.IntFilter<"PremiumOrder"> | number
+  months?: Prisma.IntFilter<"PremiumOrder"> | number
+  planName?: Prisma.StringFilter<"PremiumOrder"> | string
   amount?: Prisma.IntFilter<"PremiumOrder"> | number
-  planMonths?: Prisma.IntFilter<"PremiumOrder"> | number
-  paymentMethod?: Prisma.StringFilter<"PremiumOrder"> | string
-  transferInfo?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
-  status?: Prisma.StringFilter<"PremiumOrder"> | string
-  qrText?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  status?: Prisma.EnumPremiumOrderStatusFilter<"PremiumOrder"> | $Enums.PremiumOrderStatus
+  bankName?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  payerName?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  payerPhone?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  transferNote?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
   createdAt?: Prisma.DateTimeFilter<"PremiumOrder"> | Date | string
-  paidAt?: Prisma.DateTimeNullableFilter<"PremiumOrder"> | Date | string | null
+  approvedAt?: Prisma.DateTimeNullableFilter<"PremiumOrder"> | Date | string | null
+  rejectedAt?: Prisma.DateTimeNullableFilter<"PremiumOrder"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "id" | "invoiceId">
 
 export type PremiumOrderOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  months?: Prisma.SortOrder
+  planName?: Prisma.SortOrder
   amount?: Prisma.SortOrder
-  planMonths?: Prisma.SortOrder
-  paymentMethod?: Prisma.SortOrder
-  transferInfo?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
-  invoiceId?: Prisma.SortOrderInput | Prisma.SortOrder
-  qrText?: Prisma.SortOrderInput | Prisma.SortOrder
+  invoiceId?: Prisma.SortOrder
+  bankName?: Prisma.SortOrderInput | Prisma.SortOrder
+  payerName?: Prisma.SortOrderInput | Prisma.SortOrder
+  payerPhone?: Prisma.SortOrderInput | Prisma.SortOrder
+  transferNote?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  paidAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  approvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  rejectedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.PremiumOrderCountOrderByAggregateInput
   _avg?: Prisma.PremiumOrderAvgOrderByAggregateInput
   _max?: Prisma.PremiumOrderMaxOrderByAggregateInput
@@ -337,109 +370,133 @@ export type PremiumOrderScalarWhereWithAggregatesInput = {
   NOT?: Prisma.PremiumOrderScalarWhereWithAggregatesInput | Prisma.PremiumOrderScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"PremiumOrder"> | number
   userId?: Prisma.IntWithAggregatesFilter<"PremiumOrder"> | number
+  months?: Prisma.IntWithAggregatesFilter<"PremiumOrder"> | number
+  planName?: Prisma.StringWithAggregatesFilter<"PremiumOrder"> | string
   amount?: Prisma.IntWithAggregatesFilter<"PremiumOrder"> | number
-  planMonths?: Prisma.IntWithAggregatesFilter<"PremiumOrder"> | number
-  paymentMethod?: Prisma.StringWithAggregatesFilter<"PremiumOrder"> | string
-  transferInfo?: Prisma.StringNullableWithAggregatesFilter<"PremiumOrder"> | string | null
-  status?: Prisma.StringWithAggregatesFilter<"PremiumOrder"> | string
-  invoiceId?: Prisma.StringNullableWithAggregatesFilter<"PremiumOrder"> | string | null
-  qrText?: Prisma.StringNullableWithAggregatesFilter<"PremiumOrder"> | string | null
+  status?: Prisma.EnumPremiumOrderStatusWithAggregatesFilter<"PremiumOrder"> | $Enums.PremiumOrderStatus
+  invoiceId?: Prisma.StringWithAggregatesFilter<"PremiumOrder"> | string
+  bankName?: Prisma.StringNullableWithAggregatesFilter<"PremiumOrder"> | string | null
+  payerName?: Prisma.StringNullableWithAggregatesFilter<"PremiumOrder"> | string | null
+  payerPhone?: Prisma.StringNullableWithAggregatesFilter<"PremiumOrder"> | string | null
+  transferNote?: Prisma.StringNullableWithAggregatesFilter<"PremiumOrder"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"PremiumOrder"> | Date | string
-  paidAt?: Prisma.DateTimeNullableWithAggregatesFilter<"PremiumOrder"> | Date | string | null
+  approvedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"PremiumOrder"> | Date | string | null
+  rejectedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"PremiumOrder"> | Date | string | null
 }
 
 export type PremiumOrderCreateInput = {
+  months: number
+  planName: string
   amount: number
-  planMonths?: number
-  paymentMethod?: string
-  transferInfo?: string | null
-  status?: string
-  invoiceId?: string | null
-  qrText?: string | null
+  status?: $Enums.PremiumOrderStatus
+  invoiceId: string
+  bankName?: string | null
+  payerName?: string | null
+  payerPhone?: string | null
+  transferNote?: string | null
   createdAt?: Date | string
-  paidAt?: Date | string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
   user: Prisma.UserCreateNestedOneWithoutPremiumOrdersInput
 }
 
 export type PremiumOrderUncheckedCreateInput = {
   id?: number
   userId: number
+  months: number
+  planName: string
   amount: number
-  planMonths?: number
-  paymentMethod?: string
-  transferInfo?: string | null
-  status?: string
-  invoiceId?: string | null
-  qrText?: string | null
+  status?: $Enums.PremiumOrderStatus
+  invoiceId: string
+  bankName?: string | null
+  payerName?: string | null
+  payerPhone?: string | null
+  transferNote?: string | null
   createdAt?: Date | string
-  paidAt?: Date | string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
 }
 
 export type PremiumOrderUpdateInput = {
+  months?: Prisma.IntFieldUpdateOperationsInput | number
+  planName?: Prisma.StringFieldUpdateOperationsInput | string
   amount?: Prisma.IntFieldUpdateOperationsInput | number
-  planMonths?: Prisma.IntFieldUpdateOperationsInput | number
-  paymentMethod?: Prisma.StringFieldUpdateOperationsInput | string
-  transferInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.StringFieldUpdateOperationsInput | string
-  invoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  qrText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumPremiumOrderStatusFieldUpdateOperationsInput | $Enums.PremiumOrderStatus
+  invoiceId?: Prisma.StringFieldUpdateOperationsInput | string
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  transferNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutPremiumOrdersNestedInput
 }
 
 export type PremiumOrderUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
+  months?: Prisma.IntFieldUpdateOperationsInput | number
+  planName?: Prisma.StringFieldUpdateOperationsInput | string
   amount?: Prisma.IntFieldUpdateOperationsInput | number
-  planMonths?: Prisma.IntFieldUpdateOperationsInput | number
-  paymentMethod?: Prisma.StringFieldUpdateOperationsInput | string
-  transferInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.StringFieldUpdateOperationsInput | string
-  invoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  qrText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumPremiumOrderStatusFieldUpdateOperationsInput | $Enums.PremiumOrderStatus
+  invoiceId?: Prisma.StringFieldUpdateOperationsInput | string
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  transferNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type PremiumOrderCreateManyInput = {
   id?: number
   userId: number
+  months: number
+  planName: string
   amount: number
-  planMonths?: number
-  paymentMethod?: string
-  transferInfo?: string | null
-  status?: string
-  invoiceId?: string | null
-  qrText?: string | null
+  status?: $Enums.PremiumOrderStatus
+  invoiceId: string
+  bankName?: string | null
+  payerName?: string | null
+  payerPhone?: string | null
+  transferNote?: string | null
   createdAt?: Date | string
-  paidAt?: Date | string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
 }
 
 export type PremiumOrderUpdateManyMutationInput = {
+  months?: Prisma.IntFieldUpdateOperationsInput | number
+  planName?: Prisma.StringFieldUpdateOperationsInput | string
   amount?: Prisma.IntFieldUpdateOperationsInput | number
-  planMonths?: Prisma.IntFieldUpdateOperationsInput | number
-  paymentMethod?: Prisma.StringFieldUpdateOperationsInput | string
-  transferInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.StringFieldUpdateOperationsInput | string
-  invoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  qrText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumPremiumOrderStatusFieldUpdateOperationsInput | $Enums.PremiumOrderStatus
+  invoiceId?: Prisma.StringFieldUpdateOperationsInput | string
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  transferNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type PremiumOrderUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
+  months?: Prisma.IntFieldUpdateOperationsInput | number
+  planName?: Prisma.StringFieldUpdateOperationsInput | string
   amount?: Prisma.IntFieldUpdateOperationsInput | number
-  planMonths?: Prisma.IntFieldUpdateOperationsInput | number
-  paymentMethod?: Prisma.StringFieldUpdateOperationsInput | string
-  transferInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.StringFieldUpdateOperationsInput | string
-  invoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  qrText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumPremiumOrderStatusFieldUpdateOperationsInput | $Enums.PremiumOrderStatus
+  invoiceId?: Prisma.StringFieldUpdateOperationsInput | string
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  transferNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type PremiumOrderListRelationFilter = {
@@ -455,57 +512,66 @@ export type PremiumOrderOrderByRelationAggregateInput = {
 export type PremiumOrderCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  months?: Prisma.SortOrder
+  planName?: Prisma.SortOrder
   amount?: Prisma.SortOrder
-  planMonths?: Prisma.SortOrder
-  paymentMethod?: Prisma.SortOrder
-  transferInfo?: Prisma.SortOrder
   status?: Prisma.SortOrder
   invoiceId?: Prisma.SortOrder
-  qrText?: Prisma.SortOrder
+  bankName?: Prisma.SortOrder
+  payerName?: Prisma.SortOrder
+  payerPhone?: Prisma.SortOrder
+  transferNote?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  paidAt?: Prisma.SortOrder
+  approvedAt?: Prisma.SortOrder
+  rejectedAt?: Prisma.SortOrder
 }
 
 export type PremiumOrderAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  months?: Prisma.SortOrder
   amount?: Prisma.SortOrder
-  planMonths?: Prisma.SortOrder
 }
 
 export type PremiumOrderMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  months?: Prisma.SortOrder
+  planName?: Prisma.SortOrder
   amount?: Prisma.SortOrder
-  planMonths?: Prisma.SortOrder
-  paymentMethod?: Prisma.SortOrder
-  transferInfo?: Prisma.SortOrder
   status?: Prisma.SortOrder
   invoiceId?: Prisma.SortOrder
-  qrText?: Prisma.SortOrder
+  bankName?: Prisma.SortOrder
+  payerName?: Prisma.SortOrder
+  payerPhone?: Prisma.SortOrder
+  transferNote?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  paidAt?: Prisma.SortOrder
+  approvedAt?: Prisma.SortOrder
+  rejectedAt?: Prisma.SortOrder
 }
 
 export type PremiumOrderMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  months?: Prisma.SortOrder
+  planName?: Prisma.SortOrder
   amount?: Prisma.SortOrder
-  planMonths?: Prisma.SortOrder
-  paymentMethod?: Prisma.SortOrder
-  transferInfo?: Prisma.SortOrder
   status?: Prisma.SortOrder
   invoiceId?: Prisma.SortOrder
-  qrText?: Prisma.SortOrder
+  bankName?: Prisma.SortOrder
+  payerName?: Prisma.SortOrder
+  payerPhone?: Prisma.SortOrder
+  transferNote?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  paidAt?: Prisma.SortOrder
+  approvedAt?: Prisma.SortOrder
+  rejectedAt?: Prisma.SortOrder
 }
 
 export type PremiumOrderSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  months?: Prisma.SortOrder
   amount?: Prisma.SortOrder
-  planMonths?: Prisma.SortOrder
 }
 
 export type PremiumOrderCreateNestedManyWithoutUserInput = {
@@ -550,33 +616,43 @@ export type PremiumOrderUncheckedUpdateManyWithoutUserNestedInput = {
   deleteMany?: Prisma.PremiumOrderScalarWhereInput | Prisma.PremiumOrderScalarWhereInput[]
 }
 
+export type EnumPremiumOrderStatusFieldUpdateOperationsInput = {
+  set?: $Enums.PremiumOrderStatus
+}
+
 export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
 }
 
 export type PremiumOrderCreateWithoutUserInput = {
+  months: number
+  planName: string
   amount: number
-  planMonths?: number
-  paymentMethod?: string
-  transferInfo?: string | null
-  status?: string
-  invoiceId?: string | null
-  qrText?: string | null
+  status?: $Enums.PremiumOrderStatus
+  invoiceId: string
+  bankName?: string | null
+  payerName?: string | null
+  payerPhone?: string | null
+  transferNote?: string | null
   createdAt?: Date | string
-  paidAt?: Date | string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
 }
 
 export type PremiumOrderUncheckedCreateWithoutUserInput = {
   id?: number
+  months: number
+  planName: string
   amount: number
-  planMonths?: number
-  paymentMethod?: string
-  transferInfo?: string | null
-  status?: string
-  invoiceId?: string | null
-  qrText?: string | null
+  status?: $Enums.PremiumOrderStatus
+  invoiceId: string
+  bankName?: string | null
+  payerName?: string | null
+  payerPhone?: string | null
+  transferNote?: string | null
   createdAt?: Date | string
-  paidAt?: Date | string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
 }
 
 export type PremiumOrderCreateOrConnectWithoutUserInput = {
@@ -611,66 +687,81 @@ export type PremiumOrderScalarWhereInput = {
   NOT?: Prisma.PremiumOrderScalarWhereInput | Prisma.PremiumOrderScalarWhereInput[]
   id?: Prisma.IntFilter<"PremiumOrder"> | number
   userId?: Prisma.IntFilter<"PremiumOrder"> | number
+  months?: Prisma.IntFilter<"PremiumOrder"> | number
+  planName?: Prisma.StringFilter<"PremiumOrder"> | string
   amount?: Prisma.IntFilter<"PremiumOrder"> | number
-  planMonths?: Prisma.IntFilter<"PremiumOrder"> | number
-  paymentMethod?: Prisma.StringFilter<"PremiumOrder"> | string
-  transferInfo?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
-  status?: Prisma.StringFilter<"PremiumOrder"> | string
-  invoiceId?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
-  qrText?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  status?: Prisma.EnumPremiumOrderStatusFilter<"PremiumOrder"> | $Enums.PremiumOrderStatus
+  invoiceId?: Prisma.StringFilter<"PremiumOrder"> | string
+  bankName?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  payerName?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  payerPhone?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  transferNote?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
   createdAt?: Prisma.DateTimeFilter<"PremiumOrder"> | Date | string
-  paidAt?: Prisma.DateTimeNullableFilter<"PremiumOrder"> | Date | string | null
+  approvedAt?: Prisma.DateTimeNullableFilter<"PremiumOrder"> | Date | string | null
+  rejectedAt?: Prisma.DateTimeNullableFilter<"PremiumOrder"> | Date | string | null
 }
 
 export type PremiumOrderCreateManyUserInput = {
   id?: number
+  months: number
+  planName: string
   amount: number
-  planMonths?: number
-  paymentMethod?: string
-  transferInfo?: string | null
-  status?: string
-  invoiceId?: string | null
-  qrText?: string | null
+  status?: $Enums.PremiumOrderStatus
+  invoiceId: string
+  bankName?: string | null
+  payerName?: string | null
+  payerPhone?: string | null
+  transferNote?: string | null
   createdAt?: Date | string
-  paidAt?: Date | string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
 }
 
 export type PremiumOrderUpdateWithoutUserInput = {
+  months?: Prisma.IntFieldUpdateOperationsInput | number
+  planName?: Prisma.StringFieldUpdateOperationsInput | string
   amount?: Prisma.IntFieldUpdateOperationsInput | number
-  planMonths?: Prisma.IntFieldUpdateOperationsInput | number
-  paymentMethod?: Prisma.StringFieldUpdateOperationsInput | string
-  transferInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.StringFieldUpdateOperationsInput | string
-  invoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  qrText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumPremiumOrderStatusFieldUpdateOperationsInput | $Enums.PremiumOrderStatus
+  invoiceId?: Prisma.StringFieldUpdateOperationsInput | string
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  transferNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type PremiumOrderUncheckedUpdateWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  months?: Prisma.IntFieldUpdateOperationsInput | number
+  planName?: Prisma.StringFieldUpdateOperationsInput | string
   amount?: Prisma.IntFieldUpdateOperationsInput | number
-  planMonths?: Prisma.IntFieldUpdateOperationsInput | number
-  paymentMethod?: Prisma.StringFieldUpdateOperationsInput | string
-  transferInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.StringFieldUpdateOperationsInput | string
-  invoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  qrText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumPremiumOrderStatusFieldUpdateOperationsInput | $Enums.PremiumOrderStatus
+  invoiceId?: Prisma.StringFieldUpdateOperationsInput | string
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  transferNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type PremiumOrderUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  months?: Prisma.IntFieldUpdateOperationsInput | number
+  planName?: Prisma.StringFieldUpdateOperationsInput | string
   amount?: Prisma.IntFieldUpdateOperationsInput | number
-  planMonths?: Prisma.IntFieldUpdateOperationsInput | number
-  paymentMethod?: Prisma.StringFieldUpdateOperationsInput | string
-  transferInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.StringFieldUpdateOperationsInput | string
-  invoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  qrText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumPremiumOrderStatusFieldUpdateOperationsInput | $Enums.PremiumOrderStatus
+  invoiceId?: Prisma.StringFieldUpdateOperationsInput | string
+  bankName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payerPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  transferNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -678,63 +769,75 @@ export type PremiumOrderUncheckedUpdateManyWithoutUserInput = {
 export type PremiumOrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
+  months?: boolean
+  planName?: boolean
   amount?: boolean
-  planMonths?: boolean
-  paymentMethod?: boolean
-  transferInfo?: boolean
   status?: boolean
   invoiceId?: boolean
-  qrText?: boolean
+  bankName?: boolean
+  payerName?: boolean
+  payerPhone?: boolean
+  transferNote?: boolean
   createdAt?: boolean
-  paidAt?: boolean
+  approvedAt?: boolean
+  rejectedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["premiumOrder"]>
 
 export type PremiumOrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
+  months?: boolean
+  planName?: boolean
   amount?: boolean
-  planMonths?: boolean
-  paymentMethod?: boolean
-  transferInfo?: boolean
   status?: boolean
   invoiceId?: boolean
-  qrText?: boolean
+  bankName?: boolean
+  payerName?: boolean
+  payerPhone?: boolean
+  transferNote?: boolean
   createdAt?: boolean
-  paidAt?: boolean
+  approvedAt?: boolean
+  rejectedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["premiumOrder"]>
 
 export type PremiumOrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
+  months?: boolean
+  planName?: boolean
   amount?: boolean
-  planMonths?: boolean
-  paymentMethod?: boolean
-  transferInfo?: boolean
   status?: boolean
   invoiceId?: boolean
-  qrText?: boolean
+  bankName?: boolean
+  payerName?: boolean
+  payerPhone?: boolean
+  transferNote?: boolean
   createdAt?: boolean
-  paidAt?: boolean
+  approvedAt?: boolean
+  rejectedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["premiumOrder"]>
 
 export type PremiumOrderSelectScalar = {
   id?: boolean
   userId?: boolean
+  months?: boolean
+  planName?: boolean
   amount?: boolean
-  planMonths?: boolean
-  paymentMethod?: boolean
-  transferInfo?: boolean
   status?: boolean
   invoiceId?: boolean
-  qrText?: boolean
+  bankName?: boolean
+  payerName?: boolean
+  payerPhone?: boolean
+  transferNote?: boolean
   createdAt?: boolean
-  paidAt?: boolean
+  approvedAt?: boolean
+  rejectedAt?: boolean
 }
 
-export type PremiumOrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "amount" | "planMonths" | "paymentMethod" | "transferInfo" | "status" | "invoiceId" | "qrText" | "createdAt" | "paidAt", ExtArgs["result"]["premiumOrder"]>
+export type PremiumOrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "months" | "planName" | "amount" | "status" | "invoiceId" | "bankName" | "payerName" | "payerPhone" | "transferNote" | "createdAt" | "approvedAt" | "rejectedAt", ExtArgs["result"]["premiumOrder"]>
 export type PremiumOrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -753,15 +856,18 @@ export type $PremiumOrderPayload<ExtArgs extends runtime.Types.Extensions.Intern
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     userId: number
+    months: number
+    planName: string
     amount: number
-    planMonths: number
-    paymentMethod: string
-    transferInfo: string | null
-    status: string
-    invoiceId: string | null
-    qrText: string | null
+    status: $Enums.PremiumOrderStatus
+    invoiceId: string
+    bankName: string | null
+    payerName: string | null
+    payerPhone: string | null
+    transferNote: string | null
     createdAt: Date
-    paidAt: Date | null
+    approvedAt: Date | null
+    rejectedAt: Date | null
   }, ExtArgs["result"]["premiumOrder"]>
   composites: {}
 }
@@ -1188,15 +1294,18 @@ export interface Prisma__PremiumOrderClient<T, Null = never, ExtArgs extends run
 export interface PremiumOrderFieldRefs {
   readonly id: Prisma.FieldRef<"PremiumOrder", 'Int'>
   readonly userId: Prisma.FieldRef<"PremiumOrder", 'Int'>
+  readonly months: Prisma.FieldRef<"PremiumOrder", 'Int'>
+  readonly planName: Prisma.FieldRef<"PremiumOrder", 'String'>
   readonly amount: Prisma.FieldRef<"PremiumOrder", 'Int'>
-  readonly planMonths: Prisma.FieldRef<"PremiumOrder", 'Int'>
-  readonly paymentMethod: Prisma.FieldRef<"PremiumOrder", 'String'>
-  readonly transferInfo: Prisma.FieldRef<"PremiumOrder", 'String'>
-  readonly status: Prisma.FieldRef<"PremiumOrder", 'String'>
+  readonly status: Prisma.FieldRef<"PremiumOrder", 'PremiumOrderStatus'>
   readonly invoiceId: Prisma.FieldRef<"PremiumOrder", 'String'>
-  readonly qrText: Prisma.FieldRef<"PremiumOrder", 'String'>
+  readonly bankName: Prisma.FieldRef<"PremiumOrder", 'String'>
+  readonly payerName: Prisma.FieldRef<"PremiumOrder", 'String'>
+  readonly payerPhone: Prisma.FieldRef<"PremiumOrder", 'String'>
+  readonly transferNote: Prisma.FieldRef<"PremiumOrder", 'String'>
   readonly createdAt: Prisma.FieldRef<"PremiumOrder", 'DateTime'>
-  readonly paidAt: Prisma.FieldRef<"PremiumOrder", 'DateTime'>
+  readonly approvedAt: Prisma.FieldRef<"PremiumOrder", 'DateTime'>
+  readonly rejectedAt: Prisma.FieldRef<"PremiumOrder", 'DateTime'>
 }
     
 

@@ -43,6 +43,7 @@ export type UserMinAggregateOutputType = {
   isPremium: boolean | null
   premiumExpiresAt: Date | null
   createdAt: Date | null
+  updatedAt: Date | null
 }
 
 export type UserMaxAggregateOutputType = {
@@ -54,6 +55,7 @@ export type UserMaxAggregateOutputType = {
   isPremium: boolean | null
   premiumExpiresAt: Date | null
   createdAt: Date | null
+  updatedAt: Date | null
 }
 
 export type UserCountAggregateOutputType = {
@@ -65,6 +67,7 @@ export type UserCountAggregateOutputType = {
   isPremium: number
   premiumExpiresAt: number
   createdAt: number
+  updatedAt: number
   _all: number
 }
 
@@ -86,6 +89,7 @@ export type UserMinAggregateInputType = {
   isPremium?: true
   premiumExpiresAt?: true
   createdAt?: true
+  updatedAt?: true
 }
 
 export type UserMaxAggregateInputType = {
@@ -97,6 +101,7 @@ export type UserMaxAggregateInputType = {
   isPremium?: true
   premiumExpiresAt?: true
   createdAt?: true
+  updatedAt?: true
 }
 
 export type UserCountAggregateInputType = {
@@ -108,6 +113,7 @@ export type UserCountAggregateInputType = {
   isPremium?: true
   premiumExpiresAt?: true
   createdAt?: true
+  updatedAt?: true
   _all?: true
 }
 
@@ -206,6 +212,7 @@ export type UserGroupByOutputType = {
   isPremium: boolean
   premiumExpiresAt: Date | null
   createdAt: Date
+  updatedAt: Date
   _count: UserCountAggregateOutputType | null
   _avg: UserAvgAggregateOutputType | null
   _sum: UserSumAggregateOutputType | null
@@ -240,6 +247,7 @@ export type UserWhereInput = {
   isPremium?: Prisma.BoolFilter<"User"> | boolean
   premiumExpiresAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   premiumOrders?: Prisma.PremiumOrderListRelationFilter
 }
 
@@ -252,6 +260,7 @@ export type UserOrderByWithRelationInput = {
   isPremium?: Prisma.SortOrder
   premiumExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
   premiumOrders?: Prisma.PremiumOrderOrderByRelationAggregateInput
 }
 
@@ -267,6 +276,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   isPremium?: Prisma.BoolFilter<"User"> | boolean
   premiumExpiresAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   premiumOrders?: Prisma.PremiumOrderListRelationFilter
 }, "id" | "email">
 
@@ -279,6 +289,7 @@ export type UserOrderByWithAggregationInput = {
   isPremium?: Prisma.SortOrder
   premiumExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
   _avg?: Prisma.UserAvgOrderByAggregateInput
   _max?: Prisma.UserMaxOrderByAggregateInput
@@ -298,6 +309,7 @@ export type UserScalarWhereWithAggregatesInput = {
   isPremium?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   premiumExpiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
+  updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
 
 export type UserCreateInput = {
@@ -308,6 +320,7 @@ export type UserCreateInput = {
   isPremium?: boolean
   premiumExpiresAt?: Date | string | null
   createdAt?: Date | string
+  updatedAt?: Date | string
   premiumOrders?: Prisma.PremiumOrderCreateNestedManyWithoutUserInput
 }
 
@@ -320,6 +333,7 @@ export type UserUncheckedCreateInput = {
   isPremium?: boolean
   premiumExpiresAt?: Date | string | null
   createdAt?: Date | string
+  updatedAt?: Date | string
   premiumOrders?: Prisma.PremiumOrderUncheckedCreateNestedManyWithoutUserInput
 }
 
@@ -331,6 +345,7 @@ export type UserUpdateInput = {
   isPremium?: Prisma.BoolFieldUpdateOperationsInput | boolean
   premiumExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   premiumOrders?: Prisma.PremiumOrderUpdateManyWithoutUserNestedInput
 }
 
@@ -343,6 +358,7 @@ export type UserUncheckedUpdateInput = {
   isPremium?: Prisma.BoolFieldUpdateOperationsInput | boolean
   premiumExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   premiumOrders?: Prisma.PremiumOrderUncheckedUpdateManyWithoutUserNestedInput
 }
 
@@ -355,6 +371,7 @@ export type UserCreateManyInput = {
   isPremium?: boolean
   premiumExpiresAt?: Date | string | null
   createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type UserUpdateManyMutationInput = {
@@ -365,6 +382,7 @@ export type UserUpdateManyMutationInput = {
   isPremium?: Prisma.BoolFieldUpdateOperationsInput | boolean
   premiumExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type UserUncheckedUpdateManyInput = {
@@ -376,6 +394,7 @@ export type UserUncheckedUpdateManyInput = {
   isPremium?: Prisma.BoolFieldUpdateOperationsInput | boolean
   premiumExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type UserCountOrderByAggregateInput = {
@@ -387,6 +406,7 @@ export type UserCountOrderByAggregateInput = {
   isPremium?: Prisma.SortOrder
   premiumExpiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type UserAvgOrderByAggregateInput = {
@@ -402,6 +422,7 @@ export type UserMaxOrderByAggregateInput = {
   isPremium?: Prisma.SortOrder
   premiumExpiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type UserMinOrderByAggregateInput = {
@@ -413,6 +434,7 @@ export type UserMinOrderByAggregateInput = {
   isPremium?: Prisma.SortOrder
   premiumExpiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type UserSumOrderByAggregateInput = {
@@ -474,6 +496,7 @@ export type UserCreateWithoutPremiumOrdersInput = {
   isPremium?: boolean
   premiumExpiresAt?: Date | string | null
   createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type UserUncheckedCreateWithoutPremiumOrdersInput = {
@@ -485,6 +508,7 @@ export type UserUncheckedCreateWithoutPremiumOrdersInput = {
   isPremium?: boolean
   premiumExpiresAt?: Date | string | null
   createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type UserCreateOrConnectWithoutPremiumOrdersInput = {
@@ -511,6 +535,7 @@ export type UserUpdateWithoutPremiumOrdersInput = {
   isPremium?: Prisma.BoolFieldUpdateOperationsInput | boolean
   premiumExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type UserUncheckedUpdateWithoutPremiumOrdersInput = {
@@ -522,6 +547,7 @@ export type UserUncheckedUpdateWithoutPremiumOrdersInput = {
   isPremium?: Prisma.BoolFieldUpdateOperationsInput | boolean
   premiumExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -564,6 +590,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   isPremium?: boolean
   premiumExpiresAt?: boolean
   createdAt?: boolean
+  updatedAt?: boolean
   premiumOrders?: boolean | Prisma.User$premiumOrdersArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
@@ -577,6 +604,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   isPremium?: boolean
   premiumExpiresAt?: boolean
   createdAt?: boolean
+  updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -588,6 +616,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   isPremium?: boolean
   premiumExpiresAt?: boolean
   createdAt?: boolean
+  updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectScalar = {
@@ -599,9 +628,10 @@ export type UserSelectScalar = {
   isPremium?: boolean
   premiumExpiresAt?: boolean
   createdAt?: boolean
+  updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "password" | "role" | "isPremium" | "premiumExpiresAt" | "createdAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "password" | "role" | "isPremium" | "premiumExpiresAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   premiumOrders?: boolean | Prisma.User$premiumOrdersArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -623,6 +653,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     isPremium: boolean
     premiumExpiresAt: Date | null
     createdAt: Date
+    updatedAt: Date
   }, ExtArgs["result"]["user"]>
   composites: {}
 }
@@ -1055,6 +1086,7 @@ export interface UserFieldRefs {
   readonly isPremium: Prisma.FieldRef<"User", 'Boolean'>
   readonly premiumExpiresAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }
     
 

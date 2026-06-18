@@ -825,7 +825,8 @@ export const UserScalarFieldEnum = {
   role: 'role',
   isPremium: 'isPremium',
   premiumExpiresAt: 'premiumExpiresAt',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -834,15 +835,18 @@ export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof User
 export const PremiumOrderScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
+  months: 'months',
+  planName: 'planName',
   amount: 'amount',
-  planMonths: 'planMonths',
-  paymentMethod: 'paymentMethod',
-  transferInfo: 'transferInfo',
   status: 'status',
   invoiceId: 'invoiceId',
-  qrText: 'qrText',
+  bankName: 'bankName',
+  payerName: 'payerName',
+  payerPhone: 'payerPhone',
+  transferNote: 'transferNote',
   createdAt: 'createdAt',
-  paidAt: 'paidAt'
+  approvedAt: 'approvedAt',
+  rejectedAt: 'rejectedAt'
 } as const
 
 export type PremiumOrderScalarFieldEnum = (typeof PremiumOrderScalarFieldEnum)[keyof typeof PremiumOrderScalarFieldEnum]
@@ -978,6 +982,20 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
  * Reference to a field of type 'DateTime[]'
  */
 export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+/**
+ * Reference to a field of type 'PremiumOrderStatus'
+ */
+export type EnumPremiumOrderStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PremiumOrderStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'PremiumOrderStatus[]'
+ */
+export type ListEnumPremiumOrderStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PremiumOrderStatus[]'>
     
 
 
