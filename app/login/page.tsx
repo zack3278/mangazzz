@@ -56,7 +56,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <h1 className="text-2xl font-black">Unshy</h1>
+              <h1 className="text-2xl font-black">MangaZet</h1>
               <p className="text-sm text-red-100">MangaTeam</p>
             </div>
           </Link>
@@ -82,7 +82,7 @@ export default function LoginPage() {
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-600 text-xl font-black">
                 U   
               </div>
-              <span className="text-xl font-black">Unshy</span>
+              <span className="text-xl font-black">MangaZet</span>
             </Link>
 
             <p className="text-sm font-semibold uppercase tracking-widest text-red-400">

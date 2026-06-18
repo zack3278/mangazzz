@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
@@ -825,7 +825,7 @@ export default function AdminPage() {
 
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Unshy Admin Panel</h1>
+          <h1 className="text-3xl font-bold">MangaZet Admin Panel</h1>
           <p className="mt-2 text-zinc-400">
             Admin user, comic, genre, chapter-ийг удирдана.
           </p>

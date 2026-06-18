@@ -39,9 +39,9 @@ export async function POST() {
     }
 
     const amount = 9900;
-    const invoiceId = `UNSHY-${user.id}-${Date.now()}`;
+    const invoiceId = `MANGAZET-${user.id}-${Date.now()}`;
 
-    const qrText = `UNSHY PREMIUM\nInvoice: ${invoiceId}\nAmount: ${amount} MNT\nUser: ${user.email}`;
+    const qrText = `MANGAZET PREMIUM\nInvoice: ${invoiceId}\nAmount: ${amount} MNT\nUser: ${user.email}`;
 
     const order = await prisma.premiumOrder.create({
       data: {

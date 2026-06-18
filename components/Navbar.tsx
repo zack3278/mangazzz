@@ -56,7 +56,7 @@ export default function Navbar() {
           </div>
 
           <div>
-            <h1 className="text-xl font-black leading-none">Unshy</h1>
+            <h1 className="text-xl font-black leading-none">MangaZet</h1>
             <p className="text-xs text-zinc-400">Comic Reader</p>
           </div>
         </Link>
