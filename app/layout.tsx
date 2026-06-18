@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Unshy",
-  description: "Comic reader website",
+  title: "Mangazet",
+  description: "Манга, манхва, комик унших сайт",
 };
 
 export default function RootLayout({
@@ -11,9 +11,5 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <html lang="mn">
-      <body>{children}</body>
-    </html>
-  );
+  return <>{children}</>;
 }
