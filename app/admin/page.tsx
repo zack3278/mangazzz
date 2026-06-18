@@ -68,6 +68,27 @@ function formatPremiumDate(date: string | null) {
   });
 }
 
+function isPremiumActive(user: User) {
+  if (!user.isPremium || !user.premiumExpiresAt) return false;
+
+  const expiresAt = new Date(user.premiumExpiresAt);
+  const now = new Date();
+
+  return expiresAt.getTime() > now.getTime();
+}
+
+function getPremiumStatus(user: User) {
+  if (!user.isPremium || !user.premiumExpiresAt) {
+    return "NONE";
+  }
+
+  if (isPremiumActive(user)) {
+    return "ACTIVE";
+  }
+
+  return "EXPIRED";
+}
+
 export default function AdminPage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
 
@@ -78,7 +99,7 @@ export default function AdminPage() {
   const [comicSlug, setComicSlug] = useState("");
   const [comicDescription, setComicDescription] = useState("");
   const [comicAuthor, setComicAuthor] = useState("");
-  const [comicGenre, setComicGenre] = useState("Other");
+  const [comicGenre, setComicGenre] = useState("Бусад");
   const [comicGenre2, setComicGenre2] = useState("");
   const [comicGenre3, setComicGenre3] = useState("");
   const [coverImage, setCoverImage] = useState("");
@@ -92,7 +113,7 @@ export default function AdminPage() {
   const [editTitle, setEditTitle] = useState("");
   const [editSlug, setEditSlug] = useState("");
   const [editAuthor, setEditAuthor] = useState("");
-  const [editGenre, setEditGenre] = useState("Other");
+  const [editGenre, setEditGenre] = useState("Бусад");
   const [editGenre2, setEditGenre2] = useState("");
   const [editGenre3, setEditGenre3] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -114,41 +135,82 @@ export default function AdminPage() {
   const [savingEditChapter, setSavingEditChapter] = useState(false);
 
   async function loadUsers() {
-    const res = await fetch("/api/admin/users");
-    const data = await res.json();
+    try {
+      const res = await fetch("/api/admin/users");
+      const data = await res.json();
 
-    if (Array.isArray(data)) {
-      setUsers(data);
+      if (!res.ok) {
+        alert(data.message || "Users ачаалахад алдаа гарлаа");
+        return;
+      }
+
+      if (Array.isArray(data)) {
+        setUsers(data);
+        return;
+      }
+
+      if (Array.isArray(data.users)) {
+        setUsers(data.users);
+        return;
+      }
+
+      setUsers([]);
+    } catch (error) {
+      console.error(error);
+      alert("Users ачаалахад алдаа гарлаа");
     }
   }
 
   async function loadComics() {
-    const res = await fetch("/api/comics");
-    const data = await res.json();
+    try {
+      const res = await fetch("/api/comics");
+      const data = await res.json();
 
-    if (Array.isArray(data)) {
-      setComics(data);
+      if (!res.ok) {
+        alert(data.message || "Comics ачаалахад алдаа гарлаа");
+        return;
+      }
+
+      if (Array.isArray(data)) {
+        setComics(data);
+        return;
+      }
+
+      if (Array.isArray(data.comics)) {
+        setComics(data.comics);
+        return;
+      }
+
+      setComics([]);
+    } catch (error) {
+      console.error(error);
+      alert("Comics ачаалахад алдаа гарлаа");
     }
   }
 
   useEffect(() => {
     async function checkAuth() {
-      const res = await fetch("/api/auth/me");
-      const data = await res.json();
+      try {
+        const res = await fetch("/api/auth/me");
+        const data = await res.json();
 
-      if (!res.ok || !data.user) {
+        if (!res.ok || !data.user) {
+          location.href = "/login";
+          return;
+        }
+
+        if (data.user.role !== "ADMIN") {
+          location.href = "/";
+          return;
+        }
+
+        setCheckingAuth(false);
+        loadUsers();
+        loadComics();
+      } catch (error) {
+        console.error(error);
         location.href = "/login";
-        return;
       }
-
-      if (data.user.role !== "ADMIN") {
-        location.href = "/";
-        return;
-      }
-
-      setCheckingAuth(false);
-      loadUsers();
-      loadComics();
     }
 
     checkAuth();
@@ -174,7 +236,7 @@ export default function AdminPage() {
     loadUsers();
   }
 
-  async function changePremium(userId: number, months: 1 | 3 | 6 | 12) {
+  async function changePremium(userId: number, months: 1 | 2 | 3 | 6 | 12) {
     const res = await fetch(`/api/admin/users/${userId}/premium`, {
       method: "PATCH",
       headers: {
@@ -402,7 +464,7 @@ export default function AdminPage() {
       setComicSlug("");
       setComicDescription("");
       setComicAuthor("");
-      setComicGenre("Other");
+      setComicGenre("Бусад");
       setComicGenre2("");
       setComicGenre3("");
       setCoverImage("");
@@ -418,7 +480,7 @@ export default function AdminPage() {
     setEditTitle(comic.title);
     setEditSlug(comic.slug);
     setEditAuthor(comic.author || "");
-    setEditGenre(comic.genre || "Other");
+    setEditGenre(comic.genre || "Бусад");
     setEditGenre2(comic.genre2 || "");
     setEditGenre3(comic.genre3 || "");
     setEditDescription(comic.description);
@@ -430,7 +492,7 @@ export default function AdminPage() {
     setEditTitle("");
     setEditSlug("");
     setEditAuthor("");
-    setEditGenre("Other");
+    setEditGenre("Бусад");
     setEditGenre2("");
     setEditGenre3("");
     setEditDescription("");
@@ -894,7 +956,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Admin Panel</h1>
           <p className="mt-2 text-zinc-400">
@@ -972,14 +1034,25 @@ export default function AdminPage() {
 
                     <td className="py-3">
                       <div className="flex min-w-[280px] flex-col gap-2">
-                        {user.isPremium ? (
+                        {getPremiumStatus(user) === "ACTIVE" ? (
                           <div>
                             <span className="w-fit rounded-full bg-yellow-500/20 px-3 py-1 text-sm text-yellow-300">
-                              Premium
+                              Premium идэвхтэй
                             </span>
 
                             <p className="mt-2 text-xs text-zinc-400">
                               Дуусах огноо:{" "}
+                              {formatPremiumDate(user.premiumExpiresAt)}
+                            </p>
+                          </div>
+                        ) : getPremiumStatus(user) === "EXPIRED" ? (
+                          <div>
+                            <span className="w-fit rounded-full bg-red-500/20 px-3 py-1 text-sm text-red-300">
+                              Premium дууссан
+                            </span>
+
+                            <p className="mt-2 text-xs text-zinc-400">
+                              Дууссан огноо:{" "}
                               {formatPremiumDate(user.premiumExpiresAt)}
                             </p>
                           </div>
@@ -995,7 +1068,15 @@ export default function AdminPage() {
                             onClick={() => changePremium(user.id, 1)}
                             className="rounded-lg bg-yellow-600 px-3 py-2 text-xs font-semibold hover:bg-yellow-700"
                           >
-                            1 сар
+                            1 сар (5000₮)
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => changePremium(user.id, 2)}
+                            className="rounded-lg bg-yellow-600 px-3 py-2 text-xs font-semibold hover:bg-yellow-700"
+                          >
+                            2 сар (9000₮)
                           </button>
 
                           <button
@@ -1003,7 +1084,7 @@ export default function AdminPage() {
                             onClick={() => changePremium(user.id, 3)}
                             className="rounded-lg bg-yellow-600 px-3 py-2 text-xs font-semibold hover:bg-yellow-700"
                           >
-                            3 сар
+                            3 сар (13000₮)
                           </button>
 
                           <button
@@ -1011,7 +1092,7 @@ export default function AdminPage() {
                             onClick={() => changePremium(user.id, 6)}
                             className="rounded-lg bg-yellow-600 px-3 py-2 text-xs font-semibold hover:bg-yellow-700"
                           >
-                            6 сар
+                            6 сар (22000₮)
                           </button>
 
                           <button
@@ -1019,7 +1100,7 @@ export default function AdminPage() {
                             onClick={() => changePremium(user.id, 12)}
                             className="rounded-lg bg-yellow-600 px-3 py-2 text-xs font-semibold hover:bg-yellow-700"
                           >
-                            1 жил
+                            12 сар (35000₮)
                           </button>
 
                           <button
