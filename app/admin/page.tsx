@@ -164,6 +164,26 @@ export default function AdminPage() {
     loadUsers();
   }
 
+  async function changePremium(userId: number, isPremium: boolean) {
+    const res = await fetch(`/api/admin/users/${userId}/premium`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ isPremium }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Premium эрх өөрчлөхөд алдаа гарлаа");
+      return;
+    }
+
+    alert(data.message || "Premium эрх амжилттай өөрчлөгдлөө");
+    loadUsers();
+  }
+
   async function uploadCover(file: File | null) {
     if (!file) return;
 
@@ -299,7 +319,13 @@ export default function AdminPage() {
   async function addComic(e: FormEvent) {
     e.preventDefault();
 
-    if (!comicTitle || !comicSlug || !comicDescription || !coverImage || !comicGenre) {
+    if (
+      !comicTitle ||
+      !comicSlug ||
+      !comicDescription ||
+      !coverImage ||
+      !comicGenre
+    ) {
       alert("Title, slug, description, cover image, genre 1 заавал хэрэгтэй");
       return;
     }
@@ -377,7 +403,13 @@ export default function AdminPage() {
 
     if (!editingComic) return;
 
-    if (!editTitle || !editSlug || !editDescription || !editCoverImage || !editGenre) {
+    if (
+      !editTitle ||
+      !editSlug ||
+      !editDescription ||
+      !editCoverImage ||
+      !editGenre
+    ) {
       alert("Title, slug, description, cover image, genre 1 заавал хэрэгтэй");
       return;
     }
@@ -899,15 +931,31 @@ export default function AdminPage() {
                     <td className="py-3">{user.email}</td>
                     <td className="py-3">{user.role}</td>
                     <td className="py-3">
-                      {user.isPremium ? (
-                        <span className="rounded-full bg-yellow-500/20 px-3 py-1 text-sm text-yellow-300">
-                          Premium
-                        </span>
-                      ) : (
-                        <span className="rounded-full bg-zinc-800 px-3 py-1 text-sm text-zinc-400">
-                          Free
-                        </span>
-                      )}
+                      <div className="flex flex-col gap-2">
+                        {user.isPremium ? (
+                          <span className="w-fit rounded-full bg-yellow-500/20 px-3 py-1 text-sm text-yellow-300">
+                            Premium
+                          </span>
+                        ) : (
+                          <span className="w-fit rounded-full bg-zinc-800 px-3 py-1 text-sm text-zinc-400">
+                            Free
+                          </span>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            changePremium(user.id, !user.isPremium)
+                          }
+                          className={`w-fit rounded-lg px-3 py-2 text-sm font-semibold ${
+                            user.isPremium
+                              ? "bg-zinc-700 hover:bg-zinc-600"
+                              : "bg-yellow-600 hover:bg-yellow-700"
+                          }`}
+                        >
+                          {user.isPremium ? "Premium цуцлах" : "Premium өгөх"}
+                        </button>
+                      </div>
                     </td>
                     <td className="py-3">
                       <select
@@ -1072,7 +1120,8 @@ export default function AdminPage() {
 
             {comics.map((comic) => (
               <option key={comic.id} value={comic.id}>
-                {comic.title} / {[comic.genre, comic.genre2, comic.genre3]
+                {comic.title} /{" "}
+                {[comic.genre, comic.genre2, comic.genre3]
                   .filter(Boolean)
                   .join(", ")}
               </option>
@@ -1120,7 +1169,10 @@ export default function AdminPage() {
           {chapterImages.length > 0 && (
             <div className="mb-5 grid grid-cols-2 gap-4 md:grid-cols-4">
               {chapterImages.map((url, index) => (
-                <div key={`${url}-${index}`} className="rounded-lg bg-zinc-800 p-2">
+                <div
+                  key={`${url}-${index}`}
+                  className="rounded-lg bg-zinc-800 p-2"
+                >
                   <img
                     src={url}
                     alt="chapter preview"
