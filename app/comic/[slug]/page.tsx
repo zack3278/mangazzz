@@ -82,12 +82,12 @@ export default async function ComicDetailPage({ params }: Props) {
               <Link
                 href={
                   comic.chapters.length > 0
-                    ? `/chapter/${comic.chapters[0].id}`
+                    ? `/read/${comic.chapters[0].id}`
                     : "#"
                 }
                 className={`inline-flex items-center justify-center rounded-2xl px-5 py-3 text-sm font-semibold ${
                   comic.chapters.length > 0
-                    ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-950/40"
+                    ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-950/40 hover:scale-[1.01]"
                     : "cursor-not-allowed border border-white/10 bg-white/5 text-zinc-500"
                 }`}
               >
@@ -106,6 +106,7 @@ export default async function ComicDetailPage({ params }: Props) {
               <p className="text-xs font-semibold uppercase tracking-[0.25em] text-violet-200/80">
                 Тайлбар
               </p>
+
               <p className="mt-4 text-sm leading-7 text-zinc-300 sm:text-base">
                 {comic.description}
               </p>
@@ -119,6 +120,7 @@ export default async function ComicDetailPage({ params }: Props) {
               <p className="text-xs font-semibold uppercase tracking-[0.25em] text-violet-200/80">
                 Chapters
               </p>
+
               <h2 className="mt-2 text-2xl font-extrabold text-white sm:text-3xl">
                 Бүх бүлгүүд
               </h2>
@@ -138,13 +140,14 @@ export default async function ComicDetailPage({ params }: Props) {
               {comic.chapters.map((chapter) => (
                 <Link
                   key={chapter.id}
-                  href={`/chapter/${chapter.id}`}
+                  href={`/read/${chapter.id}`}
                   className="flex flex-col gap-3 rounded-[22px] border border-white/10 bg-[#110c1d]/80 p-4 transition hover:border-violet-500/30 hover:bg-[#161025] sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div>
                     <p className="text-lg font-bold text-white">
                       Chapter {chapter.number}: {chapter.title}
                     </p>
+
                     <p className="mt-1 text-sm text-zinc-400">
                       Уншихад бэлэн
                     </p>
