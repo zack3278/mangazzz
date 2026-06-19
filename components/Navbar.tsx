@@ -49,46 +49,46 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0b0714]/80 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#090511]/80 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-lg font-black text-white shadow-lg shadow-violet-900/40">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-lg font-black text-white shadow-lg shadow-violet-900/30">
             M
           </div>
 
           <div>
-            <p className="text-lg font-extrabold tracking-wide text-white">
+            <p className="text-lg font-black tracking-wide text-white">
               MangaZet
             </p>
-            <p className="text-xs text-violet-200/70">Dark Purple Library</p>
+            <p className="text-xs text-zinc-400">Clean Purple Edition</p>
           </div>
         </Link>
 
         <nav className="hidden items-center gap-2 md:flex">
           <Link
             href="/"
-            className="rounded-full px-4 py-2 text-sm text-zinc-200 hover:bg-white/8 hover:text-white"
+            className="rounded-full px-4 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
           >
             Нүүр
           </Link>
 
           <Link
             href="/?genre=%D0%A0%D0%BE%D0%BC%D0%B0%D0%BD%D1%81"
-            className="rounded-full px-4 py-2 text-sm text-zinc-200 hover:bg-white/8 hover:text-white"
+            className="rounded-full px-4 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
           >
             Romance
           </Link>
 
           <Link
             href="/?genre=%D0%A4%D0%B0%D0%BD%D1%82%D0%B0%D0%B7%D0%B8"
-            className="rounded-full px-4 py-2 text-sm text-zinc-200 hover:bg-white/8 hover:text-white"
+            className="rounded-full px-4 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
           >
             Fantasy
           </Link>
 
           <Link
             href="/premium"
-            className="rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-950/40 hover:scale-[1.02]"
+            className="rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-950/30 hover:scale-[1.02]"
           >
             Premium
           </Link>
@@ -97,32 +97,37 @@ export default function Navbar() {
         <div className="hidden items-center gap-3 md:flex">
           {!loading && user ? (
             <>
-              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 font-bold text-white">
+              {(user.role === "EDITOR" || user.role === "ADMIN") && (
+                <Link
+                  href={user.role === "ADMIN" ? "/admin" : "/editor"}
+                  className="rounded-full border border-violet-500/25 bg-violet-500/10 px-4 py-2 text-sm font-medium text-violet-200 hover:bg-violet-500/20"
+                >
+                  {user.role === "ADMIN" ? "Админ" : "Эдитор"}
+                </Link>
+              )}
+
+              <Link
+                href="/profile"
+                className="flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-3 py-2 hover:bg-white/10"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-sm font-bold text-white">
                   {user.name?.slice(0, 1).toUpperCase()}
                 </div>
 
-                <div className="leading-tight">
+                <div className="text-left leading-tight">
                   <p className="text-sm font-semibold text-white">{user.name}</p>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-zinc-400">{user.role}</span>
+                    <span className="text-[11px] text-zinc-400">
+                      {user.role}
+                    </span>
                     {user.isPremium && (
-                      <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-[10px] font-semibold text-violet-200">
+                      <span className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-semibold text-violet-200">
                         PREMIUM
                       </span>
                     )}
                   </div>
                 </div>
-              </div>
-
-              {(user.role === "EDITOR" || user.role === "ADMIN") && (
-                <Link
-                  href={user.role === "ADMIN" ? "/admin" : "/editor"}
-                  className="rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-2 text-sm font-medium text-violet-200 hover:bg-violet-500/20"
-                >
-                  {user.role === "ADMIN" ? "Админ" : "Эдитор"}
-                </Link>
-              )}
+              </Link>
 
               <button
                 onClick={logout}
@@ -143,7 +148,7 @@ export default function Navbar() {
 
                 <Link
                   href="/register"
-                  className="rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-950/40 hover:scale-[1.02]"
+                  className="rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-950/30 hover:scale-[1.02]"
                 >
                   Бүртгүүлэх
                 </Link>
@@ -153,11 +158,9 @@ export default function Navbar() {
         </div>
 
         <button
-          type="button"
           onClick={() => setMobileOpen((prev) => !prev)}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white md:hidden"
+          className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white md:hidden"
         >
-          <span className="sr-only">Open menu</span>
           <div className="space-y-1.5">
             <span className="block h-0.5 w-5 rounded-full bg-white" />
             <span className="block h-0.5 w-5 rounded-full bg-white" />
@@ -167,30 +170,14 @@ export default function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="border-t border-white/10 bg-[#0d0818]/95 px-4 py-4 md:hidden">
+        <div className="border-t border-white/10 bg-[#0c0715]/95 px-4 py-4 md:hidden">
           <div className="space-y-2">
             <Link
               href="/"
               onClick={() => setMobileOpen(false)}
-              className="block rounded-2xl border border-white/8 bg-white/5 px-4 py-3 text-sm font-medium text-white"
+              className="block rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white"
             >
               Нүүр
-            </Link>
-
-            <Link
-              href="/?genre=%D0%A0%D0%BE%D0%BC%D0%B0%D0%BD%D1%81"
-              onClick={() => setMobileOpen(false)}
-              className="block rounded-2xl border border-white/8 bg-white/5 px-4 py-3 text-sm font-medium text-white"
-            >
-              Romance
-            </Link>
-
-            <Link
-              href="/?genre=%D0%A4%D0%B0%D0%BD%D1%82%D0%B0%D0%B7%D0%B8"
-              onClick={() => setMobileOpen(false)}
-              className="block rounded-2xl border border-white/8 bg-white/5 px-4 py-3 text-sm font-medium text-white"
-            >
-              Fantasy
             </Link>
 
             <Link
@@ -203,30 +190,23 @@ export default function Navbar() {
 
             {!loading && user ? (
               <>
+                <Link
+                  href="/profile"
+                  onClick={() => setMobileOpen(false)}
+                  className="block rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white"
+                >
+                  Profile
+                </Link>
+
                 {(user.role === "EDITOR" || user.role === "ADMIN") && (
                   <Link
                     href={user.role === "ADMIN" ? "/admin" : "/editor"}
                     onClick={() => setMobileOpen(false)}
-                    className="block rounded-2xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-sm font-medium text-violet-200"
+                    className="block rounded-2xl border border-violet-500/25 bg-violet-500/10 px-4 py-3 text-sm font-medium text-violet-200"
                   >
-                    {user.role === "ADMIN" ? "Админ самбар" : "Эдитор самбар"}
+                    {user.role === "ADMIN" ? "Админ" : "Эдитор"}
                   </Link>
                 )}
-
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-sm font-semibold text-white">{user.name}</p>
-                  <p className="mt-1 text-xs text-zinc-400">{user.email}</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <span className="rounded-full bg-white/8 px-2 py-1 text-[11px] text-zinc-300">
-                      {user.role}
-                    </span>
-                    {user.isPremium && (
-                      <span className="rounded-full bg-violet-500/20 px-2 py-1 text-[11px] text-violet-200">
-                        PREMIUM
-                      </span>
-                    )}
-                  </div>
-                </div>
 
                 <button
                   onClick={logout}
