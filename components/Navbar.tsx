@@ -14,6 +14,7 @@ type User = {
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   async function loadUser() {
     try {
@@ -48,105 +49,216 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-white/10 bg-black/70 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4 text-white">
-        <Link href="/" className="flex shrink-0 items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-red-600 text-xl font-black shadow-lg shadow-red-600/30">
-            U
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0b0714]/80 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+        <Link href="/" className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-lg font-black text-white shadow-lg shadow-violet-900/40">
+            M
           </div>
 
           <div>
-            <h1 className="text-xl font-black leading-none">MangaZet</h1>
-            <p className="text-xs text-zinc-400">MangaTeam</p>
+            <p className="text-lg font-extrabold tracking-wide text-white">
+              MangaZet
+            </p>
+            <p className="text-xs text-violet-200/70">Dark Purple Library</p>
           </div>
         </Link>
 
-        <div className="flex flex-wrap items-center justify-end gap-2">
+        <nav className="hidden items-center gap-2 md:flex">
           <Link
             href="/"
-            className="rounded-full px-4 py-2 text-sm font-medium text-zinc-300 hover:bg-white/10 hover:text-white"
+            className="rounded-full px-4 py-2 text-sm text-zinc-200 hover:bg-white/8 hover:text-white"
           >
             Нүүр
           </Link>
 
-          {!loading && user?.role === "ADMIN" && (
-            <Link
-              href="/admin"
-              className="rounded-full bg-red-600/20 px-4 py-2 text-sm font-semibold text-red-300 hover:bg-red-600/30"
-            >
-              Админ
-            </Link>
-          )}
+          <Link
+            href="/?genre=%D0%A0%D0%BE%D0%BC%D0%B0%D0%BD%D1%81"
+            className="rounded-full px-4 py-2 text-sm text-zinc-200 hover:bg-white/8 hover:text-white"
+          >
+            Romance
+          </Link>
 
-          {!loading && (user?.role === "EDITOR" || user?.role === "ADMIN") && (
-            <Link
-              href="/editor"
-              className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-zinc-200 hover:bg-white/20"
-            >
-              Эдитор
-            </Link>
-          )}
+          <Link
+            href="/?genre=%D0%A4%D0%B0%D0%BD%D1%82%D0%B0%D0%B7%D0%B8"
+            className="rounded-full px-4 py-2 text-sm text-zinc-200 hover:bg-white/8 hover:text-white"
+          >
+            Fantasy
+          </Link>
 
+          <Link
+            href="/premium"
+            className="rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-950/40 hover:scale-[1.02]"
+          >
+            Premium
+          </Link>
+        </nav>
+
+        <div className="hidden items-center gap-3 md:flex">
           {!loading && user ? (
             <>
-              {user.isPremium ? (
+              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 font-bold text-white">
+                  {user.name?.slice(0, 1).toUpperCase()}
+                </div>
+
+                <div className="leading-tight">
+                  <p className="text-sm font-semibold text-white">{user.name}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-zinc-400">{user.role}</span>
+                    {user.isPremium && (
+                      <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-[10px] font-semibold text-violet-200">
+                        PREMIUM
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {(user.role === "EDITOR" || user.role === "ADMIN") && (
                 <Link
-                  href="/profile"
-                  className="hidden rounded-full border border-yellow-500/30 bg-yellow-500/10 px-4 py-2 text-sm font-bold text-yellow-300 hover:bg-yellow-500/20 md:block"
+                  href={user.role === "ADMIN" ? "/admin" : "/editor"}
+                  className="rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-2 text-sm font-medium text-violet-200 hover:bg-violet-500/20"
                 >
-                  👑 Premium
-                </Link>
-              ) : (
-                <Link
-                  href="/premium"
-                  className="hidden rounded-full border border-yellow-500/30 bg-yellow-500/10 px-4 py-2 text-sm font-bold text-yellow-300 hover:bg-yellow-500/20 md:block"
-                >
-                  👑 Premium авах
+                  {user.role === "ADMIN" ? "Админ" : "Эдитор"}
                 </Link>
               )}
 
-              <Link
-                href="/profile"
-                className="flex items-center gap-3 rounded-full border border-white/10 bg-white/5 py-1 pl-1 pr-4 hover:bg-white/10"
-              >
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-sm font-black">
-                  {user.name.slice(0, 1).toUpperCase()}
-                </div>
-
-                <div className="hidden text-left md:block">
-                  <p className="max-w-28 truncate text-sm font-bold">
-                    {user.name}
-                  </p>
-                  <p className="text-xs text-zinc-500">{user.role}</p>
-                </div>
-              </Link>
-
               <button
                 onClick={logout}
-                className="rounded-full bg-zinc-800 px-4 py-2 text-sm font-semibold text-zinc-200 hover:bg-red-600"
+                className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:bg-white/10"
               >
                 Гарах
               </button>
             </>
           ) : (
-            <>
-              <Link
-                href="/login"
-                className="rounded-full px-4 py-2 text-sm font-medium text-zinc-300 hover:bg-white/10 hover:text-white"
-              >
-                Нэвтрэх
-              </Link>
+            !loading && (
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/login"
+                  className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:bg-white/10"
+                >
+                  Нэвтрэх
+                </Link>
 
-              <Link
-                href="/register"
-                className="rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-red-600/30 hover:bg-red-700"
-              >
-                Бүртгүүлэх
-              </Link>
-            </>
+                <Link
+                  href="/register"
+                  className="rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-950/40 hover:scale-[1.02]"
+                >
+                  Бүртгүүлэх
+                </Link>
+              </div>
+            )
           )}
         </div>
+
+        <button
+          type="button"
+          onClick={() => setMobileOpen((prev) => !prev)}
+          className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white md:hidden"
+        >
+          <span className="sr-only">Open menu</span>
+          <div className="space-y-1.5">
+            <span className="block h-0.5 w-5 rounded-full bg-white" />
+            <span className="block h-0.5 w-5 rounded-full bg-white" />
+            <span className="block h-0.5 w-5 rounded-full bg-white" />
+          </div>
+        </button>
       </div>
-    </nav>
+
+      {mobileOpen && (
+        <div className="border-t border-white/10 bg-[#0d0818]/95 px-4 py-4 md:hidden">
+          <div className="space-y-2">
+            <Link
+              href="/"
+              onClick={() => setMobileOpen(false)}
+              className="block rounded-2xl border border-white/8 bg-white/5 px-4 py-3 text-sm font-medium text-white"
+            >
+              Нүүр
+            </Link>
+
+            <Link
+              href="/?genre=%D0%A0%D0%BE%D0%BC%D0%B0%D0%BD%D1%81"
+              onClick={() => setMobileOpen(false)}
+              className="block rounded-2xl border border-white/8 bg-white/5 px-4 py-3 text-sm font-medium text-white"
+            >
+              Romance
+            </Link>
+
+            <Link
+              href="/?genre=%D0%A4%D0%B0%D0%BD%D1%82%D0%B0%D0%B7%D0%B8"
+              onClick={() => setMobileOpen(false)}
+              className="block rounded-2xl border border-white/8 bg-white/5 px-4 py-3 text-sm font-medium text-white"
+            >
+              Fantasy
+            </Link>
+
+            <Link
+              href="/premium"
+              onClick={() => setMobileOpen(false)}
+              className="block rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-3 text-sm font-semibold text-white"
+            >
+              Premium
+            </Link>
+
+            {!loading && user ? (
+              <>
+                {(user.role === "EDITOR" || user.role === "ADMIN") && (
+                  <Link
+                    href={user.role === "ADMIN" ? "/admin" : "/editor"}
+                    onClick={() => setMobileOpen(false)}
+                    className="block rounded-2xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-sm font-medium text-violet-200"
+                  >
+                    {user.role === "ADMIN" ? "Админ самбар" : "Эдитор самбар"}
+                  </Link>
+                )}
+
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-sm font-semibold text-white">{user.name}</p>
+                  <p className="mt-1 text-xs text-zinc-400">{user.email}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <span className="rounded-full bg-white/8 px-2 py-1 text-[11px] text-zinc-300">
+                      {user.role}
+                    </span>
+                    {user.isPremium && (
+                      <span className="rounded-full bg-violet-500/20 px-2 py-1 text-[11px] text-violet-200">
+                        PREMIUM
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  onClick={logout}
+                  className="block w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white"
+                >
+                  Гарах
+                </button>
+              </>
+            ) : (
+              !loading && (
+                <div className="grid grid-cols-2 gap-2">
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileOpen(false)}
+                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-center text-sm font-medium text-white"
+                  >
+                    Нэвтрэх
+                  </Link>
+
+                  <Link
+                    href="/register"
+                    onClick={() => setMobileOpen(false)}
+                    className="rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-3 text-center text-sm font-semibold text-white"
+                  >
+                    Бүртгүүлэх
+                  </Link>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      )}
+    </header>
   );
 }
