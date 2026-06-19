@@ -1,144 +1,157 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import Navbar from "@/components/Navbar";
 
-export default function RegisterPage() {
-  const router = useRouter();
+type User = {
+  id: number;
+  name: string;
+  email: string;
+  role: "USER" | "EDITOR" | "ADMIN";
+  isPremium: boolean;
+  premiumUntil?: string | null;
+};
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+export default function ProfilePage() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const res = await fetch("/api/auth/me", {
+          cache: "no-store",
+          credentials: "include",
+        });
 
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name, email, password }),
-    });
+        const data = await res.json();
 
-    const data = await res.json();
+        if (!res.ok || !data.user) {
+          window.location.href = "/login";
+          return;
+        }
 
-    if (!res.ok) {
-      alert(data.message || "Register хийхэд алдаа гарлаа");
-      return;
+        setUser(data.user);
+      } catch {
+        window.location.href = "/login";
+      } finally {
+        setLoading(false);
+      }
     }
 
-    alert("Амжилттай бүртгэгдлээ. Одоо login хийнэ үү.");
-    router.push("/login");
+    loadUser();
+  }, []);
+
+  async function logout() {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+
+    window.location.href = "/login";
   }
 
-  return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#090511] px-4 py-8 text-white">
-      <div className="absolute right-[-120px] top-[-120px] h-80 w-80 rounded-full bg-violet-700/30 blur-3xl" />
-      <div className="absolute left-[-120px] bottom-[-120px] h-80 w-80 rounded-full bg-fuchsia-600/25 blur-3xl" />
-
-      <section className="relative grid w-full max-w-6xl overflow-hidden rounded-[32px] border border-white/10 bg-white/5 shadow-2xl shadow-black/40 backdrop-blur-xl lg:grid-cols-2">
-        <div className="p-6 sm:p-10">
-          <Link href="/" className="mb-8 flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 font-black">
-              M
-            </div>
-
-            <div>
-              <p className="text-lg font-black">MangaZet</p>
-              <p className="text-xs text-violet-200/70">Create account</p>
-            </div>
-          </Link>
-
-          <div className="mb-8">
-            <p className="text-sm font-semibold text-violet-300">
-              Шинэ хэрэглэгч
-            </p>
-            <h1 className="mt-2 text-3xl font-black sm:text-4xl">
-              Бүртгүүлэх
-            </h1>
-            <p className="mt-3 text-sm leading-6 text-zinc-400">
-              Account үүсгээд manga, manhwa, comic унших платформоо ашиглаарай.
-            </p>
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-[#08050f] text-white">
+        <Navbar />
+        <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+          <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-8">
+            Loading...
           </div>
+        </section>
+      </main>
+    );
+  }
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="mb-2 block text-sm text-zinc-300">Name</label>
-              <input
-                required
-                className="h-14 w-full rounded-2xl border border-white/10 bg-white/5 px-4 text-white outline-none placeholder:text-zinc-600 focus:border-violet-500"
-                placeholder="Таны нэр"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
+  if (!user) return null;
+
+  return (
+    <main className="min-h-screen bg-[#08050f] text-white">
+      <Navbar />
+
+      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+        <div className="rounded-[2rem] border border-white/10 bg-gradient-to-r from-purple-950 via-zinc-950 to-violet-950 p-8 shadow-2xl shadow-purple-950/30">
+          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-6">
+              <div className="flex h-28 w-28 items-center justify-center rounded-[2rem] bg-gradient-to-br from-violet-500 to-fuchsia-500 text-5xl font-black text-white">
+                {user.name.slice(0, 1).toUpperCase()}
+              </div>
+
+              <div>
+                <p className="text-sm font-black text-violet-300">
+                  User profile
+                </p>
+
+                <h1 className="mt-2 text-5xl font-black tracking-tight">
+                  {user.name}
+                </h1>
+
+                <p className="mt-2 text-zinc-400">{user.email}</p>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <span className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-1 text-sm font-bold">
+                    {user.role}
+                  </span>
+
+                  <span className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-1 text-sm font-bold text-zinc-300">
+                    {user.isPremium ? "Premium user" : "Free user"}
+                  </span>
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label className="mb-2 block text-sm text-zinc-300">Email</label>
-              <input
-                type="email"
-                required
-                className="h-14 w-full rounded-2xl border border-white/10 bg-white/5 px-4 text-white outline-none placeholder:text-zinc-600 focus:border-violet-500"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm text-zinc-300">
-                Password
-              </label>
-              <input
-                type="password"
-                required
-                className="h-14 w-full rounded-2xl border border-white/10 bg-white/5 px-4 text-white outline-none placeholder:text-zinc-600 focus:border-violet-500"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-
-            <button className="h-14 w-full rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 font-bold text-white shadow-lg shadow-violet-950/40 hover:scale-[1.01]">
-              Бүртгүүлэх
-            </button>
-          </form>
-
-          <p className="mt-6 text-center text-sm text-zinc-400">
-            Бүртгэлтэй юу?{" "}
-            <Link
-              href="/login"
-              className="font-semibold text-violet-300 hover:text-violet-200"
+            <button
+              onClick={logout}
+              className="rounded-2xl border border-white/10 bg-white/[0.06] px-6 py-3 font-black text-white transition hover:bg-red-500"
             >
-              Нэвтрэх
-            </Link>
-          </p>
+              Logout
+            </button>
+          </div>
         </div>
 
-        <div className="hidden min-h-[620px] flex-col justify-between bg-gradient-to-br from-fuchsia-950 via-[#120a24] to-violet-950 p-10 lg:flex">
-          <div>
-            <p className="mb-4 inline-flex rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm text-violet-100">
-              Mobile friendly UI
-            </p>
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-6">
+            <p className="text-sm text-zinc-400">Role</p>
+            <h2 className="mt-3 text-3xl font-black">{user.role}</h2>
+          </div>
 
-            <h2 className="max-w-lg text-5xl font-black leading-tight">
-              Өөрийн унших ертөнцөө эхлүүл.
+          <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-6">
+            <p className="text-sm text-zinc-400">Premium</p>
+            <h2 className="mt-3 text-3xl font-black">
+              {user.isPremium ? "ACTIVE" : "INACTIVE"}
             </h2>
-
-            <p className="mt-5 max-w-md leading-7 text-zinc-300">
-              Dark purple theme, premium badge, profile, reader, chapter list
-              бүгд нэг өнгөний системтэй.
-            </p>
           </div>
 
-          <div className="rounded-[28px] border border-white/10 bg-white/10 p-6">
-            <p className="text-sm text-zinc-300">Design concept</p>
-            <p className="mt-2 text-2xl font-black">
-              Glass card + Purple glow + Mobile UX
-            </p>
+          <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-6">
+            <p className="text-sm text-zinc-400">Дуусах хугацаа</p>
+            <h2 className="mt-3 text-3xl font-black">
+              {user.premiumUntil
+                ? new Date(user.premiumUntil).toLocaleDateString()
+                : "—"}
+            </h2>
           </div>
+        </div>
+
+        <div className="mt-6 rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-8">
+          <p className="text-sm font-black uppercase tracking-[0.3em] text-violet-300">
+            Premium access
+          </p>
+
+          <h2 className="mt-4 text-3xl font-black">Premium эрх авах</h2>
+
+          <p className="mt-4 max-w-2xl leading-7 text-zinc-300">
+            Premium эрхтэй хэрэглэгч бүх manga/chapter унших боломжтой.
+            Төлбөрөө шилжүүлээд admin шалгасны дараа эрх идэвхжинэ.
+          </p>
+
+          <Link
+            href="/premium"
+            className="mt-6 inline-flex rounded-2xl bg-violet-600 px-6 py-3 font-black text-white transition hover:bg-violet-500"
+          >
+            Premium авах
+          </Link>
         </div>
       </section>
     </main>
