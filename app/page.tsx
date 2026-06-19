@@ -63,8 +63,6 @@ export default async function HomePage({ searchParams }: Props) {
     },
   });
 
-  const latestComics = comics.slice(0, 12);
-
   const heroComics = await prisma.comic.findMany({
     orderBy: {
       createdAt: "desc",
@@ -85,37 +83,38 @@ export default async function HomePage({ searchParams }: Props) {
     },
   });
 
-  const topHero = heroComics[0] || null;
-  const sideHero = heroComics.slice(1, 5);
+  const latestComics = comics.slice(0, 12);
+  const mainHero = heroComics[0] || null;
+  const smallHeroes = heroComics.slice(1, 5);
 
   return (
     <main className="min-h-screen text-white">
       <Navbar />
 
       <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        {topHero ? (
+        {mainHero ? (
           <div className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
             <Link
-              href={`/comic/${topHero.slug}`}
-              className="group relative min-h-[430px] overflow-hidden rounded-[34px] border border-white/10 bg-white/5 shadow-2xl shadow-black/30"
+              href={`/comic/${mainHero.slug}`}
+              className="group relative min-h-[460px] overflow-hidden rounded-[34px] border border-white/10 bg-white/5 shadow-2xl shadow-black/40"
             >
               <img
-                src={topHero.coverImage}
-                alt={topHero.title}
+                src={mainHero.coverImage}
+                alt={mainHero.title}
                 className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
               />
 
-              <div className="absolute inset-0 bg-gradient-to-t from-[#06030d] via-[#06030d]/55 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#06030d]/75 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#05020b] via-[#05020b]/55 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#05020b]/80 via-transparent to-transparent" />
 
               <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
                 <div className="mb-4 flex flex-wrap gap-2">
-                  {[topHero.genre, topHero.genre2, topHero.genre3]
+                  {[mainHero.genre, mainHero.genre2, mainHero.genre3]
                     .filter(Boolean)
                     .map((genre) => (
                       <span
                         key={genre}
-                        className="rounded-full bg-violet-600/80 px-3 py-1 text-xs font-bold text-white backdrop-blur"
+                        className="rounded-full bg-violet-600/85 px-3 py-1 text-xs font-bold text-white backdrop-blur"
                       >
                         {genre}
                       </span>
@@ -123,11 +122,11 @@ export default async function HomePage({ searchParams }: Props) {
                 </div>
 
                 <h1 className="max-w-2xl text-4xl font-black leading-tight sm:text-6xl">
-                  {topHero.title}
+                  {mainHero.title}
                 </h1>
 
                 <p className="mt-3 max-w-xl line-clamp-2 text-sm leading-6 text-zinc-200 sm:text-base">
-                  {topHero.description}
+                  {mainHero.description}
                 </p>
 
                 <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -136,23 +135,23 @@ export default async function HomePage({ searchParams }: Props) {
                   </span>
 
                   <span className="rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur">
-                    {topHero.chapters.length} chapters
+                    {mainHero.chapters.length} chapters
                   </span>
 
                   <span className="rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur">
-                    {topHero.views} views
+                    {mainHero.views} views
                   </span>
                 </div>
               </div>
             </Link>
 
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-1">
-              {sideHero.length > 0 ? (
-                sideHero.map((comic) => (
+              {smallHeroes.length > 0 ? (
+                smallHeroes.map((comic) => (
                   <Link
                     key={comic.id}
                     href={`/comic/${comic.slug}`}
-                    className="group relative min-h-[205px] overflow-hidden rounded-[28px] border border-white/10 bg-white/5 shadow-xl shadow-black/20"
+                    className="group relative min-h-[222px] overflow-hidden rounded-[28px] border border-white/10 bg-white/5 shadow-xl shadow-black/30"
                   >
                     <img
                       src={comic.coverImage}
@@ -160,7 +159,7 @@ export default async function HomePage({ searchParams }: Props) {
                       className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
                     />
 
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#06030d] via-[#06030d]/45 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#05020b] via-[#05020b]/45 to-transparent" />
 
                     <div className="absolute bottom-0 left-0 right-0 p-4">
                       <div className="mb-2 flex flex-wrap gap-2">
@@ -184,14 +183,14 @@ export default async function HomePage({ searchParams }: Props) {
                   </Link>
                 ))
               ) : (
-                <div className="col-span-2 flex min-h-[205px] items-center justify-center rounded-[28px] border border-dashed border-white/10 bg-white/5 p-6 text-center text-sm text-zinc-400 lg:col-span-1">
+                <div className="col-span-2 flex min-h-[222px] items-center justify-center rounded-[28px] border border-dashed border-white/10 bg-white/5 p-6 text-center text-sm text-zinc-400 lg:col-span-1">
                   Илүү олон manga нэмэхэд энд cover-ууд гарна.
                 </div>
               )}
             </div>
           </div>
         ) : (
-          <div className="flex min-h-[430px] items-center justify-center rounded-[34px] border border-dashed border-white/10 bg-white/5 p-8 text-center shadow-2xl shadow-black/20">
+          <div className="flex min-h-[460px] items-center justify-center rounded-[34px] border border-dashed border-white/10 bg-white/5 p-8 text-center shadow-2xl shadow-black/30">
             <div>
               <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[28px] bg-gradient-to-br from-violet-500 to-fuchsia-500 text-3xl font-black">
                 M
@@ -270,7 +269,7 @@ export default async function HomePage({ searchParams }: Props) {
                     className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                   />
 
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#06030d] to-transparent p-4">
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#05020b] to-transparent p-4">
                     <div className="flex flex-wrap gap-2">
                       {[comic.genre, comic.genre2, comic.genre3]
                         .filter(Boolean)
@@ -278,7 +277,7 @@ export default async function HomePage({ searchParams }: Props) {
                         .map((genre) => (
                           <span
                             key={genre}
-                            className="rounded-full bg-violet-600/80 px-2.5 py-1 text-[10px] font-bold text-white"
+                            className="rounded-full bg-violet-600/85 px-2.5 py-1 text-[10px] font-bold text-white"
                           >
                             {genre}
                           </span>

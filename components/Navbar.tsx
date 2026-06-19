@@ -45,7 +45,7 @@ export default function Navbar() {
     loadUser();
   }, []);
 
-  function search(e: FormEvent) {
+  function handleSearch(e: FormEvent) {
     e.preventDefault();
 
     const value = q.trim();
@@ -69,31 +69,33 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#08030f]/85 backdrop-blur-2xl">
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#08030f]/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <Link href="/" className="flex shrink-0 items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-lg font-black text-white shadow-lg shadow-violet-900/40">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-lg font-black text-white">
             M
           </div>
 
           <div className="hidden sm:block">
-            <p className="text-lg font-black tracking-wide text-white">
-              MangaZet
-            </p>
+            <p className="text-lg font-black text-white">MangaZet</p>
             <p className="text-xs text-zinc-400">Manga reader</p>
           </div>
         </Link>
 
-        <form onSubmit={search} className="hidden flex-1 md:block">
+        {/* DESKTOP SEARCH */}
+        <form onSubmit={handleSearch} className="hidden flex-1 md:block">
           <div className="relative">
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Манга хайх..."
-              className="h-11 w-full rounded-2xl border border-white/10 bg-white/5 px-5 pr-24 text-sm text-white outline-none placeholder:text-zinc-500 focus:border-violet-500"
+              className="h-11 w-full rounded-2xl border border-white/10 bg-white/5 px-5 pr-20 text-sm text-white outline-none placeholder:text-zinc-500 focus:border-violet-500"
             />
 
-            <button className="absolute right-1.5 top-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-xs font-bold text-white">
+            <button
+              type="submit"
+              className="absolute right-1.5 top-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-xs font-bold text-white"
+            >
               Хайх
             </button>
           </div>
@@ -109,7 +111,7 @@ export default function Navbar() {
 
           <Link
             href="/premium"
-            className="rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-violet-950/40"
+            className="rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-bold text-white"
           >
             Premium
           </Link>
@@ -121,7 +123,7 @@ export default function Navbar() {
               {(user.role === "EDITOR" || user.role === "ADMIN") && (
                 <Link
                   href={user.role === "ADMIN" ? "/admin" : "/editor"}
-                  className="rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-2 text-sm font-semibold text-violet-200 hover:bg-violet-500/20"
+                  className="rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-2 text-sm font-semibold text-violet-200"
                 >
                   {user.role === "ADMIN" ? "Админ" : "Эдитор"}
                 </Link>
@@ -155,7 +157,7 @@ export default function Navbar() {
               <>
                 <Link
                   href="/login"
-                  className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+                  className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white"
                 >
                   Нэвтрэх
                 </Link>
@@ -185,7 +187,8 @@ export default function Navbar() {
 
       {mobileOpen && (
         <div className="border-t border-white/10 bg-[#08030f]/95 px-4 py-4 md:hidden">
-          <form onSubmit={search} className="mb-3">
+          {/* MOBILE SEARCH */}
+          <form onSubmit={handleSearch} className="mb-3">
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
@@ -193,7 +196,10 @@ export default function Navbar() {
               className="h-12 w-full rounded-2xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none placeholder:text-zinc-500 focus:border-violet-500"
             />
 
-            <button className="mt-2 h-12 w-full rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 text-sm font-bold text-white">
+            <button
+              type="submit"
+              className="mt-2 h-12 w-full rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 text-sm font-bold text-white"
+            >
               Хайх
             </button>
           </form>
