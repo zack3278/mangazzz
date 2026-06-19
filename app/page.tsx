@@ -85,7 +85,7 @@ export default async function HomePage({ searchParams }: Props) {
 
   const latestComics = comics.slice(0, 12);
   const mainHero = heroComics[0] || null;
-  const smallHeroes = heroComics.slice(1, 5);
+  const sideHeroes = heroComics.slice(1, 5);
 
   return (
     <main className="min-h-screen text-white">
@@ -93,21 +93,21 @@ export default async function HomePage({ searchParams }: Props) {
 
       <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {mainHero ? (
-          <div className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
+          <div className="grid gap-4 lg:grid-cols-[1.35fr_0.65fr]">
             <Link
               href={`/comic/${mainHero.slug}`}
-              className="group relative min-h-[460px] overflow-hidden rounded-[34px] border border-white/10 bg-white/5 shadow-2xl shadow-black/40"
+              className="group relative min-h-[520px] overflow-hidden rounded-[36px] border border-white/10 bg-white/5 shadow-2xl shadow-black/40"
             >
               <img
                 src={mainHero.coverImage}
                 alt={mainHero.title}
-                className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105"
               />
 
-              <div className="absolute inset-0 bg-gradient-to-t from-[#05020b] via-[#05020b]/55 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#05020b]/80 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#05020b] via-[#05020b]/60 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#05020b]/85 via-[#05020b]/25 to-transparent" />
 
-              <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
+              <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
                 <div className="mb-4 flex flex-wrap gap-2">
                   {[mainHero.genre, mainHero.genre2, mainHero.genre3]
                     .filter(Boolean)
@@ -121,15 +121,15 @@ export default async function HomePage({ searchParams }: Props) {
                     ))}
                 </div>
 
-                <h1 className="max-w-2xl text-4xl font-black leading-tight sm:text-6xl">
+                <h1 className="max-w-3xl text-4xl font-black leading-tight sm:text-6xl">
                   {mainHero.title}
                 </h1>
 
-                <p className="mt-3 max-w-xl line-clamp-2 text-sm leading-6 text-zinc-200 sm:text-base">
+                <p className="mt-4 max-w-2xl line-clamp-3 text-sm leading-7 text-zinc-200 sm:text-base">
                   {mainHero.description}
                 </p>
 
-                <div className="mt-6 flex flex-wrap items-center gap-3">
+                <div className="mt-7 flex flex-wrap items-center gap-3">
                   <span className="rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-violet-950/40">
                     Уншиж эхлэх
                   </span>
@@ -146,17 +146,17 @@ export default async function HomePage({ searchParams }: Props) {
             </Link>
 
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-1">
-              {smallHeroes.length > 0 ? (
-                smallHeroes.map((comic) => (
+              {sideHeroes.length > 0 ? (
+                sideHeroes.map((comic) => (
                   <Link
                     key={comic.id}
                     href={`/comic/${comic.slug}`}
-                    className="group relative min-h-[222px] overflow-hidden rounded-[28px] border border-white/10 bg-white/5 shadow-xl shadow-black/30"
+                    className="group relative min-h-[250px] overflow-hidden rounded-[30px] border border-white/10 bg-white/5 shadow-xl shadow-black/30"
                   >
                     <img
                       src={comic.coverImage}
                       alt={comic.title}
-                      className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105"
                     />
 
                     <div className="absolute inset-0 bg-gradient-to-t from-[#05020b] via-[#05020b]/45 to-transparent" />
@@ -183,14 +183,14 @@ export default async function HomePage({ searchParams }: Props) {
                   </Link>
                 ))
               ) : (
-                <div className="col-span-2 flex min-h-[222px] items-center justify-center rounded-[28px] border border-dashed border-white/10 bg-white/5 p-6 text-center text-sm text-zinc-400 lg:col-span-1">
+                <div className="col-span-2 flex min-h-[250px] items-center justify-center rounded-[30px] border border-dashed border-white/10 bg-white/5 p-6 text-center text-sm text-zinc-400 lg:col-span-1">
                   Илүү олон manga нэмэхэд энд cover-ууд гарна.
                 </div>
               )}
             </div>
           </div>
         ) : (
-          <div className="flex min-h-[460px] items-center justify-center rounded-[34px] border border-dashed border-white/10 bg-white/5 p-8 text-center shadow-2xl shadow-black/30">
+          <div className="flex min-h-[520px] items-center justify-center rounded-[36px] border border-dashed border-white/10 bg-white/5 p-8 text-center shadow-2xl shadow-black/30">
             <div>
               <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[28px] bg-gradient-to-br from-violet-500 to-fuchsia-500 text-3xl font-black">
                 M
@@ -217,7 +217,7 @@ export default async function HomePage({ searchParams }: Props) {
         )}
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-violet-300">
@@ -246,10 +246,8 @@ export default async function HomePage({ searchParams }: Props) {
         </div>
 
         {latestComics.length === 0 ? (
-          <div className="rounded-[28px] border border-dashed border-white/10 bg-white/5 p-10 text-center">
-            <h3 className="text-2xl font-black text-white">
-              Manga олдсонгүй
-            </h3>
+          <div className="rounded-[30px] border border-dashed border-white/10 bg-white/5 p-10 text-center">
+            <h3 className="text-2xl font-black text-white">Manga олдсонгүй</h3>
             <p className="mt-2 text-sm text-zinc-400">
               Manga нэмэгдсэний дараа энэ хэсэг card-аар дүүрнэ.
             </p>
@@ -260,13 +258,13 @@ export default async function HomePage({ searchParams }: Props) {
               <Link
                 key={comic.id}
                 href={`/comic/${comic.slug}`}
-                className="group overflow-hidden rounded-[28px] border border-white/10 bg-white/5 shadow-xl shadow-black/20 transition hover:-translate-y-1 hover:border-violet-500/40"
+                className="group overflow-hidden rounded-[30px] border border-white/10 bg-white/5 shadow-xl shadow-black/20 transition hover:-translate-y-1 hover:border-violet-500/40"
               >
                 <div className="relative aspect-[3/4] overflow-hidden">
                   <img
                     src={comic.coverImage}
                     alt={comic.title}
-                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
                   />
 
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#05020b] to-transparent p-4">
@@ -320,7 +318,7 @@ export default async function HomePage({ searchParams }: Props) {
         </div>
 
         {latestChapters.length === 0 ? (
-          <div className="rounded-[28px] border border-dashed border-white/10 bg-white/5 p-10 text-center">
+          <div className="rounded-[30px] border border-dashed border-white/10 bg-white/5 p-10 text-center">
             <h3 className="text-2xl font-black text-white">
               Chapter байхгүй байна
             </h3>
@@ -339,7 +337,7 @@ export default async function HomePage({ searchParams }: Props) {
                 <img
                   src={chapter.comic.coverImage}
                   alt={chapter.comic.title}
-                  className="h-24 w-18 rounded-2xl object-cover"
+                  className="h-24 w-[72px] rounded-2xl object-cover"
                 />
 
                 <div className="min-w-0 flex-1 py-1">
