@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 type User = {
   id: number;
@@ -13,259 +12,219 @@ type User = {
 };
 
 export default function Navbar() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [q, setQ] = useState(searchParams.get("q") || "");
-
-  async function loadUser() {
-    try {
-      const res = await fetch("/api/auth/me", {
-        cache: "no-store",
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.user) {
-        setUser(data.user);
-      } else {
-        setUser(null);
-      }
-    } catch {
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    loadUser();
-  }, []);
+    async function loadUser() {
+      try {
+        const res = await fetch("/api/auth/me", {
+          cache: "no-store",
+        });
 
-  function handleSearch(e: FormEvent) {
-    e.preventDefault();
+        const data = await res.json();
 
-    const value = q.trim();
-
-    if (!value) {
-      router.push("/");
-      setMobileOpen(false);
-      return;
+        if (res.ok && data.user) {
+          setUser(data.user);
+        } else {
+          setUser(null);
+        }
+      } catch {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
     }
 
-    router.push(`/?q=${encodeURIComponent(value)}`);
-    setMobileOpen(false);
-  }
+    loadUser();
+  }, []);
 
   async function logout() {
     await fetch("/api/auth/logout", {
       method: "POST",
     });
 
-    location.href = "/login";
+    window.location.href = "/login";
   }
 
+  const menuItems = (
+    <>
+      <Link href="/" className="navbar-link">
+        Home
+      </Link>
+
+      <Link href="/series" className="navbar-link">
+        Series
+      </Link>
+
+      <Link href="/premium" className="navbar-link">
+        Premium
+      </Link>
+
+      {!loading && user?.role === "ADMIN" && (
+        <Link href="/admin" className="navbar-link">
+          Admin
+        </Link>
+      )}
+
+      {!loading && (user?.role === "EDITOR" || user?.role === "ADMIN") && (
+        <Link href="/editor" className="navbar-link">
+          Editor
+        </Link>
+      )}
+    </>
+  );
+
+  const mobileMenuItems = (
+    <>
+      <Link href="/" className="mobile-navbar-link" onClick={() => setOpen(false)}>
+        Home
+      </Link>
+
+      <Link
+        href="/series"
+        className="mobile-navbar-link"
+        onClick={() => setOpen(false)}
+      >
+        Series
+      </Link>
+
+      <Link
+        href="/premium"
+        className="mobile-navbar-link"
+        onClick={() => setOpen(false)}
+      >
+        Premium
+      </Link>
+
+      {!loading && user?.role === "ADMIN" && (
+        <Link
+          href="/admin"
+          className="mobile-navbar-link"
+          onClick={() => setOpen(false)}
+        >
+          Admin
+        </Link>
+      )}
+
+      {!loading && (user?.role === "EDITOR" || user?.role === "ADMIN") && (
+        <Link
+          href="/editor"
+          className="mobile-navbar-link"
+          onClick={() => setOpen(false)}
+        >
+          Editor
+        </Link>
+      )}
+    </>
+  );
+
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#08030f]/90 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
-        <Link href="/" className="flex shrink-0 items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-lg font-black text-white">
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#070707]/95 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
+        <Link href="/" className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-lg font-black text-black">
             M
           </div>
 
-          <div className="hidden sm:block">
-            <p className="text-lg font-black text-white">MangaZet</p>
-            <p className="text-xs text-zinc-400">Manga reader</p>
+          <div className="leading-tight">
+            <h1 className="text-xl font-black tracking-tight text-white">
+              MangaZet
+            </h1>
+            <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-zinc-500">
+              Scans
+            </p>
           </div>
         </Link>
 
-        {/* DESKTOP SEARCH */}
-        <form onSubmit={handleSearch} className="hidden flex-1 md:block">
-          <div className="relative">
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Манга хайх..."
-              className="h-11 w-full rounded-2xl border border-white/10 bg-white/5 px-5 pr-20 text-sm text-white outline-none placeholder:text-zinc-500 focus:border-violet-500"
-            />
+        <nav className="hidden items-center gap-8 md:flex">{menuItems}</nav>
 
-            <button
-              type="submit"
-              className="absolute right-1.5 top-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-xs font-bold text-white"
-            >
-              Хайх
-            </button>
-          </div>
-        </form>
-
-        <nav className="hidden items-center gap-2 md:flex">
-          <Link
-            href="/"
-            className="rounded-full px-4 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
-          >
-            Нүүр
-          </Link>
-
-          <Link
-            href="/premium"
-            className="rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-bold text-white"
-          >
-            Premium
-          </Link>
-        </nav>
-
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-3 md:flex">
           {!loading && user ? (
             <>
-              {(user.role === "EDITOR" || user.role === "ADMIN") && (
-                <Link
-                  href={user.role === "ADMIN" ? "/admin" : "/editor"}
-                  className="rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-2 text-sm font-semibold text-violet-200"
-                >
-                  {user.role === "ADMIN" ? "Админ" : "Эдитор"}
-                </Link>
-              )}
-
               <Link
                 href="/profile"
-                className="flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-3 py-2 hover:bg-white/10"
+                className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-bold text-white transition hover:bg-white/[0.08]"
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-sm font-black text-white">
-                  {user.name.slice(0, 1).toUpperCase()}
-                </div>
-
-                <div className="leading-tight">
-                  <p className="max-w-24 truncate text-sm font-bold text-white">
-                    {user.name}
-                  </p>
-                  <p className="text-[11px] text-zinc-400">{user.role}</p>
-                </div>
+                {user.name}
               </Link>
 
               <button
                 onClick={logout}
-                className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+                className="rounded-full bg-white px-5 py-2 text-sm font-black text-black transition hover:bg-zinc-200"
               >
                 Гарах
               </button>
             </>
           ) : (
-            !loading && (
+            <>
+              <Link
+                href="/login"
+                className="text-sm font-bold text-zinc-300 transition hover:text-white"
+              >
+                Нэвтрэх
+              </Link>
+
+              <Link
+                href="/register"
+                className="rounded-full bg-white px-5 py-2 text-sm font-black text-black transition hover:bg-zinc-200"
+              >
+                Бүртгүүлэх
+              </Link>
+            </>
+          )}
+        </div>
+
+        <button
+          onClick={() => setOpen((value) => !value)}
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-2xl text-white md:hidden"
+          aria-label="Open menu"
+        >
+          {open ? "×" : "☰"}
+        </button>
+      </div>
+
+      {open && (
+        <div className="border-t border-white/10 bg-[#070707] px-4 py-4 md:hidden">
+          <nav className="grid gap-2">{mobileMenuItems}</nav>
+
+          <div className="mt-4 grid gap-2">
+            {!loading && user ? (
+              <>
+                <Link
+                  href="/profile"
+                  onClick={() => setOpen(false)}
+                  className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-bold text-white"
+                >
+                  {user.name}
+                </Link>
+
+                <button
+                  onClick={logout}
+                  className="rounded-xl bg-white px-4 py-3 text-left text-sm font-black text-black"
+                >
+                  Гарах
+                </button>
+              </>
+            ) : (
               <>
                 <Link
                   href="/login"
-                  className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white"
+                  onClick={() => setOpen(false)}
+                  className="rounded-xl border border-white/10 px-4 py-3 text-sm font-bold text-white"
                 >
                   Нэвтрэх
                 </Link>
 
                 <Link
                   href="/register"
-                  className="rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-bold text-white"
+                  onClick={() => setOpen(false)}
+                  className="rounded-xl bg-white px-4 py-3 text-sm font-black text-black"
                 >
                   Бүртгүүлэх
                 </Link>
               </>
-            )
-          )}
-        </div>
-
-        <button
-          onClick={() => setMobileOpen((prev) => !prev)}
-          className="ml-auto flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white md:hidden"
-        >
-          <div className="space-y-1.5">
-            <span className="block h-0.5 w-5 rounded-full bg-white" />
-            <span className="block h-0.5 w-5 rounded-full bg-white" />
-            <span className="block h-0.5 w-5 rounded-full bg-white" />
-          </div>
-        </button>
-      </div>
-
-      {mobileOpen && (
-        <div className="border-t border-white/10 bg-[#08030f]/95 px-4 py-4 md:hidden">
-          {/* MOBILE SEARCH */}
-          <form onSubmit={handleSearch} className="mb-3">
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Манга хайх..."
-              className="h-12 w-full rounded-2xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none placeholder:text-zinc-500 focus:border-violet-500"
-            />
-
-            <button
-              type="submit"
-              className="mt-2 h-12 w-full rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 text-sm font-bold text-white"
-            >
-              Хайх
-            </button>
-          </form>
-
-          <div className="space-y-2">
-            <Link
-              href="/"
-              onClick={() => setMobileOpen(false)}
-              className="block rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white"
-            >
-              Нүүр
-            </Link>
-
-            <Link
-              href="/premium"
-              onClick={() => setMobileOpen(false)}
-              className="block rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-3 text-sm font-bold text-white"
-            >
-              Premium
-            </Link>
-
-            {!loading && user ? (
-              <>
-                <Link
-                  href="/profile"
-                  onClick={() => setMobileOpen(false)}
-                  className="block rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white"
-                >
-                  Profile
-                </Link>
-
-                {(user.role === "EDITOR" || user.role === "ADMIN") && (
-                  <Link
-                    href={user.role === "ADMIN" ? "/admin" : "/editor"}
-                    onClick={() => setMobileOpen(false)}
-                    className="block rounded-2xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-sm font-semibold text-violet-200"
-                  >
-                    {user.role === "ADMIN" ? "Админ самбар" : "Эдитор самбар"}
-                  </Link>
-                )}
-
-                <button
-                  onClick={logout}
-                  className="block w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white"
-                >
-                  Гарах
-                </button>
-              </>
-            ) : (
-              !loading && (
-                <div className="grid grid-cols-2 gap-2">
-                  <Link
-                    href="/login"
-                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-center text-sm font-semibold text-white"
-                  >
-                    Нэвтрэх
-                  </Link>
-
-                  <Link
-                    href="/register"
-                    className="rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-3 text-center text-sm font-bold text-white"
-                  >
-                    Бүртгүүлэх
-                  </Link>
-                </div>
-              )
             )}
           </div>
         </div>

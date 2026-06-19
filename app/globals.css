@@ -1,13 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #090511;
-  --foreground: #f5f3ff;
-  --muted: #b9a8d6;
-  --card: rgba(22, 16, 35, 0.78);
-  --border: rgba(255, 255, 255, 0.08);
-  --accent: #8b5cf6;
-  --accent-2: #c084fc;
+  --background: #050505;
+  --foreground: #ffffff;
 }
 
 * {
@@ -20,51 +15,75 @@ html {
 
 body {
   margin: 0;
-  min-height: 100vh;
+  background: var(--background);
   color: var(--foreground);
-  background:
-    radial-gradient(circle at top left, rgba(139, 92, 246, 0.22), transparent 26%),
-    radial-gradient(circle at top right, rgba(168, 85, 247, 0.16), transparent 22%),
-    radial-gradient(circle at bottom left, rgba(76, 29, 149, 0.18), transparent 24%),
-    linear-gradient(180deg, #090511 0%, #0d0818 42%, #07040f 100%);
   font-family: Arial, Helvetica, sans-serif;
 }
 
-a,
-button {
-  transition: all 0.2s ease;
+a {
+  text-decoration: none;
 }
 
-img {
-  display: block;
-  max-width: 100%;
-}
-
+button,
 input,
 select,
-textarea,
-button {
-  font: inherit;
+textarea {
+  font-family: inherit;
 }
 
-::selection {
-  background: rgba(139, 92, 246, 0.35);
+.navbar-link {
+  color: rgb(212 212 216);
+  font-size: 14px;
+  font-weight: 800;
+  transition: 0.2s ease;
+}
+
+.navbar-link:hover {
   color: white;
 }
 
-::-webkit-scrollbar {
-  width: 10px;
+.mobile-navbar-link {
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: rgb(244 244 245);
+  font-size: 14px;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: 0.2s ease;
 }
 
-::-webkit-scrollbar-track {
-  background: #0a0813;
+.mobile-navbar-link:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #6d28d9, #9333ea);
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.filter-pill {
   border-radius: 999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #7c3aed, #a855f7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 6px 10px;
+  color: rgb(244 114 182);
+  font-size: 12px;
+  font-weight: 800;
 }
