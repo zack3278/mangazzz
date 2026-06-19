@@ -6,485 +6,366 @@ import Navbar from "@/components/Navbar";
 type Props = {
   searchParams: Promise<{
     q?: string;
-    genre?: string;
   }>;
 };
-
-function makeQueryLink(q: string, genre: string) {
-  const params = new URLSearchParams();
-
-  if (q) params.set("q", q);
-  if (genre) params.set("genre", genre);
-
-  return `/?${params.toString()}`;
-}
 
 export default async function HomePage({ searchParams }: Props) {
   const params = await searchParams;
   const q = params.q?.trim() || "";
-  const selectedGenre = params.genre?.trim() || "";
-
-  const genreSource = await prisma.comic.findMany({
-    select: {
-      genre: true,
-      genre2: true,
-      genre3: true,
-    },
-  });
-
-  const genres = Array.from(
-    new Set(
-      genreSource
-        .flatMap((comic) => [comic.genre, comic.genre2, comic.genre3])
-        .filter((genre): genre is string => Boolean(genre && genre.trim()))
-    )
-  ).sort();
 
   const comics = await prisma.comic.findMany({
-    where: {
-      AND: [
-        q
-          ? {
-              OR: [
-                { title: { contains: q, mode: "insensitive" } },
-                { author: { contains: q, mode: "insensitive" } },
-                { genre: { contains: q, mode: "insensitive" } },
-                { genre2: { contains: q, mode: "insensitive" } },
-                { genre3: { contains: q, mode: "insensitive" } },
-              ],
-            }
-          : {},
-        selectedGenre
-          ? {
-              OR: [
-                { genre: selectedGenre },
-                { genre2: selectedGenre },
-                { genre3: selectedGenre },
-              ],
-            }
-          : {},
-      ],
-    },
+    where: q
+      ? {
+          OR: [
+            {
+              title: {
+                contains: q,
+                mode: "insensitive",
+              },
+            },
+            {
+              author: {
+                contains: q,
+                mode: "insensitive",
+              },
+            },
+            {
+              genre: {
+                contains: q,
+                mode: "insensitive",
+              },
+            },
+            {
+              genre2: {
+                contains: q,
+                mode: "insensitive",
+              },
+            },
+            {
+              genre3: {
+                contains: q,
+                mode: "insensitive",
+              },
+            },
+          ],
+        }
+      : {},
     orderBy: {
       createdAt: "desc",
     },
     include: {
-      chapters: true,
+      chapters: {
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 1,
+      },
     },
-    take: 12,
   });
 
-  const popularComics = await prisma.comic.findMany({
+  const latestComics = comics.slice(0, 12);
+
+  const heroComics = await prisma.comic.findMany({
     orderBy: {
-      views: "desc",
+      createdAt: "desc",
     },
+    take: 5,
     include: {
       chapters: true,
     },
-    take: 6,
   });
 
-  const totalComics = await prisma.comic.count();
-  const totalViews = popularComics.reduce((sum, comic) => sum + comic.views, 0);
-  const totalChapters = comics.reduce(
-    (sum, comic) => sum + comic.chapters.length,
-    0
-  );
-  const featuredComic = popularComics[0] || comics[0] || null;
+  const latestChapters = await prisma.chapter.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+    take: 12,
+    include: {
+      comic: true,
+    },
+  });
+
+  const topHero = heroComics[0] || null;
+  const sideHero = heroComics.slice(1, 5);
 
   return (
     <main className="min-h-screen text-white">
       <Navbar />
 
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute left-[-120px] top-10 h-72 w-72 rounded-full bg-violet-700/20 blur-3xl" />
-          <div className="absolute right-[-120px] top-24 h-72 w-72 rounded-full bg-fuchsia-700/15 blur-3xl" />
-        </div>
+      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        {topHero ? (
+          <div className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
+            <Link
+              href={`/comic/${topHero.slug}`}
+              className="group relative min-h-[430px] overflow-hidden rounded-[34px] border border-white/10 bg-white/5 shadow-2xl shadow-black/30"
+            >
+              <img
+                src={topHero.coverImage}
+                alt={topHero.title}
+                className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+              />
 
-        <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/20 backdrop-blur-xl sm:p-8">
-              <div className="inline-flex rounded-full border border-violet-400/15 bg-violet-500/10 px-4 py-2 text-xs font-semibold text-violet-200">
-                Clean Manga Platform
-              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-[#06030d] via-[#06030d]/55 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#06030d]/75 via-transparent to-transparent" />
 
-              <h1 className="mt-5 max-w-3xl text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">
-                Манга, манхва, комикоо
-                <span className="bg-gradient-to-r from-violet-300 to-fuchsia-300 bg-clip-text text-transparent">
-                  {" "}
-                  цэвэрхэн
-                </span>
-                , гоё интерфейстэй унш
-              </h1>
-
-              <p className="mt-5 max-w-2xl text-sm leading-7 text-zinc-300 sm:text-base">
-                Илүү minimal, илүү premium мэдрэмжтэй, гар утсанд эвтэйхэн
-                интерфейс. Хайлт, genre filter, ranking, latest comic бүгд
-                цэгцтэй.
-              </p>
-
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link
-                  href="#latest"
-                  className="rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-950/30"
-                >
-                  Уншиж эхлэх
-                </Link>
-
-                <Link
-                  href="#popular"
-                  className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10"
-                >
-                  Popular үзэх
-                </Link>
-              </div>
-
-              <form
-                action="/"
-                method="GET"
-                className="mt-8 rounded-[28px] border border-white/10 bg-[#120c1d]/90 p-4"
-              >
-                {selectedGenre && (
-                  <input type="hidden" name="genre" value={selectedGenre} />
-                )}
-
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <input
-                    type="text"
-                    name="q"
-                    defaultValue={q}
-                    placeholder="Манга нэр, author, genre хайх..."
-                    className="h-14 flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 text-white outline-none placeholder:text-zinc-500 focus:border-violet-500"
-                  />
-
-                  <button className="h-14 rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-6 text-sm font-semibold text-white shadow-lg shadow-violet-950/30">
-                    Хайх
-                  </button>
+              <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
+                <div className="mb-4 flex flex-wrap gap-2">
+                  {[topHero.genre, topHero.genre2, topHero.genre3]
+                    .filter(Boolean)
+                    .map((genre) => (
+                      <span
+                        key={genre}
+                        className="rounded-full bg-violet-600/80 px-3 py-1 text-xs font-bold text-white backdrop-blur"
+                      >
+                        {genre}
+                      </span>
+                    ))}
                 </div>
 
-                <div className="mt-4 flex flex-wrap gap-2">
+                <h1 className="max-w-2xl text-4xl font-black leading-tight sm:text-6xl">
+                  {topHero.title}
+                </h1>
+
+                <p className="mt-3 max-w-xl line-clamp-2 text-sm leading-6 text-zinc-200 sm:text-base">
+                  {topHero.description}
+                </p>
+
+                <div className="mt-6 flex flex-wrap items-center gap-3">
+                  <span className="rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-violet-950/40">
+                    Уншиж эхлэх
+                  </span>
+
+                  <span className="rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur">
+                    {topHero.chapters.length} chapters
+                  </span>
+
+                  <span className="rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur">
+                    {topHero.views} views
+                  </span>
+                </div>
+              </div>
+            </Link>
+
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-1">
+              {sideHero.length > 0 ? (
+                sideHero.map((comic) => (
                   <Link
-                    href="/"
-                    className={`rounded-full px-3 py-2 text-xs font-medium ${
-                      !selectedGenre
-                        ? "bg-violet-600 text-white"
-                        : "border border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
-                    }`}
-                  >
-                    Бүгд
-                  </Link>
-
-                  {genres.slice(0, 10).map((genre) => (
-                    <Link
-                      key={genre}
-                      href={makeQueryLink(q, genre)}
-                      className={`rounded-full px-3 py-2 text-xs font-medium ${
-                        selectedGenre === genre
-                          ? "bg-violet-600 text-white"
-                          : "border border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
-                      }`}
-                    >
-                      {genre}
-                    </Link>
-                  ))}
-                </div>
-              </form>
-            </div>
-
-            <div className="grid gap-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
-                  <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">
-                    Comics
-                  </p>
-                  <p className="mt-3 text-3xl font-black">{totalComics}</p>
-                </div>
-
-                <div className="rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
-                  <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">
-                    Genres
-                  </p>
-                  <p className="mt-3 text-3xl font-black">{genres.length}</p>
-                </div>
-
-                <div className="rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
-                  <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">
-                    Chapters
-                  </p>
-                  <p className="mt-3 text-3xl font-black">{totalChapters}</p>
-                </div>
-
-                <div className="rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
-                  <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">
-                    Views
-                  </p>
-                  <p className="mt-3 text-3xl font-black">{totalViews}</p>
-                </div>
-              </div>
-
-              <div className="rounded-[32px] border border-white/10 bg-white/5 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl">
-                <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.25em] text-violet-200/80">
-                      Featured
-                    </p>
-                    <h2 className="mt-2 text-2xl font-black">Онцлох comic</h2>
-                  </div>
-                </div>
-
-                {featuredComic ? (
-                  <Link
-                    href={`/comic/${featuredComic.slug}`}
-                    className="block overflow-hidden rounded-[24px] border border-white/10 bg-[#120c1d]"
+                    key={comic.id}
+                    href={`/comic/${comic.slug}`}
+                    className="group relative min-h-[205px] overflow-hidden rounded-[28px] border border-white/10 bg-white/5 shadow-xl shadow-black/20"
                   >
                     <img
-                      src={featuredComic.coverImage}
-                      alt={featuredComic.title}
-                      className="h-64 w-full object-cover"
+                      src={comic.coverImage}
+                      alt={comic.title}
+                      className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
                     />
 
-                    <div className="p-5">
-                      <div className="mb-3 flex flex-wrap gap-2">
-                        {[featuredComic.genre, featuredComic.genre2, featuredComic.genre3]
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#06030d] via-[#06030d]/45 to-transparent" />
+
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <div className="mb-2 flex flex-wrap gap-2">
+                        {[comic.genre, comic.genre2, comic.genre3]
                           .filter(Boolean)
+                          .slice(0, 2)
                           .map((genre) => (
                             <span
                               key={genre}
-                              className="rounded-full bg-violet-500/10 px-3 py-1 text-[11px] text-violet-200"
+                              className="rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur"
                             >
                               {genre}
                             </span>
                           ))}
                       </div>
 
-                      <h3 className="text-xl font-bold text-white">
-                        {featuredComic.title}
-                      </h3>
-
-                      <p className="mt-2 text-sm text-zinc-400">
-                        {featuredComic.author || "Unknown author"}
-                      </p>
-
-                      <div className="mt-4 flex flex-wrap gap-2 text-xs text-zinc-300">
-                        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
-                          {featuredComic.views} views
-                        </span>
-                        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
-                          {featuredComic.chapters.length} chapters
-                        </span>
-                      </div>
+                      <h2 className="line-clamp-2 text-lg font-black text-white">
+                        {comic.title}
+                      </h2>
                     </div>
                   </Link>
-                ) : (
-                  <div className="rounded-[24px] border border-dashed border-white/10 bg-[#120c1d] p-8 text-center">
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-500/10 text-2xl">
-                      ✦
-                    </div>
-                    <h3 className="mt-4 text-lg font-bold text-white">
-                      Одоогоор comic байхгүй
-                    </h3>
-                    <p className="mt-2 text-sm leading-6 text-zinc-400">
-                      Admin panel-ээс comic нэмсний дараа featured хэсэг энд
-                      гоё харагдана.
-                    </p>
-                  </div>
-                )}
-              </div>
+                ))
+              ) : (
+                <div className="col-span-2 flex min-h-[205px] items-center justify-center rounded-[28px] border border-dashed border-white/10 bg-white/5 p-6 text-center text-sm text-zinc-400 lg:col-span-1">
+                  Илүү олон manga нэмэхэд энд cover-ууд гарна.
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      </section>
-
-      <section
-        id="popular"
-        className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8"
-      >
-        <div className="mb-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-violet-200/80">
-            Ranking
-          </p>
-          <h2 className="mt-2 text-3xl font-black">Popular manga</h2>
-          <p className="mt-2 text-sm text-zinc-400">
-            Хамгийн их үзэлттэй comic-ууд
-          </p>
-        </div>
-
-        {popularComics.length === 0 ? (
-          <div className="rounded-[28px] border border-dashed border-white/10 bg-white/5 p-10 text-center backdrop-blur-xl">
-            <h3 className="text-xl font-bold text-white">
-              Popular comic байхгүй байна
-            </h3>
-            <p className="mt-2 text-sm text-zinc-400">
-              Comic нэмэгдэж эхэлмэгц ranking хэсэг автоматаар дүүрнэ.
-            </p>
-          </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {popularComics.map((comic, index) => {
-              const comicGenres = [comic.genre, comic.genre2, comic.genre3].filter(
-                Boolean
-              );
+          <div className="flex min-h-[430px] items-center justify-center rounded-[34px] border border-dashed border-white/10 bg-white/5 p-8 text-center shadow-2xl shadow-black/20">
+            <div>
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[28px] bg-gradient-to-br from-violet-500 to-fuchsia-500 text-3xl font-black">
+                M
+              </div>
 
-              return (
-                <Link
-                  key={comic.id}
-                  href={`/comic/${comic.slug}`}
-                  className="group overflow-hidden rounded-[28px] border border-white/10 bg-white/5 shadow-xl shadow-black/20 backdrop-blur-xl transition hover:-translate-y-1 hover:border-violet-500/30"
-                >
-                  <div className="relative">
-                    <img
-                      src={comic.coverImage}
-                      alt={comic.title}
-                      className="h-80 w-full object-cover transition duration-300 group-hover:scale-105"
-                    />
+              <h1 className="mt-6 text-4xl font-black sm:text-6xl">
+                Manga cover энд гарна
+              </h1>
 
-                    <div className="absolute left-4 top-4 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-1 text-xs font-bold text-white">
-                      #{index + 1}
-                    </div>
-                  </div>
+              <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-zinc-400 sm:text-base">
+                Одоогоор database дээр manga байхгүй байна. Admin panel-ээс
+                manga нэмэхэд энэ хэсэг том cover banner болж автоматаар
+                харагдана.
+              </p>
 
-                  <div className="p-5">
-                    <div className="mb-3 flex flex-wrap gap-2">
-                      {comicGenres.slice(0, 3).map((genre) => (
-                        <span
-                          key={genre}
-                          className="rounded-full bg-violet-500/10 px-3 py-1 text-[11px] text-violet-200"
-                        >
-                          {genre}
-                        </span>
-                      ))}
-                    </div>
-
-                    <h3 className="text-xl font-bold text-white">
-                      {comic.title}
-                    </h3>
-
-                    <p className="mt-2 text-sm text-zinc-400">
-                      {comic.author || "Unknown author"}
-                    </p>
-
-                    <div className="mt-4 flex flex-wrap gap-2 text-xs text-zinc-300">
-                      <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
-                        {comic.views} views
-                      </span>
-                      <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
-                        {comic.chapters.length} ch
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
+              <Link
+                href="/admin"
+                className="mt-6 inline-flex rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-3 text-sm font-bold text-white"
+              >
+                Admin panel рүү очих
+              </Link>
+            </div>
           </div>
         )}
       </section>
 
-      <section
-        id="latest"
-        className="mx-auto max-w-7xl px-4 py-6 pb-14 sm:px-6 lg:px-8"
-      >
+      <section className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-violet-200/80">
-              Latest
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-violet-300">
+              Manga
             </p>
+
             <h2 className="mt-2 text-3xl font-black">
-              {q || selectedGenre ? "Хайлтын үр дүн" : "Шинэ comic"}
+              {q ? "Хайлтын үр дүн" : "Манганууд"}
             </h2>
+
             <p className="mt-2 text-sm text-zinc-400">
-              {q || selectedGenre
-                ? "Хайлт болон genre filter-ийн үр дүн"
+              {q
+                ? `"${q}" хайлтын илэрц`
                 : "Сүүлд нэмэгдсэн manga, manhwa, comic"}
             </p>
           </div>
 
-          {(q || selectedGenre) && (
-            <div className="flex flex-wrap gap-2">
-              {q && (
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-zinc-300">
-                  Search: {q}
-                </span>
-              )}
-              {selectedGenre && (
-                <span className="rounded-full border border-violet-500/25 bg-violet-500/10 px-3 py-2 text-xs text-violet-200">
-                  Genre: {selectedGenre}
-                </span>
-              )}
-              <Link
-                href="/"
-                className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-white hover:bg-white/10"
-              >
-                Цэвэрлэх
-              </Link>
-            </div>
+          {q && (
+            <Link
+              href="/"
+              className="w-fit rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+            >
+              Хайлтыг цэвэрлэх
+            </Link>
           )}
         </div>
 
-        {comics.length === 0 ? (
-          <div className="rounded-[28px] border border-dashed border-white/10 bg-white/5 p-10 text-center backdrop-blur-xl">
-            <h3 className="text-xl font-bold text-white">
-              Comic олдсонгүй
+        {latestComics.length === 0 ? (
+          <div className="rounded-[28px] border border-dashed border-white/10 bg-white/5 p-10 text-center">
+            <h3 className="text-2xl font-black text-white">
+              Manga олдсонгүй
             </h3>
             <p className="mt-2 text-sm text-zinc-400">
-              Хайлтын үгээ өөрчлөөд дахин оролдоно уу.
+              Manga нэмэгдсэний дараа энэ хэсэг card-аар дүүрнэ.
             </p>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {comics.map((comic) => {
-              const comicGenres = [comic.genre, comic.genre2, comic.genre3].filter(
-                Boolean
-              );
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {latestComics.map((comic) => (
+              <Link
+                key={comic.id}
+                href={`/comic/${comic.slug}`}
+                className="group overflow-hidden rounded-[28px] border border-white/10 bg-white/5 shadow-xl shadow-black/20 transition hover:-translate-y-1 hover:border-violet-500/40"
+              >
+                <div className="relative aspect-[3/4] overflow-hidden">
+                  <img
+                    src={comic.coverImage}
+                    alt={comic.title}
+                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                  />
 
-              return (
-                <Link
-                  key={comic.id}
-                  href={`/comic/${comic.slug}`}
-                  className="group overflow-hidden rounded-[28px] border border-white/10 bg-white/5 shadow-xl shadow-black/20 backdrop-blur-xl transition hover:-translate-y-1 hover:border-violet-500/30"
-                >
-                  <div className="relative">
-                    <img
-                      src={comic.coverImage}
-                      alt={comic.title}
-                      className="h-72 w-full object-cover transition duration-300 group-hover:scale-105"
-                    />
-
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0b0814] to-transparent p-4">
-                      <div className="flex flex-wrap gap-2">
-                        {comicGenres.slice(0, 3).map((genre) => (
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#06030d] to-transparent p-4">
+                    <div className="flex flex-wrap gap-2">
+                      {[comic.genre, comic.genre2, comic.genre3]
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map((genre) => (
                           <span
                             key={genre}
-                            className="rounded-full bg-white/10 px-3 py-1 text-[11px] text-white"
+                            className="rounded-full bg-violet-600/80 px-2.5 py-1 text-[10px] font-bold text-white"
                           >
                             {genre}
                           </span>
                         ))}
-                      </div>
                     </div>
                   </div>
+                </div>
 
-                  <div className="p-5">
-                    <h3 className="text-lg font-bold text-white">
-                      {comic.title}
-                    </h3>
+                <div className="p-4">
+                  <h3 className="line-clamp-1 text-lg font-black text-white">
+                    {comic.title}
+                  </h3>
 
-                    <p className="mt-2 text-sm text-zinc-400">
-                      {comic.author || "Unknown author"}
-                    </p>
+                  <p className="mt-1 line-clamp-1 text-sm text-zinc-400">
+                    {comic.author || "Unknown author"}
+                  </p>
 
-                    <div className="mt-4 flex flex-wrap gap-2 text-xs text-zinc-300">
-                      <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
-                        {comic.views} views
-                      </span>
-                      <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
-                        {comic.chapters.length} ch
-                      </span>
-                    </div>
+                  <div className="mt-4 flex items-center justify-between text-xs text-zinc-300">
+                    <span>{comic.views} views</span>
+                    <span>{comic.chapters.length} ch</span>
                   </div>
-                </Link>
-              );
-            })}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 py-8 pb-16 sm:px-6 lg:px-8">
+        <div className="mb-5">
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-violet-300">
+            Latest update
+          </p>
+
+          <h2 className="mt-2 text-3xl font-black">Сүүлд орсон chapter</h2>
+
+          <p className="mt-2 text-sm text-zinc-400">
+            Хамгийн сүүлд нэмэгдсэн бүлгүүд
+          </p>
+        </div>
+
+        {latestChapters.length === 0 ? (
+          <div className="rounded-[28px] border border-dashed border-white/10 bg-white/5 p-10 text-center">
+            <h3 className="text-2xl font-black text-white">
+              Chapter байхгүй байна
+            </h3>
+            <p className="mt-2 text-sm text-zinc-400">
+              Chapter нэмэгдсэний дараа энд update жагсаалт гарна.
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {latestChapters.map((chapter) => (
+              <Link
+                key={chapter.id}
+                href={`/read/${chapter.id}`}
+                className="flex gap-4 rounded-[24px] border border-white/10 bg-white/5 p-3 transition hover:border-violet-500/40 hover:bg-white/10"
+              >
+                <img
+                  src={chapter.comic.coverImage}
+                  alt={chapter.comic.title}
+                  className="h-24 w-18 rounded-2xl object-cover"
+                />
+
+                <div className="min-w-0 flex-1 py-1">
+                  <h3 className="line-clamp-1 text-base font-black text-white">
+                    {chapter.comic.title}
+                  </h3>
+
+                  <p className="mt-1 line-clamp-1 text-sm text-zinc-400">
+                    Chapter {chapter.number}: {chapter.title}
+                  </p>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <span className="rounded-full bg-violet-500/10 px-3 py-1 text-xs font-semibold text-violet-200">
+                      Унших
+                    </span>
+
+                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300">
+                      {chapter.comic.genre}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center pr-2 text-violet-200">→</div>
+              </Link>
+            ))}
           </div>
         )}
       </section>
