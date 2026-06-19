@@ -29,18 +29,21 @@ export type AggregatePremiumOrder = {
 export type PremiumOrderAvgAggregateOutputType = {
   id: number | null
   userId: number | null
+  months: number | null
   amount: number | null
 }
 
 export type PremiumOrderSumAggregateOutputType = {
   id: number | null
   userId: number | null
+  months: number | null
   amount: number | null
 }
 
 export type PremiumOrderMinAggregateOutputType = {
   id: number | null
   userId: number | null
+  months: number | null
   amount: number | null
   status: string | null
   invoiceId: string | null
@@ -52,6 +55,7 @@ export type PremiumOrderMinAggregateOutputType = {
 export type PremiumOrderMaxAggregateOutputType = {
   id: number | null
   userId: number | null
+  months: number | null
   amount: number | null
   status: string | null
   invoiceId: string | null
@@ -63,6 +67,7 @@ export type PremiumOrderMaxAggregateOutputType = {
 export type PremiumOrderCountAggregateOutputType = {
   id: number
   userId: number
+  months: number
   amount: number
   status: number
   invoiceId: number
@@ -76,18 +81,21 @@ export type PremiumOrderCountAggregateOutputType = {
 export type PremiumOrderAvgAggregateInputType = {
   id?: true
   userId?: true
+  months?: true
   amount?: true
 }
 
 export type PremiumOrderSumAggregateInputType = {
   id?: true
   userId?: true
+  months?: true
   amount?: true
 }
 
 export type PremiumOrderMinAggregateInputType = {
   id?: true
   userId?: true
+  months?: true
   amount?: true
   status?: true
   invoiceId?: true
@@ -99,6 +107,7 @@ export type PremiumOrderMinAggregateInputType = {
 export type PremiumOrderMaxAggregateInputType = {
   id?: true
   userId?: true
+  months?: true
   amount?: true
   status?: true
   invoiceId?: true
@@ -110,6 +119,7 @@ export type PremiumOrderMaxAggregateInputType = {
 export type PremiumOrderCountAggregateInputType = {
   id?: true
   userId?: true
+  months?: true
   amount?: true
   status?: true
   invoiceId?: true
@@ -208,10 +218,11 @@ export type PremiumOrderGroupByArgs<ExtArgs extends runtime.Types.Extensions.Int
 export type PremiumOrderGroupByOutputType = {
   id: number
   userId: number
+  months: number
   amount: number
   status: string
-  invoiceId: string
-  qrText: string
+  invoiceId: string | null
+  qrText: string | null
   createdAt: Date
   paidAt: Date | null
   _count: PremiumOrderCountAggregateOutputType | null
@@ -242,10 +253,11 @@ export type PremiumOrderWhereInput = {
   NOT?: Prisma.PremiumOrderWhereInput | Prisma.PremiumOrderWhereInput[]
   id?: Prisma.IntFilter<"PremiumOrder"> | number
   userId?: Prisma.IntFilter<"PremiumOrder"> | number
+  months?: Prisma.IntFilter<"PremiumOrder"> | number
   amount?: Prisma.IntFilter<"PremiumOrder"> | number
   status?: Prisma.StringFilter<"PremiumOrder"> | string
-  invoiceId?: Prisma.StringFilter<"PremiumOrder"> | string
-  qrText?: Prisma.StringFilter<"PremiumOrder"> | string
+  invoiceId?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  qrText?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
   createdAt?: Prisma.DateTimeFilter<"PremiumOrder"> | Date | string
   paidAt?: Prisma.DateTimeNullableFilter<"PremiumOrder"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -254,10 +266,11 @@ export type PremiumOrderWhereInput = {
 export type PremiumOrderOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  months?: Prisma.SortOrder
   amount?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  invoiceId?: Prisma.SortOrder
-  qrText?: Prisma.SortOrder
+  invoiceId?: Prisma.SortOrderInput | Prisma.SortOrder
+  qrText?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   paidAt?: Prisma.SortOrderInput | Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -270,9 +283,10 @@ export type PremiumOrderWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.PremiumOrderWhereInput[]
   NOT?: Prisma.PremiumOrderWhereInput | Prisma.PremiumOrderWhereInput[]
   userId?: Prisma.IntFilter<"PremiumOrder"> | number
+  months?: Prisma.IntFilter<"PremiumOrder"> | number
   amount?: Prisma.IntFilter<"PremiumOrder"> | number
   status?: Prisma.StringFilter<"PremiumOrder"> | string
-  qrText?: Prisma.StringFilter<"PremiumOrder"> | string
+  qrText?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
   createdAt?: Prisma.DateTimeFilter<"PremiumOrder"> | Date | string
   paidAt?: Prisma.DateTimeNullableFilter<"PremiumOrder"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -281,10 +295,11 @@ export type PremiumOrderWhereUniqueInput = Prisma.AtLeast<{
 export type PremiumOrderOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  months?: Prisma.SortOrder
   amount?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  invoiceId?: Prisma.SortOrder
-  qrText?: Prisma.SortOrder
+  invoiceId?: Prisma.SortOrderInput | Prisma.SortOrder
+  qrText?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   paidAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.PremiumOrderCountOrderByAggregateInput
@@ -300,19 +315,21 @@ export type PremiumOrderScalarWhereWithAggregatesInput = {
   NOT?: Prisma.PremiumOrderScalarWhereWithAggregatesInput | Prisma.PremiumOrderScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"PremiumOrder"> | number
   userId?: Prisma.IntWithAggregatesFilter<"PremiumOrder"> | number
+  months?: Prisma.IntWithAggregatesFilter<"PremiumOrder"> | number
   amount?: Prisma.IntWithAggregatesFilter<"PremiumOrder"> | number
   status?: Prisma.StringWithAggregatesFilter<"PremiumOrder"> | string
-  invoiceId?: Prisma.StringWithAggregatesFilter<"PremiumOrder"> | string
-  qrText?: Prisma.StringWithAggregatesFilter<"PremiumOrder"> | string
+  invoiceId?: Prisma.StringNullableWithAggregatesFilter<"PremiumOrder"> | string | null
+  qrText?: Prisma.StringNullableWithAggregatesFilter<"PremiumOrder"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"PremiumOrder"> | Date | string
   paidAt?: Prisma.DateTimeNullableWithAggregatesFilter<"PremiumOrder"> | Date | string | null
 }
 
 export type PremiumOrderCreateInput = {
+  months?: number
   amount: number
   status?: string
-  invoiceId: string
-  qrText: string
+  invoiceId?: string | null
+  qrText?: string | null
   createdAt?: Date | string
   paidAt?: Date | string | null
   user: Prisma.UserCreateNestedOneWithoutPremiumOrdersInput
@@ -321,19 +338,21 @@ export type PremiumOrderCreateInput = {
 export type PremiumOrderUncheckedCreateInput = {
   id?: number
   userId: number
+  months?: number
   amount: number
   status?: string
-  invoiceId: string
-  qrText: string
+  invoiceId?: string | null
+  qrText?: string | null
   createdAt?: Date | string
   paidAt?: Date | string | null
 }
 
 export type PremiumOrderUpdateInput = {
+  months?: Prisma.IntFieldUpdateOperationsInput | number
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.StringFieldUpdateOperationsInput | string
-  invoiceId?: Prisma.StringFieldUpdateOperationsInput | string
-  qrText?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutPremiumOrdersNestedInput
@@ -342,10 +361,11 @@ export type PremiumOrderUpdateInput = {
 export type PremiumOrderUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
+  months?: Prisma.IntFieldUpdateOperationsInput | number
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.StringFieldUpdateOperationsInput | string
-  invoiceId?: Prisma.StringFieldUpdateOperationsInput | string
-  qrText?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -353,19 +373,21 @@ export type PremiumOrderUncheckedUpdateInput = {
 export type PremiumOrderCreateManyInput = {
   id?: number
   userId: number
+  months?: number
   amount: number
   status?: string
-  invoiceId: string
-  qrText: string
+  invoiceId?: string | null
+  qrText?: string | null
   createdAt?: Date | string
   paidAt?: Date | string | null
 }
 
 export type PremiumOrderUpdateManyMutationInput = {
+  months?: Prisma.IntFieldUpdateOperationsInput | number
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.StringFieldUpdateOperationsInput | string
-  invoiceId?: Prisma.StringFieldUpdateOperationsInput | string
-  qrText?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -373,10 +395,11 @@ export type PremiumOrderUpdateManyMutationInput = {
 export type PremiumOrderUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
+  months?: Prisma.IntFieldUpdateOperationsInput | number
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.StringFieldUpdateOperationsInput | string
-  invoiceId?: Prisma.StringFieldUpdateOperationsInput | string
-  qrText?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -394,6 +417,7 @@ export type PremiumOrderOrderByRelationAggregateInput = {
 export type PremiumOrderCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  months?: Prisma.SortOrder
   amount?: Prisma.SortOrder
   status?: Prisma.SortOrder
   invoiceId?: Prisma.SortOrder
@@ -405,12 +429,14 @@ export type PremiumOrderCountOrderByAggregateInput = {
 export type PremiumOrderAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  months?: Prisma.SortOrder
   amount?: Prisma.SortOrder
 }
 
 export type PremiumOrderMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  months?: Prisma.SortOrder
   amount?: Prisma.SortOrder
   status?: Prisma.SortOrder
   invoiceId?: Prisma.SortOrder
@@ -422,6 +448,7 @@ export type PremiumOrderMaxOrderByAggregateInput = {
 export type PremiumOrderMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  months?: Prisma.SortOrder
   amount?: Prisma.SortOrder
   status?: Prisma.SortOrder
   invoiceId?: Prisma.SortOrder
@@ -433,6 +460,7 @@ export type PremiumOrderMinOrderByAggregateInput = {
 export type PremiumOrderSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  months?: Prisma.SortOrder
   amount?: Prisma.SortOrder
 }
 
@@ -478,25 +506,27 @@ export type PremiumOrderUncheckedUpdateManyWithoutUserNestedInput = {
   deleteMany?: Prisma.PremiumOrderScalarWhereInput | Prisma.PremiumOrderScalarWhereInput[]
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
+export type NullableStringFieldUpdateOperationsInput = {
+  set?: string | null
 }
 
 export type PremiumOrderCreateWithoutUserInput = {
+  months?: number
   amount: number
   status?: string
-  invoiceId: string
-  qrText: string
+  invoiceId?: string | null
+  qrText?: string | null
   createdAt?: Date | string
   paidAt?: Date | string | null
 }
 
 export type PremiumOrderUncheckedCreateWithoutUserInput = {
   id?: number
+  months?: number
   amount: number
   status?: string
-  invoiceId: string
-  qrText: string
+  invoiceId?: string | null
+  qrText?: string | null
   createdAt?: Date | string
   paidAt?: Date | string | null
 }
@@ -533,49 +563,54 @@ export type PremiumOrderScalarWhereInput = {
   NOT?: Prisma.PremiumOrderScalarWhereInput | Prisma.PremiumOrderScalarWhereInput[]
   id?: Prisma.IntFilter<"PremiumOrder"> | number
   userId?: Prisma.IntFilter<"PremiumOrder"> | number
+  months?: Prisma.IntFilter<"PremiumOrder"> | number
   amount?: Prisma.IntFilter<"PremiumOrder"> | number
   status?: Prisma.StringFilter<"PremiumOrder"> | string
-  invoiceId?: Prisma.StringFilter<"PremiumOrder"> | string
-  qrText?: Prisma.StringFilter<"PremiumOrder"> | string
+  invoiceId?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  qrText?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
   createdAt?: Prisma.DateTimeFilter<"PremiumOrder"> | Date | string
   paidAt?: Prisma.DateTimeNullableFilter<"PremiumOrder"> | Date | string | null
 }
 
 export type PremiumOrderCreateManyUserInput = {
   id?: number
+  months?: number
   amount: number
   status?: string
-  invoiceId: string
-  qrText: string
+  invoiceId?: string | null
+  qrText?: string | null
   createdAt?: Date | string
   paidAt?: Date | string | null
 }
 
 export type PremiumOrderUpdateWithoutUserInput = {
+  months?: Prisma.IntFieldUpdateOperationsInput | number
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.StringFieldUpdateOperationsInput | string
-  invoiceId?: Prisma.StringFieldUpdateOperationsInput | string
-  qrText?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type PremiumOrderUncheckedUpdateWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  months?: Prisma.IntFieldUpdateOperationsInput | number
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.StringFieldUpdateOperationsInput | string
-  invoiceId?: Prisma.StringFieldUpdateOperationsInput | string
-  qrText?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type PremiumOrderUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  months?: Prisma.IntFieldUpdateOperationsInput | number
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.StringFieldUpdateOperationsInput | string
-  invoiceId?: Prisma.StringFieldUpdateOperationsInput | string
-  qrText?: Prisma.StringFieldUpdateOperationsInput | string
+  invoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -585,6 +620,7 @@ export type PremiumOrderUncheckedUpdateManyWithoutUserInput = {
 export type PremiumOrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
+  months?: boolean
   amount?: boolean
   status?: boolean
   invoiceId?: boolean
@@ -597,6 +633,7 @@ export type PremiumOrderSelect<ExtArgs extends runtime.Types.Extensions.Internal
 export type PremiumOrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
+  months?: boolean
   amount?: boolean
   status?: boolean
   invoiceId?: boolean
@@ -609,6 +646,7 @@ export type PremiumOrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
 export type PremiumOrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
+  months?: boolean
   amount?: boolean
   status?: boolean
   invoiceId?: boolean
@@ -621,6 +659,7 @@ export type PremiumOrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
 export type PremiumOrderSelectScalar = {
   id?: boolean
   userId?: boolean
+  months?: boolean
   amount?: boolean
   status?: boolean
   invoiceId?: boolean
@@ -629,7 +668,7 @@ export type PremiumOrderSelectScalar = {
   paidAt?: boolean
 }
 
-export type PremiumOrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "amount" | "status" | "invoiceId" | "qrText" | "createdAt" | "paidAt", ExtArgs["result"]["premiumOrder"]>
+export type PremiumOrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "months" | "amount" | "status" | "invoiceId" | "qrText" | "createdAt" | "paidAt", ExtArgs["result"]["premiumOrder"]>
 export type PremiumOrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -648,10 +687,11 @@ export type $PremiumOrderPayload<ExtArgs extends runtime.Types.Extensions.Intern
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     userId: number
+    months: number
     amount: number
     status: string
-    invoiceId: string
-    qrText: string
+    invoiceId: string | null
+    qrText: string | null
     createdAt: Date
     paidAt: Date | null
   }, ExtArgs["result"]["premiumOrder"]>
@@ -1080,6 +1120,7 @@ export interface Prisma__PremiumOrderClient<T, Null = never, ExtArgs extends run
 export interface PremiumOrderFieldRefs {
   readonly id: Prisma.FieldRef<"PremiumOrder", 'Int'>
   readonly userId: Prisma.FieldRef<"PremiumOrder", 'Int'>
+  readonly months: Prisma.FieldRef<"PremiumOrder", 'Int'>
   readonly amount: Prisma.FieldRef<"PremiumOrder", 'Int'>
   readonly status: Prisma.FieldRef<"PremiumOrder", 'String'>
   readonly invoiceId: Prisma.FieldRef<"PremiumOrder", 'String'>

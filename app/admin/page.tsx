@@ -58,6 +58,13 @@ const genreOptions = [
   "Бусад",
 ];
 
+const premiumPlans = [
+  { months: 1, label: "1 сар", price: "5000₮" },
+  { months: 3, label: "3 сар", price: "13000₮" },
+  { months: 6, label: "6 сар", price: "24000₮" },
+  { months: 12, label: "1 жил", price: "44000₮" },
+];
+
 function formatPremiumDate(date: string | null) {
   if (!date) return "Хугацаа байхгүй";
 
@@ -72,20 +79,12 @@ function isPremiumActive(user: User) {
   if (!user.isPremium || !user.premiumExpiresAt) return false;
 
   const expiresAt = new Date(user.premiumExpiresAt);
-  const now = new Date();
-
-  return expiresAt.getTime() > now.getTime();
+  return expiresAt.getTime() > Date.now();
 }
 
 function getPremiumStatus(user: User) {
-  if (!user.isPremium || !user.premiumExpiresAt) {
-    return "NONE";
-  }
-
-  if (isPremiumActive(user)) {
-    return "ACTIVE";
-  }
-
+  if (!user.isPremium || !user.premiumExpiresAt) return "NONE";
+  if (isPremiumActive(user)) return "ACTIVE";
   return "EXPIRED";
 }
 
@@ -236,14 +235,14 @@ export default function AdminPage() {
     loadUsers();
   }
 
-  async function changePremium(userId: number, months: 1 | 2 | 3 | 6 | 12) {
+  async function changePremium(userId: number, months: number) {
     const res = await fetch(`/api/admin/users/${userId}/premium`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        action: "grant",
+        isPremium: true,
         months,
       }),
     });
@@ -255,13 +254,12 @@ export default function AdminPage() {
       return;
     }
 
-    alert(data.message || "Premium эрх амжилттай өөрчлөгдлөө");
+    alert(data.message || "Premium эрх амжилттай олгогдлоо");
     loadUsers();
   }
 
   async function cancelPremium(userId: number) {
     const ok = confirm("Энэ хэрэглэгчийн premium эрхийг цуцлах уу?");
-
     if (!ok) return;
 
     const res = await fetch(`/api/admin/users/${userId}/premium`, {
@@ -270,7 +268,7 @@ export default function AdminPage() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        action: "cancel",
+        isPremium: false,
       }),
     });
 
@@ -420,13 +418,7 @@ export default function AdminPage() {
   async function addComic(e: FormEvent) {
     e.preventDefault();
 
-    if (
-      !comicTitle ||
-      !comicSlug ||
-      !comicDescription ||
-      !coverImage ||
-      !comicGenre
-    ) {
+    if (!comicTitle || !comicSlug || !comicDescription || !coverImage || !comicGenre) {
       alert("Title, slug, description, cover image, genre 1 заавал хэрэгтэй");
       return;
     }
@@ -504,13 +496,7 @@ export default function AdminPage() {
 
     if (!editingComic) return;
 
-    if (
-      !editTitle ||
-      !editSlug ||
-      !editDescription ||
-      !editCoverImage ||
-      !editGenre
-    ) {
+    if (!editTitle || !editSlug || !editDescription || !editCoverImage || !editGenre) {
       alert("Title, slug, description, cover image, genre 1 заавал хэрэгтэй");
       return;
     }
@@ -543,7 +529,6 @@ export default function AdminPage() {
       }
 
       alert("Comic амжилттай засагдлаа");
-
       closeEditComic();
       loadComics();
     } finally {
@@ -652,7 +637,6 @@ export default function AdminPage() {
       }
 
       alert("Chapter амжилттай засагдлаа");
-
       closeEditChapter();
       loadComics();
     } finally {
@@ -661,10 +645,7 @@ export default function AdminPage() {
   }
 
   async function deleteComic(comicId: number) {
-    const ok = confirm(
-      "Энэ comic-ийг устгах уу? Доторх бүх chapter хамт устна."
-    );
-
+    const ok = confirm("Энэ comic-ийг устгах уу? Доторх бүх chapter хамт устна.");
     if (!ok) return;
 
     const res = await fetch(`/api/comics/${comicId}`, {
@@ -684,7 +665,6 @@ export default function AdminPage() {
 
   async function deleteChapter(chapterId: number) {
     const ok = confirm("Энэ chapter-ийг устгах уу?");
-
     if (!ok) return;
 
     const res = await fetch(`/api/chapters/${chapterId}`, {
@@ -712,25 +692,22 @@ export default function AdminPage() {
 
   if (checkingAuth) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-zinc-950 text-white">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-4">
-          Шалгаж байна...
-        </div>
+      <main className="min-h-screen bg-black p-6 text-white">
+        <p>Шалгаж байна...</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-8 py-8 text-white">
+    <main className="min-h-screen bg-black p-6 text-white">
       {editingComic && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
           <form
             onSubmit={saveEditComic}
-            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-zinc-900 p-6"
+            className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-zinc-900 p-6"
           >
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-2xl font-bold">Comic засах</h2>
-
               <button
                 type="button"
                 onClick={closeEditComic}
@@ -827,9 +804,7 @@ export default function AdminPage() {
             />
 
             {uploadingEditCover && (
-              <p className="mb-4 text-yellow-400">
-                Cover upload хийж байна...
-              </p>
+              <p className="mb-4 text-yellow-400">Cover upload хийж байна...</p>
             )}
 
             {editCoverImage && (
@@ -839,7 +814,6 @@ export default function AdminPage() {
                   alt="cover preview"
                   className="h-64 w-44 rounded object-cover"
                 />
-
                 <p className="mt-2 text-sm text-zinc-400">{editCoverImage}</p>
               </div>
             )}
@@ -871,7 +845,6 @@ export default function AdminPage() {
           >
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-2xl font-bold">Chapter засах</h2>
-
               <button
                 type="button"
                 onClick={closeEditChapter}
@@ -920,20 +893,15 @@ export default function AdminPage() {
             {editChapterImages.length > 0 && (
               <div className="mb-5 grid grid-cols-2 gap-4 md:grid-cols-4">
                 {editChapterImages.map((url, index) => (
-                  <div
-                    key={`${url}-${index}`}
-                    className="rounded-lg bg-zinc-800 p-2"
-                  >
+                  <div key={`${url}-${index}`} className="rounded-lg bg-zinc-800 p-2">
                     <img
                       src={url}
                       alt="chapter preview"
                       className="h-40 w-full rounded object-cover"
                     />
-
                     <p className="mt-2 text-xs text-zinc-400">
                       Page {index + 1}
                     </p>
-
                     <button
                       type="button"
                       onClick={() => removeEditChapterImage(index)}
@@ -1039,7 +1007,6 @@ export default function AdminPage() {
                             <span className="w-fit rounded-full bg-yellow-500/20 px-3 py-1 text-sm text-yellow-300">
                               Premium идэвхтэй
                             </span>
-
                             <p className="mt-2 text-xs text-zinc-400">
                               Дуусах огноо:{" "}
                               {formatPremiumDate(user.premiumExpiresAt)}
@@ -1050,7 +1017,6 @@ export default function AdminPage() {
                             <span className="w-fit rounded-full bg-red-500/20 px-3 py-1 text-sm text-red-300">
                               Premium дууссан
                             </span>
-
                             <p className="mt-2 text-xs text-zinc-400">
                               Дууссан огноо:{" "}
                               {formatPremiumDate(user.premiumExpiresAt)}
@@ -1063,45 +1029,16 @@ export default function AdminPage() {
                         )}
 
                         <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => changePremium(user.id, 1)}
-                            className="rounded-lg bg-yellow-600 px-3 py-2 text-xs font-semibold hover:bg-yellow-700"
-                          >
-                            1 сар (5000₮)
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => changePremium(user.id, 2)}
-                            className="rounded-lg bg-yellow-600 px-3 py-2 text-xs font-semibold hover:bg-yellow-700"
-                          >
-                            2 сар (9000₮)
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => changePremium(user.id, 3)}
-                            className="rounded-lg bg-yellow-600 px-3 py-2 text-xs font-semibold hover:bg-yellow-700"
-                          >
-                            3 сар (13000₮)
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => changePremium(user.id, 6)}
-                            className="rounded-lg bg-yellow-600 px-3 py-2 text-xs font-semibold hover:bg-yellow-700"
-                          >
-                            6 сар (22000₮)
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => changePremium(user.id, 12)}
-                            className="rounded-lg bg-yellow-600 px-3 py-2 text-xs font-semibold hover:bg-yellow-700"
-                          >
-                            12 сар (35000₮)
-                          </button>
+                          {premiumPlans.map((plan) => (
+                            <button
+                              key={plan.months}
+                              type="button"
+                              onClick={() => changePremium(user.id, plan.months)}
+                              className="rounded-lg bg-yellow-600 px-3 py-2 text-xs font-semibold hover:bg-yellow-700"
+                            >
+                              {plan.label} ({plan.price})
+                            </button>
+                          ))}
 
                           <button
                             type="button"
@@ -1165,9 +1102,7 @@ export default function AdminPage() {
 
           <div className="grid gap-4 md:grid-cols-3">
             <div>
-              <label className="mb-2 block text-sm text-zinc-400">
-                Genre 1
-              </label>
+              <label className="mb-2 block text-sm text-zinc-400">Genre 1</label>
               <select
                 className="mb-4 w-full rounded-lg bg-zinc-800 px-4 py-3 outline-none"
                 value={comicGenre}
@@ -1182,9 +1117,7 @@ export default function AdminPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm text-zinc-400">
-                Genre 2
-              </label>
+              <label className="mb-2 block text-sm text-zinc-400">Genre 2</label>
               <select
                 className="mb-4 w-full rounded-lg bg-zinc-800 px-4 py-3 outline-none"
                 value={comicGenre2}
@@ -1200,9 +1133,7 @@ export default function AdminPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm text-zinc-400">
-                Genre 3
-              </label>
+              <label className="mb-2 block text-sm text-zinc-400">Genre 3</label>
               <select
                 className="mb-4 w-full rounded-lg bg-zinc-800 px-4 py-3 outline-none"
                 value={comicGenre3}
@@ -1218,9 +1149,7 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <label className="mb-2 block text-sm text-zinc-400">
-            Cover image
-          </label>
+          <label className="mb-2 block text-sm text-zinc-400">Cover image</label>
           <input
             className="mb-4 w-full rounded-lg bg-zinc-800 px-4 py-3 outline-none"
             type="file"
@@ -1239,14 +1168,11 @@ export default function AdminPage() {
                 alt="cover preview"
                 className="h-64 w-44 rounded object-cover"
               />
-
               <p className="mt-2 text-sm text-zinc-400">{coverImage}</p>
             </div>
           )}
 
-          <label className="mb-2 block text-sm text-zinc-400">
-            Description
-          </label>
+          <label className="mb-2 block text-sm text-zinc-400">Description</label>
           <textarea
             className="mb-4 h-32 w-full rounded-lg bg-zinc-800 px-4 py-3 outline-none"
             placeholder="Description"
@@ -1265,22 +1191,17 @@ export default function AdminPage() {
         <form onSubmit={addChapter} className="rounded-2xl bg-zinc-900 p-6">
           <h2 className="mb-5 text-2xl font-bold">Chapter нэмэх</h2>
 
-          <label className="mb-2 block text-sm text-zinc-400">
-            Comic сонгох
-          </label>
+          <label className="mb-2 block text-sm text-zinc-400">Comic сонгох</label>
           <select
             className="mb-4 w-full rounded-lg bg-zinc-800 px-4 py-3 outline-none"
             value={selectedComicId}
             onChange={(e) => setSelectedComicId(e.target.value)}
           >
             <option value="">Comic сонгох</option>
-
             {comics.map((comic) => (
               <option key={comic.id} value={comic.id}>
                 {comic.title} /{" "}
-                {[comic.genre, comic.genre2, comic.genre3]
-                  .filter(Boolean)
-                  .join(", ")}
+                {[comic.genre, comic.genre2, comic.genre3].filter(Boolean).join(", ")}
               </option>
             ))}
           </select>
@@ -1326,20 +1247,13 @@ export default function AdminPage() {
           {chapterImages.length > 0 && (
             <div className="mb-5 grid grid-cols-2 gap-4 md:grid-cols-4">
               {chapterImages.map((url, index) => (
-                <div
-                  key={`${url}-${index}`}
-                  className="rounded-lg bg-zinc-800 p-2"
-                >
+                <div key={`${url}-${index}`} className="rounded-lg bg-zinc-800 p-2">
                   <img
                     src={url}
                     alt="chapter preview"
                     className="h-40 w-full rounded object-cover"
                   />
-
-                  <p className="mt-2 text-xs text-zinc-400">
-                    Page {index + 1}
-                  </p>
-
+                  <p className="mt-2 text-xs text-zinc-400">Page {index + 1}</p>
                   <button
                     type="button"
                     onClick={() => removeChapterImage(index)}
@@ -1369,104 +1283,102 @@ export default function AdminPage() {
         ) : (
           <div className="space-y-5">
             {comics.map((comic) => (
-              <div key={comic.id} className="rounded-xl bg-zinc-800 p-5">
-                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                  <div className="flex gap-4">
-                    <img
-                      src={comic.coverImage}
-                      alt={comic.title}
-                      className="h-32 w-24 rounded object-cover"
-                    />
+              <div key={comic.id} className="rounded-2xl bg-zinc-950 p-5">
+                <div className="flex flex-col gap-4 md:flex-row">
+                  <img
+                    src={comic.coverImage}
+                    alt={comic.title}
+                    className="h-52 w-36 rounded object-cover"
+                  />
 
-                    <div>
-                      <h3 className="text-xl font-bold">{comic.title}</h3>
-                      <p className="text-sm text-zinc-400">/{comic.slug}</p>
-
-                      <p className="mt-1 text-sm text-zinc-400">
-                        Author: {comic.author || "Unknown"}
-                      </p>
-
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {[comic.genre, comic.genre2, comic.genre3]
-                          .filter(Boolean)
-                          .map((genre) => (
-                            <span
-                              key={genre}
-                              className="rounded-full bg-red-600/20 px-3 py-1 text-sm text-red-300"
-                            >
-                              {genre}
-                            </span>
-                          ))}
+                  <div className="flex-1">
+                    <div className="flex flex-col justify-between gap-3 md:flex-row">
+                      <div>
+                        <h3 className="text-xl font-bold">{comic.title}</h3>
+                        <p className="mt-1 text-sm text-zinc-400">
+                          Slug: {comic.slug}
+                        </p>
+                        <p className="mt-1 text-sm text-zinc-400">
+                          Author: {comic.author || "Тодорхойгүй"}
+                        </p>
+                        <p className="mt-1 text-sm text-zinc-400">
+                          Genre:{" "}
+                          {[comic.genre, comic.genre2, comic.genre3]
+                            .filter(Boolean)
+                            .join(", ")}
+                        </p>
+                        <p className="mt-3 line-clamp-3 text-sm text-zinc-300">
+                          {comic.description}
+                        </p>
                       </div>
 
-                      <Link
-                        href={`/comic/${comic.slug}`}
-                        className="mt-3 block text-sm text-red-400 hover:text-red-300"
-                      >
-                        Нээх
-                      </Link>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => openEditComic(comic)}
-                      className="rounded-lg bg-zinc-700 px-4 py-2 hover:bg-zinc-600"
-                    >
-                      Засах
-                    </button>
-
-                    <button
-                      onClick={() => deleteComic(comic.id)}
-                      className="rounded-lg bg-red-600 px-4 py-2 hover:bg-red-700"
-                    >
-                      Устгах
-                    </button>
-                  </div>
-                </div>
-
-                <div className="mt-5">
-                  <h4 className="mb-3 font-semibold">Chapters</h4>
-
-                  {comic.chapters.length === 0 ? (
-                    <p className="text-sm text-zinc-400">
-                      Chapter байхгүй байна.
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {comic.chapters.map((chapter) => (
-                        <div
-                          key={chapter.id}
-                          className="flex items-center justify-between rounded-lg bg-zinc-900 px-4 py-3"
+                      <div className="flex h-fit gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openEditComic(comic)}
+                          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold hover:bg-blue-700"
                         >
-                          <div>
-                            <p className="font-medium">
-                              Chapter {chapter.number}: {chapter.title}
-                            </p>
-                            <p className="text-sm text-zinc-400">
-                              {chapter.images.length} images
-                            </p>
-                          </div>
+                          Засах
+                        </button>
 
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => openEditChapter(chapter)}
-                              className="rounded bg-zinc-700 px-3 py-1 text-sm hover:bg-zinc-600"
-                            >
-                              Засах
-                            </button>
-
-                            <button
-                              onClick={() => deleteChapter(chapter.id)}
-                              className="rounded bg-red-600 px-3 py-1 text-sm hover:bg-red-700"
-                            >
-                              Устгах
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                        <button
+                          type="button"
+                          onClick={() => deleteComic(comic.id)}
+                          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-700"
+                        >
+                          Устгах
+                        </button>
+                      </div>
                     </div>
-                  )}
+
+                    <div className="mt-5">
+                      <h4 className="mb-3 font-semibold">
+                        Chapters ({comic.chapters.length})
+                      </h4>
+
+                      {comic.chapters.length === 0 ? (
+                        <p className="text-sm text-zinc-500">
+                          Chapter байхгүй байна.
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          {comic.chapters.map((chapter) => (
+                            <div
+                              key={chapter.id}
+                              className="flex items-center justify-between rounded-lg bg-zinc-900 px-4 py-3"
+                            >
+                              <div>
+                                <p className="font-semibold">
+                                  #{chapter.number} - {chapter.title}
+                                </p>
+                                <p className="text-xs text-zinc-400">
+                                  {chapter.images.length} зураг
+                                </p>
+                              </div>
+
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => openEditChapter(chapter)}
+                                  className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold hover:bg-blue-700"
+                                >
+                                  Засах
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => deleteChapter(chapter.id)}
+                                  className="rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold hover:bg-red-700"
+                                >
+                                  Устгах
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}

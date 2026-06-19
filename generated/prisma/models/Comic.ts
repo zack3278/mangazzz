@@ -540,10 +540,6 @@ export type ComicScalarRelationFilter = {
   isNot?: Prisma.ComicWhereInput
 }
 
-export type NullableStringFieldUpdateOperationsInput = {
-  set?: string | null
-}
-
 export type ComicCreateNestedOneWithoutChaptersInput = {
   create?: Prisma.XOR<Prisma.ComicCreateWithoutChaptersInput, Prisma.ComicUncheckedCreateWithoutChaptersInput>
   connectOrCreate?: Prisma.ComicCreateOrConnectWithoutChaptersInput

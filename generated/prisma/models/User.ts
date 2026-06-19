@@ -41,6 +41,7 @@ export type UserMinAggregateOutputType = {
   password: string | null
   role: $Enums.Role | null
   isPremium: boolean | null
+  premiumExpiresAt: Date | null
   createdAt: Date | null
 }
 
@@ -51,6 +52,7 @@ export type UserMaxAggregateOutputType = {
   password: string | null
   role: $Enums.Role | null
   isPremium: boolean | null
+  premiumExpiresAt: Date | null
   createdAt: Date | null
 }
 
@@ -61,6 +63,7 @@ export type UserCountAggregateOutputType = {
   password: number
   role: number
   isPremium: number
+  premiumExpiresAt: number
   createdAt: number
   _all: number
 }
@@ -81,6 +84,7 @@ export type UserMinAggregateInputType = {
   password?: true
   role?: true
   isPremium?: true
+  premiumExpiresAt?: true
   createdAt?: true
 }
 
@@ -91,6 +95,7 @@ export type UserMaxAggregateInputType = {
   password?: true
   role?: true
   isPremium?: true
+  premiumExpiresAt?: true
   createdAt?: true
 }
 
@@ -101,6 +106,7 @@ export type UserCountAggregateInputType = {
   password?: true
   role?: true
   isPremium?: true
+  premiumExpiresAt?: true
   createdAt?: true
   _all?: true
 }
@@ -198,6 +204,7 @@ export type UserGroupByOutputType = {
   password: string
   role: $Enums.Role
   isPremium: boolean
+  premiumExpiresAt: Date | null
   createdAt: Date
   _count: UserCountAggregateOutputType | null
   _avg: UserAvgAggregateOutputType | null
@@ -231,6 +238,7 @@ export type UserWhereInput = {
   password?: Prisma.StringFilter<"User"> | string
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
   isPremium?: Prisma.BoolFilter<"User"> | boolean
+  premiumExpiresAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   premiumOrders?: Prisma.PremiumOrderListRelationFilter
 }
@@ -242,6 +250,7 @@ export type UserOrderByWithRelationInput = {
   password?: Prisma.SortOrder
   role?: Prisma.SortOrder
   isPremium?: Prisma.SortOrder
+  premiumExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   premiumOrders?: Prisma.PremiumOrderOrderByRelationAggregateInput
 }
@@ -256,6 +265,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   password?: Prisma.StringFilter<"User"> | string
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
   isPremium?: Prisma.BoolFilter<"User"> | boolean
+  premiumExpiresAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   premiumOrders?: Prisma.PremiumOrderListRelationFilter
 }, "id" | "email">
@@ -267,6 +277,7 @@ export type UserOrderByWithAggregationInput = {
   password?: Prisma.SortOrder
   role?: Prisma.SortOrder
   isPremium?: Prisma.SortOrder
+  premiumExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
   _avg?: Prisma.UserAvgOrderByAggregateInput
@@ -285,6 +296,7 @@ export type UserScalarWhereWithAggregatesInput = {
   password?: Prisma.StringWithAggregatesFilter<"User"> | string
   role?: Prisma.EnumRoleWithAggregatesFilter<"User"> | $Enums.Role
   isPremium?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  premiumExpiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
 
@@ -294,6 +306,7 @@ export type UserCreateInput = {
   password: string
   role?: $Enums.Role
   isPremium?: boolean
+  premiumExpiresAt?: Date | string | null
   createdAt?: Date | string
   premiumOrders?: Prisma.PremiumOrderCreateNestedManyWithoutUserInput
 }
@@ -305,6 +318,7 @@ export type UserUncheckedCreateInput = {
   password: string
   role?: $Enums.Role
   isPremium?: boolean
+  premiumExpiresAt?: Date | string | null
   createdAt?: Date | string
   premiumOrders?: Prisma.PremiumOrderUncheckedCreateNestedManyWithoutUserInput
 }
@@ -315,6 +329,7 @@ export type UserUpdateInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isPremium?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  premiumExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   premiumOrders?: Prisma.PremiumOrderUpdateManyWithoutUserNestedInput
 }
@@ -326,6 +341,7 @@ export type UserUncheckedUpdateInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isPremium?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  premiumExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   premiumOrders?: Prisma.PremiumOrderUncheckedUpdateManyWithoutUserNestedInput
 }
@@ -337,6 +353,7 @@ export type UserCreateManyInput = {
   password: string
   role?: $Enums.Role
   isPremium?: boolean
+  premiumExpiresAt?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -346,6 +363,7 @@ export type UserUpdateManyMutationInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isPremium?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  premiumExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -356,6 +374,7 @@ export type UserUncheckedUpdateManyInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isPremium?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  premiumExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -366,6 +385,7 @@ export type UserCountOrderByAggregateInput = {
   password?: Prisma.SortOrder
   role?: Prisma.SortOrder
   isPremium?: Prisma.SortOrder
+  premiumExpiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -380,6 +400,7 @@ export type UserMaxOrderByAggregateInput = {
   password?: Prisma.SortOrder
   role?: Prisma.SortOrder
   isPremium?: Prisma.SortOrder
+  premiumExpiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -390,6 +411,7 @@ export type UserMinOrderByAggregateInput = {
   password?: Prisma.SortOrder
   role?: Prisma.SortOrder
   isPremium?: Prisma.SortOrder
+  premiumExpiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -412,6 +434,10 @@ export type EnumRoleFieldUpdateOperationsInput = {
 
 export type BoolFieldUpdateOperationsInput = {
   set?: boolean
+}
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
 }
 
 export type DateTimeFieldUpdateOperationsInput = {
@@ -446,6 +472,7 @@ export type UserCreateWithoutPremiumOrdersInput = {
   password: string
   role?: $Enums.Role
   isPremium?: boolean
+  premiumExpiresAt?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -456,6 +483,7 @@ export type UserUncheckedCreateWithoutPremiumOrdersInput = {
   password: string
   role?: $Enums.Role
   isPremium?: boolean
+  premiumExpiresAt?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -481,6 +509,7 @@ export type UserUpdateWithoutPremiumOrdersInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isPremium?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  premiumExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -491,6 +520,7 @@ export type UserUncheckedUpdateWithoutPremiumOrdersInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isPremium?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  premiumExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -532,6 +562,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   password?: boolean
   role?: boolean
   isPremium?: boolean
+  premiumExpiresAt?: boolean
   createdAt?: boolean
   premiumOrders?: boolean | Prisma.User$premiumOrdersArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -544,6 +575,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   password?: boolean
   role?: boolean
   isPremium?: boolean
+  premiumExpiresAt?: boolean
   createdAt?: boolean
 }, ExtArgs["result"]["user"]>
 
@@ -554,6 +586,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   password?: boolean
   role?: boolean
   isPremium?: boolean
+  premiumExpiresAt?: boolean
   createdAt?: boolean
 }, ExtArgs["result"]["user"]>
 
@@ -564,10 +597,11 @@ export type UserSelectScalar = {
   password?: boolean
   role?: boolean
   isPremium?: boolean
+  premiumExpiresAt?: boolean
   createdAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "password" | "role" | "isPremium" | "createdAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "password" | "role" | "isPremium" | "premiumExpiresAt" | "createdAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   premiumOrders?: boolean | Prisma.User$premiumOrdersArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -587,6 +621,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     password: string
     role: $Enums.Role
     isPremium: boolean
+    premiumExpiresAt: Date | null
     createdAt: Date
   }, ExtArgs["result"]["user"]>
   composites: {}
@@ -1018,6 +1053,7 @@ export interface UserFieldRefs {
   readonly password: Prisma.FieldRef<"User", 'String'>
   readonly role: Prisma.FieldRef<"User", 'Role'>
   readonly isPremium: Prisma.FieldRef<"User", 'Boolean'>
+  readonly premiumExpiresAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
 }
     

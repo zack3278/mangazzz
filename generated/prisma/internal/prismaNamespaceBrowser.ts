@@ -81,6 +81,7 @@ export const UserScalarFieldEnum = {
   password: 'password',
   role: 'role',
   isPremium: 'isPremium',
+  premiumExpiresAt: 'premiumExpiresAt',
   createdAt: 'createdAt'
 } as const
 
@@ -90,6 +91,7 @@ export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof User
 export const PremiumOrderScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
+  months: 'months',
   amount: 'amount',
   status: 'status',
   invoiceId: 'invoiceId',

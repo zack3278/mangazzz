@@ -1,63 +1,127 @@
-export type PremiumMonths = 1 | 2 | 3 | 6 | 12;
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth";
+import { addMonths, getPremiumPlan, isValidPremiumMonths } from "@/lib/premium";
 
-export type PremiumPlan = {
-  months: PremiumMonths;
-  name: string;
-  price: number;
+type Props = {
+  params: Promise<{
+    id: string;
+  }>;
 };
 
-export const premiumPlans: PremiumPlan[] = [
-  {
-    months: 1,
-    name: "1 сар",
-    price: 5000,
-  },
-  {
-    months: 2,
-    name: "2 сар",
-    price: 9000,
-  },
-  {
-    months: 3,
-    name: "3 сар",
-    price: 13000,
-  },
-  {
-    months: 6,
-    name: "6 сар",
-    price: 22000,
-  },
-  {
-    months: 12,
-    name: "12 сар",
-    price: 35000,
-  },
-];
+export async function PATCH(req: Request, { params }: Props) {
+  try {
+    const admin = await requireAdmin();
 
-export function isValidPremiumMonths(months: number): months is PremiumMonths {
-  return [1, 2, 3, 6, 12].includes(months);
-}
+    if (!admin) {
+      return NextResponse.json(
+        { message: "Зөвхөн ADMIN premium эрх өөрчилнө" },
+        { status: 403 }
+      );
+    }
 
-export function getPremiumPlan(months: number) {
-  return premiumPlans.find((plan) => plan.months === months) || null;
-}
+    const { id } = await params;
+    const userId = Number(id);
 
-export function addMonths(date: Date, months: number) {
-  const result = new Date(date);
-  result.setMonth(result.getMonth() + months);
-  return result;
-}
+    if (!Number.isInteger(userId)) {
+      return NextResponse.json(
+        { message: "User ID буруу байна" },
+        { status: 400 }
+      );
+    }
 
-export function isPremiumActive(user: {
-  isPremium?: boolean | null;
-  premiumExpiresAt?: Date | string | null;
-}) {
-  if (!user.isPremium || !user.premiumExpiresAt) {
-    return false;
+    const body = await req.json();
+    const isPremium = Boolean(body.isPremium);
+    const months = Number(body.months || 1);
+
+    if (!isPremium) {
+      const user = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          isPremium: false,
+          premiumExpiresAt: null,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          isPremium: true,
+          premiumExpiresAt: true,
+        },
+      });
+
+      return NextResponse.json({
+        message: "Premium эрхийг цуцаллаа",
+        user,
+      });
+    }
+
+    if (!isValidPremiumMonths(months)) {
+      return NextResponse.json(
+        { message: "Premium хугацаа буруу байна" },
+        { status: 400 }
+      );
+    }
+
+    const plan = getPremiumPlan(months);
+
+    if (!plan) {
+      return NextResponse.json(
+        { message: "Premium plan олдсонгүй" },
+        { status: 400 }
+      );
+    }
+
+    const now = new Date();
+
+    const currentUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        premiumExpiresAt: true,
+      },
+    });
+
+    if (!currentUser) {
+      return NextResponse.json(
+        { message: "User олдсонгүй" },
+        { status: 404 }
+      );
+    }
+
+    const startDate =
+      currentUser.premiumExpiresAt &&
+      new Date(currentUser.premiumExpiresAt).getTime() > now.getTime()
+        ? new Date(currentUser.premiumExpiresAt)
+        : now;
+
+    const premiumExpiresAt = addMonths(startDate, months);
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        isPremium: true,
+        premiumExpiresAt,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isPremium: true,
+        premiumExpiresAt: true,
+      },
+    });
+
+    return NextResponse.json({
+      message: `${plan.name} premium эрх амжилттай олголоо`,
+      user,
+    });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { message: "Premium эрх өөрчлөхөд алдаа гарлаа" },
+      { status: 500 }
+    );
   }
-
-  const expiresAt = new Date(user.premiumExpiresAt);
-  const now = new Date();
-
-  return expiresAt.getTime() > now.getTime();
 }
