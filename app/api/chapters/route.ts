@@ -13,20 +13,27 @@ type ChapterBody = {
   imageUrls?: string[];
 };
 
-function normalizeContent(body: ChapterBody) {
-  if (typeof body.content === "string" && body.content.trim()) {
-    return body.content.trim();
+function normalizeImages(body: ChapterBody): string[] {
+  if (Array.isArray(body.imageUrls) && body.imageUrls.length > 0) {
+    return body.imageUrls
+      .map((url) => String(url).trim())
+      .filter(Boolean);
   }
 
   if (Array.isArray(body.images) && body.images.length > 0) {
-    return body.images.filter(Boolean).join("\n");
+    return body.images
+      .map((url) => String(url).trim())
+      .filter(Boolean);
   }
 
-  if (Array.isArray(body.imageUrls) && body.imageUrls.length > 0) {
-    return body.imageUrls.filter(Boolean).join("\n");
+  if (typeof body.content === "string" && body.content.trim()) {
+    return body.content
+      .split("\n")
+      .map((url) => url.trim())
+      .filter(Boolean);
   }
 
-  return "";
+  return [];
 }
 
 export async function GET() {
@@ -34,6 +41,14 @@ export async function GET() {
     const chapters = await prisma.chapter.findMany({
       orderBy: {
         number: "asc",
+      },
+      include: {
+        images: {
+          orderBy: {
+            order: "asc",
+          },
+        },
+        comic: true,
       },
     });
 
@@ -54,15 +69,15 @@ export async function POST(req: Request) {
 
     console.log("CHAPTER_CREATE_BODY:", body);
 
-    const rawComicId = body.comicId || body.mangaId;
+    const rawComicId = body.comicId ?? body.mangaId;
     const comicId = Number(rawComicId);
 
-    const title = body.title || body.chapterTitle || "";
+    const title = String(body.title || body.chapterTitle || "").trim();
 
-    const rawNumber = body.number || body.chapterNumber;
+    const rawNumber = body.number ?? body.chapterNumber;
     const number = Number(rawNumber);
 
-    const content = normalizeContent(body);
+    const imageUrls = normalizeImages(body);
 
     if (!comicId || Number.isNaN(comicId)) {
       return NextResponse.json(
@@ -73,14 +88,14 @@ export async function POST(req: Request) {
             comicId,
             title,
             number,
-            contentLength: content.length,
+            imageCount: imageUrls.length,
           },
         },
         { status: 400 }
       );
     }
 
-    if (!title.trim()) {
+    if (!title) {
       return NextResponse.json(
         {
           message: "Chapter нэр дутуу байна",
@@ -88,7 +103,7 @@ export async function POST(req: Request) {
             comicId,
             title,
             number,
-            contentLength: content.length,
+            imageCount: imageUrls.length,
           },
         },
         { status: 400 }
@@ -103,14 +118,14 @@ export async function POST(req: Request) {
             comicId,
             title,
             number,
-            contentLength: content.length,
+            imageCount: imageUrls.length,
           },
         },
         { status: 400 }
       );
     }
 
-    if (!content.trim()) {
+    if (imageUrls.length === 0) {
       return NextResponse.json(
         {
           message: "Chapter зураг дутуу байна",
@@ -118,7 +133,7 @@ export async function POST(req: Request) {
             comicId,
             title,
             number,
-            contentLength: content.length,
+            imageCount: imageUrls.length,
           },
         },
         { status: 400 }
@@ -138,10 +153,12 @@ export async function POST(req: Request) {
       );
     }
 
-    const sameChapter = await prisma.chapter.findFirst({
+    const sameChapter = await prisma.chapter.findUnique({
       where: {
-        comicId,
-        number,
+        comicId_number: {
+          comicId,
+          number,
+        },
       },
     });
 
@@ -157,9 +174,21 @@ export async function POST(req: Request) {
     const chapter = await prisma.chapter.create({
       data: {
         comicId,
-        title: title.trim(),
+        title,
         number,
-        content,
+        images: {
+          create: imageUrls.map((imageUrl, index) => ({
+            imageUrl,
+            order: index + 1,
+          })),
+        },
+      },
+      include: {
+        images: {
+          orderBy: {
+            order: "asc",
+          },
+        },
       },
     });
 
