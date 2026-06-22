@@ -23,7 +23,7 @@ const plans = [
   {
     name: "1 жил",
     price: "44,000₮",
-    desc: "Бүтэн жилийн premium access",
+    desc: "Бүтэн жилийн premium эрх",
     best: false,
   },
 ];
@@ -42,12 +42,10 @@ export default function PremiumPage() {
           </p>
 
           <h1 className="mt-3 max-w-3xl text-4xl font-bold leading-tight tracking-[-0.03em] text-white md:text-6xl">
-            Premium эрх аваад бүх manga-г чөлөөтэй уншаарай
+            Premium эрх авсанаар бүх зурагт номнуудыг хязгааргүй унших боломжтой.
           </h1>
 
           <p className="mt-4 max-w-2xl text-sm font-medium leading-7 text-zinc-400 md:text-base">
-            Өөрт тохирох багцаа сонгоод доорх данс руу төлбөрөө шилжүүлнэ.
-            Гүйлгээний утган дээр өөрийн имэйл эсвэл username-ээ бичээрэй.
           </p>
         </div>
 
@@ -99,14 +97,13 @@ export default function PremiumPage() {
             </p>
 
             <h2 className="mt-4 max-w-xl text-3xl font-bold leading-tight tracking-[-0.03em] text-white md:text-4xl">
-              Энэ данс руу төлбөр хийхдээ гүйлгээний утган дээрээ имэйл эсвэл
-              username бичнэ
+              Төлбөр хийхдээ гүйлгээний утган дээрээ имэйл ээ бичнэ үү.
             </h2>
 
             <p className="mt-4 max-w-xl text-sm font-medium leading-7 text-zinc-400">
               Төлбөр орсны дараа admin premium эрхийг баталгаажуулна. Хэрвээ
-              төлбөр хийсэн ч эрх ороогүй бол profile хэсгээр эсвэл admin-тай
-              холбогдоорой.
+              төлбөр хийсэн ч эрх ороогүй бол page хуудас руу
+              хандана уу.
             </p>
           </div>
 
@@ -119,7 +116,7 @@ export default function PremiumPage() {
             <div className="rounded-2xl bg-black/45 p-5">
               <p className="text-sm font-medium text-zinc-500">Данс</p>
               <p className="mt-1 text-lg font-bold text-white">
-                Энд өөрийн дансаа бичнэ
+                45000 500 5779514888
               </p>
             </div>
 

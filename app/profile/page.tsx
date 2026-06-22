@@ -58,12 +58,12 @@ export default function ProfilePage() {
                 {user.name.slice(0, 1).toUpperCase()}
               </div>
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.3em] text-violet-300">User profile</p>
+                <p className="text-xs font-black uppercase tracking-[0.3em] text-violet-300">Хэрэглэгчийн булан</p>
                 <h1 className="mt-1 text-4xl font-black">{user.name}</h1>
                 <p className="text-zinc-400">{user.email}</p>
               </div>
             </div>
-            <button onClick={logout} className="rounded-2xl border border-white/10 px-5 py-3 font-black hover:bg-white/10">Logout</button>
+            <button onClick={logout} className="rounded-2xl border border-white/10 px-5 py-3 font-black hover:bg-white/10">Гарах</button>
           </div>
 
           <div className="mt-8 grid gap-4 md:grid-cols-3">
@@ -74,7 +74,7 @@ export default function ProfilePage() {
 
           <div className="mt-8 rounded-[28px] border border-violet-400/30 bg-violet-500/10 p-6">
             <h2 className="text-2xl font-black">Premium эрх авах</h2>
-            <p className="mt-2 text-zinc-300">Premium эрхтэй хэрэглэгч бүх manga/chapter унших боломжтой.</p>
+            <p className="mt-2 text-zinc-300">Premium эрх авсанаар бүх гаргалтуудыг хязгааргүй унших болоижтой</p>
             <Link href="/premium" className="mt-5 inline-block rounded-2xl bg-white px-5 py-3 font-black text-black">Premium авах</Link>
           </div>
         </div>

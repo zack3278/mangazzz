@@ -30,10 +30,8 @@ export default function LoginPage() {
     <main className="grid min-h-screen place-items-center bg-[#080711] px-4 text-white">
       <div className="w-full max-w-md rounded-[32px] border border-white/10 bg-white/[0.05] p-7 shadow-2xl shadow-black/50 backdrop-blur">
         <Link href="/" className="mb-8 inline-flex items-center gap-3 font-black"><span className="grid h-10 w-10 place-items-center rounded-2xl bg-white text-black">M</span>MangaZet</Link>
-        <p className="text-xs font-black uppercase tracking-[0.35em] text-violet-300">Welcome back</p>
+        <p className="text-xs font-black uppercase tracking-[0.35em] text-violet-300">Тавтай морил</p>
         <h1 className="mt-2 text-4xl font-black">Нэвтрэх</h1>
-        <p className="mt-2 text-sm text-zinc-400">Premium унших эрх, profile, admin/editor panel рүү орно.</p>
-
         <form onSubmit={submit} className="mt-7 space-y-4">
           <input className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-4 outline-none focus:border-violet-400" placeholder="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           <input className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-4 outline-none focus:border-violet-400" placeholder="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />

@@ -108,7 +108,7 @@ export default function Navbar() {
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-red-700 text-xs font-bold shadow-[0_0_24px_rgba(220,38,38,0.55)]">
             M
           </span>
-          <span className="hidden text-sm font-bold sm:block">MangaZzz</span>
+          <span className="hidden text-sm font-bold sm:block">MangaZet</span>
         </Link>
 
         <form
@@ -128,7 +128,7 @@ export default function Navbar() {
             href="/"
             className="rounded-lg px-3 py-2 text-xs font-bold text-zinc-300 hover:bg-white/10 hover:text-white"
           >
-            Home
+            Нүүр
           </Link>
 
           <Link
@@ -144,7 +144,7 @@ export default function Navbar() {
                 href="/profile"
                 className="rounded-lg px-3 py-2 text-xs font-bold text-zinc-300 hover:bg-white/10 hover:text-white"
               >
-                Profile
+                Хэрэглэгч
               </Link>
 
               {(user.role === "ADMIN" || user.role === "EDITOR") && (
@@ -152,7 +152,7 @@ export default function Navbar() {
                   href="/editor"
                   className="rounded-lg px-3 py-2 text-xs font-bold text-zinc-300 hover:bg-white/10 hover:text-white"
                 >
-                  Editor
+                  Эдитор
                 </Link>
               )}
 
@@ -161,7 +161,7 @@ export default function Navbar() {
                   href="/admin"
                   className="rounded-lg px-3 py-2 text-xs font-bold text-zinc-300 hover:bg-white/10 hover:text-white"
                 >
-                  Admin
+                  Админ
                 </Link>
               )}
 
@@ -170,7 +170,7 @@ export default function Navbar() {
                 onClick={logout}
                 className="rounded-lg bg-zinc-800 px-3 py-2 text-xs font-bold text-white hover:bg-red-600"
               >
-                Logout
+                Гарах
               </button>
             </>
           ) : (
@@ -178,7 +178,7 @@ export default function Navbar() {
               href="/login"
               className="rounded-lg bg-red-700 px-3 py-2 text-xs font-bold text-white hover:bg-red-600"
             >
-              Login
+              Нэвтрэх
             </Link>
           )}
         </nav>
@@ -190,7 +190,7 @@ export default function Navbar() {
                 href="/profile"
                 className="rounded-lg bg-white/10 px-3 py-2 text-xs font-bold text-white"
               >
-                Profile
+                Хэрэглэгч
               </Link>
 
               <button
@@ -198,7 +198,7 @@ export default function Navbar() {
                 onClick={logout}
                 className="rounded-lg bg-red-700 px-3 py-2 text-xs font-bold text-white"
               >
-                Logout
+                Гарах
               </button>
             </>
           ) : (
@@ -206,7 +206,7 @@ export default function Navbar() {
               href="/login"
               className="rounded-lg bg-red-700 px-3 py-2 text-xs font-bold text-white"
             >
-              Login
+              Нэвтрэх
             </Link>
           )}
         </div>

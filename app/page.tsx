@@ -231,7 +231,7 @@ export default async function HomePage({ searchParams }: Props) {
       <section className="mt-4 w-full">
         <div className="mb-3 flex items-center gap-2 px-2 sm:px-6">
           <span className="text-xs text-white">✿</span>
-          <h2 className="text-sm font-bold text-white">Popular Today</h2>
+          <h2 className="text-sm font-bold text-white">Өнөөдөр алдартай</h2>
         </div>
 
         {topRow.length > 0 ? (
@@ -242,7 +242,7 @@ export default async function HomePage({ searchParams }: Props) {
           </div>
         ) : (
           <div className="mx-3 rounded-xl border border-white/10 bg-[#090909] p-6 text-center text-sm font-bold text-zinc-500">
-            Manga байхгүй байна.
+            Зурагт ном байхгүй байна.
           </div>
         )}
       </section>
@@ -255,11 +255,11 @@ export default async function HomePage({ searchParams }: Props) {
             </h2>
 
             <span className="rounded-md border border-red-500/40 bg-red-600/10 px-3 py-1 text-[10px] font-bold text-red-400">
-              ♨ Hot
+              ♨ Эрэлттэй
             </span>
 
             <span className="rounded-md border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-bold text-zinc-400">
-              ◎ New
+              ◎ Шинэ
             </span>
           </div>
 
@@ -286,7 +286,7 @@ export default async function HomePage({ searchParams }: Props) {
         {latestChapters.length > 0 && (
           <div className="mt-8">
             <h3 className="mb-3 text-base font-bold text-white">
-              Recent Chapter Updates
+              Шинээр орсон бүлгүүд
             </h3>
 
             <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
