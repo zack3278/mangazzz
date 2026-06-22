@@ -87,3 +87,8 @@ textarea {
   font-size: 12px;
   font-weight: 800;
 }
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}

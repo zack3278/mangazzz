@@ -1,97 +1,55 @@
-"use client";
-
 import Link from "next/link";
-import { useEffect, useState } from "react";
-
-type User = {
-  id: number;
-  name: string;
-  email: string;
-  role: "USER" | "EDITOR" | "ADMIN";
-  isPremium: boolean;
-};
 
 export default function Navbar() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    async function loadUser() {
-      try {
-        const res = await fetch("/api/auth/me", { cache: "no-store", credentials: "include" });
-        const data = await res.json();
-        setUser(res.ok && data.user ? data.user : null);
-      } catch {
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadUser();
-  }, []);
-
-  async function logout() {
-    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-    window.location.href = "/login";
-  }
-
-  const links = (
-    <>
-      <Link href="/" onClick={() => setOpen(false)}>Series</Link>
-      <Link href="/premium" onClick={() => setOpen(false)}>Premium</Link>
-      {!loading && user?.role === "ADMIN" && <Link href="/admin" onClick={() => setOpen(false)}>Admin</Link>}
-      {!loading && (user?.role === "EDITOR" || user?.role === "ADMIN") && <Link href="/editor" onClick={() => setOpen(false)}>Editor</Link>}
-    </>
-  );
-
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#080711]/85 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white text-xl font-black text-black">M</span>
-          <span><b className="block text-lg leading-none">MangaZet</b><small className="font-black tracking-[0.32em] text-violet-300">SCANS</small></span>
+    <header className="sticky top-0 z-50 border-b border-white/5 bg-[#020202]/95 backdrop-blur">
+      <div className="mx-auto flex h-14 max-w-[1120px] items-center gap-3 px-3 sm:px-5">
+        <Link href="/" className="flex items-center gap-2 font-black text-white">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-red-700 text-xs shadow-[0_0_24px_rgba(220,38,38,0.55)]">
+            M
+          </span>
+          <span className="hidden text-sm sm:block">MangaZzz</span>
         </Link>
 
-        <nav className="hidden items-center gap-7 text-sm font-bold text-zinc-200 md:flex">{links}</nav>
+        <form
+          action="/"
+          className="ml-auto flex h-9 min-w-0 flex-1 max-w-[460px] items-center rounded-full border border-white/10 bg-[#0a0a0a] px-3"
+        >
+          <span className="mr-2 text-zinc-500">⌕</span>
+          <input
+            name="q"
+            placeholder="Search"
+            className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-white outline-none placeholder:text-zinc-600"
+          />
+        </form>
 
-        <div className="hidden items-center gap-3 md:flex">
-          {loading ? <span className="text-sm text-zinc-500">...</span> : user ? (
-            <>
-              <Link href="/profile" className="rounded-2xl border border-white/10 px-4 py-2 text-sm font-black hover:bg-white/10">{user.name}</Link>
-              <button onClick={logout} className="rounded-2xl bg-white px-4 py-2 text-sm font-black text-black">Гарах</button>
-            </>
-          ) : (
-            <>
-              <Link href="/login" className="rounded-2xl border border-white/10 px-4 py-2 text-sm font-black hover:bg-white/10">Нэвтрэх</Link>
-              <Link href="/register" className="rounded-2xl bg-white px-4 py-2 text-sm font-black text-black">Бүртгүүлэх</Link>
-            </>
-          )}
-        </div>
-
-        <button onClick={() => setOpen((v) => !v)} className="grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-white/[0.04] text-2xl md:hidden" aria-label="Menu">
-          {open ? "×" : "☰"}
-        </button>
+        <nav className="hidden items-center gap-1 md:flex">
+          <Link
+            href="/"
+            className="rounded-lg px-3 py-2 text-xs font-black text-zinc-300 hover:bg-white/10 hover:text-white"
+          >
+            Home
+          </Link>
+          <Link
+            href="/premium"
+            className="rounded-lg px-3 py-2 text-xs font-black text-zinc-300 hover:bg-white/10 hover:text-white"
+          >
+            Premium
+          </Link>
+          <Link
+            href="/profile"
+            className="rounded-lg px-3 py-2 text-xs font-black text-zinc-300 hover:bg-white/10 hover:text-white"
+          >
+            Profile
+          </Link>
+          <Link
+            href="/login"
+            className="rounded-lg bg-red-700 px-3 py-2 text-xs font-black text-white hover:bg-red-600"
+          >
+            Login
+          </Link>
+        </nav>
       </div>
-
-      {open && (
-        <div className="mx-4 mb-4 grid gap-2 rounded-3xl border border-white/10 bg-zinc-950 p-4 text-sm font-black md:hidden">
-          {links}
-          <div className="mt-2 grid gap-2 border-t border-white/10 pt-3">
-            {loading ? null : user ? (
-              <>
-                <Link href="/profile" onClick={() => setOpen(false)} className="rounded-2xl border border-white/10 px-4 py-3">{user.name}</Link>
-                <button onClick={logout} className="rounded-2xl bg-white px-4 py-3 text-left text-black">Гарах</button>
-              </>
-            ) : (
-              <>
-                <Link href="/login" onClick={() => setOpen(false)} className="rounded-2xl border border-white/10 px-4 py-3">Нэвтрэх</Link>
-                <Link href="/register" onClick={() => setOpen(false)} className="rounded-2xl bg-white px-4 py-3 text-black">Бүртгүүлэх</Link>
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </header>
   );
 }
