@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect, notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import Navbar from "@/components/Navbar";
@@ -32,51 +32,47 @@ export default async function ReadChapterPage({ params }: Props) {
     notFound();
   }
 
-  const user = await getCurrentUser();
+  const currentUser = await getCurrentUser();
 
-  if (!user) {
+  if (!currentUser) {
     redirect(`/login?next=/read/${chapterId}`);
   }
 
-  const dbUser = await prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: {
-      id: user.id,
+      id: currentUser.id,
     },
     select: {
       id: true,
-      role: true,
       isPremium: true,
       premiumExpiresAt: true,
     },
   });
 
-  if (!dbUser) {
+  if (!user) {
     redirect(`/login?next=/read/${chapterId}`);
   }
 
   const premiumExpired =
-    dbUser.isPremium &&
-    dbUser.premiumExpiresAt !== null &&
-    new Date(dbUser.premiumExpiresAt).getTime() <= Date.now();
+    user.isPremium &&
+    user.premiumExpiresAt !== null &&
+    new Date(user.premiumExpiresAt).getTime() <= Date.now();
 
   if (premiumExpired) {
     await prisma.user.update({
       where: {
-        id: dbUser.id,
+        id: user.id,
       },
       data: {
         isPremium: false,
         premiumExpiresAt: null,
       },
     });
+
+    redirect("/premium");
   }
 
-  const canRead =
-    dbUser.role === "ADMIN" ||
-    dbUser.role === "EDITOR" ||
-    (dbUser.isPremium && !premiumExpired);
-
-  if (!canRead) {
+  if (!user.isPremium) {
     redirect("/premium");
   }
 
@@ -98,6 +94,40 @@ export default async function ReadChapterPage({ params }: Props) {
     notFound();
   }
 
+  const previousChapter = await prisma.chapter.findFirst({
+    where: {
+      comicId: chapter.comicId,
+      number: {
+        lt: chapter.number,
+      },
+    },
+    orderBy: {
+      number: "desc",
+    },
+    select: {
+      id: true,
+      number: true,
+      title: true,
+    },
+  });
+
+  const nextChapter = await prisma.chapter.findFirst({
+    where: {
+      comicId: chapter.comicId,
+      number: {
+        gt: chapter.number,
+      },
+    },
+    orderBy: {
+      number: "asc",
+    },
+    select: {
+      id: true,
+      number: true,
+      title: true,
+    },
+  });
+
   await prisma.comic.update({
     where: {
       id: chapter.comicId,
@@ -113,8 +143,8 @@ export default async function ReadChapterPage({ params }: Props) {
     <main className="min-h-screen bg-black text-white">
       <Navbar />
 
-      <section className="mx-auto max-w-5xl px-4 py-6">
-        <div className="mb-6 rounded-2xl border border-white/10 bg-zinc-950 p-4">
+      <section className="mx-auto max-w-5xl px-3 py-5 sm:px-4">
+        <div className="mb-4 rounded-2xl border border-white/10 bg-[#090909] p-4">
           <Link
             href={`/comic/${chapter.comic.slug}`}
             className="text-sm font-bold text-red-400 hover:text-red-300"
@@ -122,17 +152,51 @@ export default async function ReadChapterPage({ params }: Props) {
             ← {chapter.comic.title}
           </Link>
 
-          <h1 className="mt-3 text-2xl font-black">
+          <h1 className="mt-3 text-xl font-black sm:text-2xl">
             Chapter {chapter.number}: {chapter.title}
           </h1>
 
           <p className="mt-1 text-sm text-zinc-500">
             {chapter.images.length} pages
           </p>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {previousChapter ? (
+              <Link
+                href={`/read/${previousChapter.id}`}
+                className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold text-white hover:bg-red-600"
+              >
+                ← Өмнөх chapter
+                <span className="mt-1 block text-xs font-medium text-zinc-400">
+                  Chapter {previousChapter.number}: {previousChapter.title}
+                </span>
+              </Link>
+            ) : (
+              <div className="rounded-xl border border-white/10 bg-zinc-900/50 px-4 py-3 text-sm font-bold text-zinc-600">
+                ← Өмнөх chapter байхгүй
+              </div>
+            )}
+
+            {nextChapter ? (
+              <Link
+                href={`/read/${nextChapter.id}`}
+                className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold text-white hover:bg-red-600 sm:text-right"
+              >
+                Дараагийн chapter →
+                <span className="mt-1 block text-xs font-medium text-zinc-400">
+                  Chapter {nextChapter.number}: {nextChapter.title}
+                </span>
+              </Link>
+            ) : (
+              <div className="rounded-xl border border-white/10 bg-zinc-900/50 px-4 py-3 text-sm font-bold text-zinc-600 sm:text-right">
+                Дараагийн chapter байхгүй →
+              </div>
+            )}
+          </div>
         </div>
 
         {chapter.images.length === 0 ? (
-          <div className="rounded-2xl border border-white/10 bg-zinc-950 p-10 text-center text-zinc-400">
+          <div className="rounded-2xl border border-white/10 bg-[#090909] p-10 text-center text-zinc-400">
             Энэ chapter дээр зураг байхгүй байна.
           </div>
         ) : (
@@ -142,11 +206,40 @@ export default async function ReadChapterPage({ params }: Props) {
                 key={image.id}
                 src={getImageSrc(image.imageUrl)}
                 alt={`Page ${image.order}`}
-                className="h-auto w-full max-w-full"
+                className="h-auto w-full max-w-full select-none"
+                loading="lazy"
               />
             ))}
           </div>
         )}
+
+        <div className="mt-6 grid gap-3 rounded-2xl border border-white/10 bg-[#090909] p-4 sm:grid-cols-2">
+          {previousChapter ? (
+            <Link
+              href={`/read/${previousChapter.id}`}
+              className="rounded-xl bg-zinc-900 px-4 py-3 text-sm font-bold text-white hover:bg-red-600"
+            >
+              ← Өмнөх chapter
+            </Link>
+          ) : (
+            <div className="rounded-xl bg-zinc-900/50 px-4 py-3 text-sm font-bold text-zinc-600">
+              ← Өмнөх chapter байхгүй
+            </div>
+          )}
+
+          {nextChapter ? (
+            <Link
+              href={`/read/${nextChapter.id}`}
+              className="rounded-xl bg-zinc-900 px-4 py-3 text-sm font-bold text-white hover:bg-red-600 sm:text-right"
+            >
+              Дараагийн chapter →
+            </Link>
+          ) : (
+            <div className="rounded-xl bg-zinc-900/50 px-4 py-3 text-sm font-bold text-zinc-600 sm:text-right">
+              Дараагийн chapter байхгүй →
+            </div>
+          )}
+        </div>
       </section>
     </main>
   );
