@@ -7,6 +7,24 @@ type Props = {
   searchParams: Promise<{ q?: string }>;
 };
 
+function getCoverSrc(src?: string | null) {
+  if (!src) return "/placeholder-cover.jpg";
+
+  const clean = src.trim();
+
+  if (!clean) return "/placeholder-cover.jpg";
+
+  if (clean.startsWith("http://") || clean.startsWith("https://")) {
+    return clean;
+  }
+
+  if (clean.startsWith("/")) {
+    return clean;
+  }
+
+  return `/${clean}`;
+}
+
 function timeAgo(date?: Date | string | null) {
   if (!date) return "New";
 
@@ -29,13 +47,13 @@ function SmallCover({ comic }: { comic: any }) {
     <Link href={`/comic/${comic.slug}`} className="group w-[118px] shrink-0">
       <div className="relative h-[178px] overflow-hidden rounded-md bg-zinc-900 shadow-[0_10px_30px_rgba(0,0,0,0.7)] ring-1 ring-white/10">
         <img
-          src={comic.coverImage || "/placeholder-cover.jpg"}
+          src={getCoverSrc(comic.coverImage)}
           alt={comic.title}
           className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
         />
 
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/70 to-transparent px-2 pb-2 pt-8">
-          <p className="line-clamp-2 text-[11px] font-black leading-tight text-white drop-shadow">
+          <p className="line-clamp-2 text-[11px] font-bold leading-tight text-white drop-shadow">
             {comic.title}
           </p>
         </div>
@@ -59,16 +77,16 @@ function MangaBoxCard({ comic }: { comic: any }) {
           className="relative block min-h-[160px] overflow-hidden bg-zinc-900"
         >
           <img
-            src={comic.coverImage || "/placeholder-cover.jpg"}
+            src={getCoverSrc(comic.coverImage)}
             alt={comic.title}
             className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
           />
 
-          <span className="absolute right-1 top-1 rounded bg-pink-500 px-1.5 py-0.5 text-[8px] font-black text-white">
+          <span className="absolute right-1 top-1 rounded bg-pink-500 px-1.5 py-0.5 text-[8px] font-bold text-white">
             Manhwa
           </span>
 
-          <span className="absolute bottom-1 left-1 rounded bg-black/80 px-1.5 py-0.5 text-[8px] font-black text-white">
+          <span className="absolute bottom-1 left-1 rounded bg-black/80 px-1.5 py-0.5 text-[8px] font-bold text-white">
             Pinned
           </span>
         </Link>
@@ -76,15 +94,13 @@ function MangaBoxCard({ comic }: { comic: any }) {
         <div className="flex min-w-0 flex-col p-3">
           <Link
             href={`/comic/${comic.slug}`}
-            className="line-clamp-2 text-[14px] font-black leading-tight text-white hover:text-red-300"
+            className="line-clamp-2 text-[14px] font-bold leading-tight text-white hover:text-red-300"
           >
             {comic.title}
           </Link>
 
           <div className="mt-1 flex items-center gap-2 text-[10px] font-bold">
-            <span className="text-yellow-400">
-              ★ {(comic.rating || 9.4).toString()}
-            </span>
+            <span className="text-yellow-400">★ 9.4</span>
             <span className="text-emerald-400">● Ongoing</span>
           </div>
 
@@ -99,7 +115,7 @@ function MangaBoxCard({ comic }: { comic: any }) {
               <Link
                 key={chapter.id}
                 href={`/read/${chapter.id}`}
-                className="flex items-center justify-between rounded-md border border-white/10 bg-black/60 px-2 py-1.5 text-[10px] font-black text-zinc-200 hover:border-red-500/50 hover:bg-red-500/10"
+                className="flex items-center justify-between rounded-md border border-white/10 bg-black/60 px-2 py-1.5 text-[10px] font-bold text-zinc-200 hover:border-red-500/50 hover:bg-red-500/10"
               >
                 <span>Chapter {chapter.number}</span>
                 <span className={index === 0 ? "text-zinc-300" : "text-zinc-500"}>
@@ -127,13 +143,13 @@ function ChapterRow({ chapter }: { chapter: any }) {
       className="grid grid-cols-[54px_1fr_auto] items-center gap-3 rounded-lg border border-white/10 bg-[#0a0a0a] p-2 transition hover:border-red-500/50 hover:bg-red-500/10"
     >
       <img
-        src={chapter.comic.coverImage || "/placeholder-cover.jpg"}
+        src={getCoverSrc(chapter.comic.coverImage)}
         alt={chapter.comic.title}
         className="h-16 w-12 rounded object-cover"
       />
 
       <div className="min-w-0">
-        <p className="line-clamp-1 text-xs font-black text-white">
+        <p className="line-clamp-1 text-xs font-bold text-white">
           {chapter.comic.title}
         </p>
         <p className="mt-1 text-[11px] font-bold text-zinc-400">
@@ -141,7 +157,7 @@ function ChapterRow({ chapter }: { chapter: any }) {
         </p>
       </div>
 
-      <span className="rounded-full bg-red-600 px-2 py-1 text-[10px] font-black text-white">
+      <span className="rounded-full bg-red-600 px-2 py-1 text-[10px] font-bold text-white">
         Read
       </span>
     </Link>
@@ -215,7 +231,7 @@ export default async function HomePage({ searchParams }: Props) {
       <section className="mt-4 w-full">
         <div className="mb-3 flex items-center gap-2 px-2 sm:px-6">
           <span className="text-xs text-white">✿</span>
-          <h2 className="text-sm font-black text-white">Popular Today</h2>
+          <h2 className="text-sm font-bold text-white">Popular Today</h2>
         </div>
 
         {topRow.length > 0 ? (
@@ -234,15 +250,15 @@ export default async function HomePage({ searchParams }: Props) {
       <section className="mx-auto mt-6 max-w-[1500px] px-3 pb-12 sm:px-6">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex flex-wrap items-center gap-3">
-            <h2 className="text-lg font-black text-white">
+            <h2 className="text-lg font-bold text-white">
               {q ? `Search: ${q}` : "Latest Releases"}
             </h2>
 
-            <span className="rounded-md border border-red-500/40 bg-red-600/10 px-3 py-1 text-[10px] font-black text-red-400">
+            <span className="rounded-md border border-red-500/40 bg-red-600/10 px-3 py-1 text-[10px] font-bold text-red-400">
               ♨ Hot
             </span>
 
-            <span className="rounded-md border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-black text-zinc-400">
+            <span className="rounded-md border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-bold text-zinc-400">
               ◎ New
             </span>
           </div>
@@ -269,7 +285,7 @@ export default async function HomePage({ searchParams }: Props) {
 
         {latestChapters.length > 0 && (
           <div className="mt-8">
-            <h3 className="mb-3 text-base font-black text-white">
+            <h3 className="mb-3 text-base font-bold text-white">
               Recent Chapter Updates
             </h3>
 
