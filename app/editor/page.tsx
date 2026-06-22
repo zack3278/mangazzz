@@ -13,7 +13,6 @@ type Comic = {
   genre?: string | null;
   description?: string | null;
   coverImage?: string | null;
-  createdAt?: string;
   chapters?: Chapter[];
 };
 
@@ -23,7 +22,6 @@ type Chapter = {
   number: number;
   content?: string | null;
   comicId?: string;
-  createdAt?: string;
 };
 
 function makeSlug(text: string) {
@@ -43,14 +41,8 @@ function getCoverSrc(src?: string | null) {
   if (!clean) return "/placeholder-cover.jpg";
   if (clean.startsWith("blob:")) return "/placeholder-cover.jpg";
   if (clean.includes("fakepath")) return "/placeholder-cover.jpg";
-
-  if (clean.startsWith("http://") || clean.startsWith("https://")) {
-    return clean;
-  }
-
-  if (clean.startsWith("/")) {
-    return clean;
-  }
+  if (clean.startsWith("http://") || clean.startsWith("https://")) return clean;
+  if (clean.startsWith("/")) return clean;
 
   return `/${clean}`;
 }
@@ -58,22 +50,43 @@ function getCoverSrc(src?: string | null) {
 export default function EditorPage() {
   const [comics, setComics] = useState<Comic[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [activeTab, setActiveTab] = useState<"manga" | "chapter">("manga");
 
   const [savingManga, setSavingManga] = useState(false);
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [author, setAuthor] = useState("");
-  const [genre, setGenre] = useState("");
+  const [genre1, setGenre1] = useState("");
+  const [genre2, setGenre2] = useState("");
+  const [genre3, setGenre3] = useState("");
   const [description, setDescription] = useState("");
   const [coverImage, setCoverImage] = useState("");
+  const [uploadingCover, setUploadingCover] = useState(false);
 
   const [savingChapter, setSavingChapter] = useState(false);
   const [chapterComicId, setChapterComicId] = useState("");
   const [chapterTitle, setChapterTitle] = useState("");
   const [chapterNumber, setChapterNumber] = useState("");
-  const [chapterContent, setChapterContent] = useState("");
+  const [chapterImages, setChapterImages] = useState<string[]>([]);
+  const [uploadingChapterImages, setUploadingChapterImages] = useState(false);
+
+  async function uploadImage(file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Upload алдаа");
+    }
+
+    return data.url as string;
+  }
 
   async function loadComics() {
     try {
@@ -112,6 +125,48 @@ export default function EditorPage() {
     }
   }
 
+  async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingCover(true);
+
+    try {
+      const url = await uploadImage(file);
+      setCoverImage(url);
+    } catch (error) {
+      console.error(error);
+      alert("Cover зураг upload хийхэд алдаа гарлаа");
+    } finally {
+      setUploadingCover(false);
+    }
+  }
+
+  async function handleChapterImagesUpload(
+    e: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setUploadingChapterImages(true);
+
+    try {
+      const urls: string[] = [];
+
+      for (const file of files) {
+        const url = await uploadImage(file);
+        urls.push(url);
+      }
+
+      setChapterImages((prev) => [...prev, ...urls]);
+    } catch (error) {
+      console.error(error);
+      alert("Chapter зураг upload хийхэд алдаа гарлаа");
+    } finally {
+      setUploadingChapterImages(false);
+    }
+  }
+
   async function handleMangaSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -125,6 +180,16 @@ export default function EditorPage() {
       return;
     }
 
+    if (!coverImage.trim()) {
+      alert("Cover зураг upload хийнэ үү");
+      return;
+    }
+
+    const genres = [genre1, genre2, genre3]
+      .map((g) => g.trim())
+      .filter(Boolean)
+      .join(", ");
+
     setSavingManga(true);
 
     try {
@@ -137,7 +202,7 @@ export default function EditorPage() {
           title: title.trim(),
           slug: slug.trim(),
           author: author.trim(),
-          genre: genre.trim(),
+          genre: genres,
           description: description.trim(),
           coverImage: coverImage.trim(),
         }),
@@ -155,7 +220,9 @@ export default function EditorPage() {
       setTitle("");
       setSlug("");
       setAuthor("");
-      setGenre("");
+      setGenre1("");
+      setGenre2("");
+      setGenre3("");
       setDescription("");
       setCoverImage("");
 
@@ -194,8 +261,8 @@ export default function EditorPage() {
       return;
     }
 
-    if (!chapterContent.trim()) {
-      alert("Chapter content оруулна уу");
+    if (chapterImages.length === 0) {
+      alert("Chapter зураг upload хийнэ үү");
       return;
     }
 
@@ -211,7 +278,7 @@ export default function EditorPage() {
           comicId: chapterComicId,
           title: chapterTitle.trim(),
           number: parsedNumber,
-          content: chapterContent.trim(),
+          content: chapterImages.join("\n"),
         }),
       });
 
@@ -226,7 +293,7 @@ export default function EditorPage() {
 
       setChapterTitle("");
       setChapterNumber("");
-      setChapterContent("");
+      setChapterImages([]);
 
       await loadComics();
     } catch (error) {
@@ -284,7 +351,7 @@ export default function EditorPage() {
                 : "rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-bold text-zinc-300 hover:bg-white/10"
             }
           >
-            Chapter нэмэх
+            Chapter зураг нэмэх
           </button>
         </div>
 
@@ -335,28 +402,61 @@ export default function EditorPage() {
                   />
                 </div>
 
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-zinc-300">
-                    Genre
-                  </label>
-                  <input
-                    value={genre}
-                    onChange={(e) => setGenre(e.target.value)}
-                    placeholder="Action, Fantasy"
-                    className="w-full rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-red-500"
-                  />
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-zinc-300">
+                      Genre 1
+                    </label>
+                    <input
+                      value={genre1}
+                      onChange={(e) => setGenre1(e.target.value)}
+                      placeholder="Action"
+                      className="w-full rounded-xl border border-white/10 bg-black px-3 py-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-red-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-zinc-300">
+                      Genre 2
+                    </label>
+                    <input
+                      value={genre2}
+                      onChange={(e) => setGenre2(e.target.value)}
+                      placeholder="Fantasy"
+                      className="w-full rounded-xl border border-white/10 bg-black px-3 py-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-red-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-zinc-300">
+                      Genre 3
+                    </label>
+                    <input
+                      value={genre3}
+                      onChange={(e) => setGenre3(e.target.value)}
+                      placeholder="Murim"
+                      className="w-full rounded-xl border border-white/10 bg-black px-3 py-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-red-500"
+                    />
+                  </div>
                 </div>
 
                 <div>
                   <label className="mb-2 block text-sm font-bold text-zinc-300">
-                    Cover image URL
+                    Cover зураг
                   </label>
+
                   <input
-                    value={coverImage}
-                    onChange={(e) => setCoverImage(e.target.value)}
-                    placeholder="https://... эсвэл /cover/manga.jpg"
-                    className="w-full rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-red-500"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCoverUpload}
+                    className="w-full rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-zinc-300 file:mr-4 file:rounded-lg file:border-0 file:bg-red-600 file:px-3 file:py-2 file:text-sm file:font-bold file:text-white hover:file:bg-red-500"
                   />
+
+                  {uploadingCover && (
+                    <p className="mt-2 text-sm text-zinc-400">
+                      Cover upload хийж байна...
+                    </p>
+                  )}
 
                   {coverImage && (
                     <div className="mt-3 rounded-xl border border-white/10 bg-black/50 p-3">
@@ -384,7 +484,7 @@ export default function EditorPage() {
 
                 <button
                   type="submit"
-                  disabled={savingManga}
+                  disabled={savingManga || uploadingCover}
                   className="w-full rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {savingManga ? "Хадгалж байна..." : "Manga нэмэх"}
@@ -397,7 +497,7 @@ export default function EditorPage() {
               className="rounded-2xl border border-white/10 bg-[#090909] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)]"
             >
               <h2 className="mb-4 text-xl font-bold text-white">
-                Шинэ chapter нэмэх
+                Chapter зураг нэмэх
               </h2>
 
               <div className="space-y-4">
@@ -457,35 +557,78 @@ export default function EditorPage() {
 
                 <div>
                   <label className="mb-2 block text-sm font-bold text-zinc-300">
-                    Chapter гарчиг
+                    Chapter нэр
                   </label>
                   <input
                     value={chapterTitle}
                     onChange={(e) => setChapterTitle(e.target.value)}
-                    placeholder="Эхлэл"
+                    placeholder="Chapter 1"
                     className="w-full rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-red-500"
                   />
                 </div>
 
                 <div>
                   <label className="mb-2 block text-sm font-bold text-zinc-300">
-                    Chapter content
+                    Chapter зургууд
                   </label>
-                  <textarea
-                    value={chapterContent}
-                    onChange={(e) => setChapterContent(e.target.value)}
-                    rows={12}
-                    placeholder="Chapter-ийн текстээ энд бичнэ..."
-                    className="w-full resize-none rounded-xl border border-white/10 bg-black px-4 py-3 text-sm leading-7 text-white outline-none placeholder:text-zinc-600 focus:border-red-500"
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleChapterImagesUpload}
+                    className="w-full rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-zinc-300 file:mr-4 file:rounded-lg file:border-0 file:bg-red-600 file:px-3 file:py-2 file:text-sm file:font-bold file:text-white hover:file:bg-red-500"
                   />
+
+                  {uploadingChapterImages && (
+                    <p className="mt-2 text-sm text-zinc-400">
+                      Chapter зургууд upload хийж байна...
+                    </p>
+                  )}
+
+                  {chapterImages.length > 0 && (
+                    <div className="mt-3 rounded-xl border border-white/10 bg-black/50 p-3">
+                      <div className="mb-3 flex items-center justify-between">
+                        <p className="text-sm font-bold text-zinc-300">
+                          Upload хийсэн зураг: {chapterImages.length}
+                        </p>
+
+                        <button
+                          type="button"
+                          onClick={() => setChapterImages([])}
+                          className="rounded-lg bg-zinc-800 px-3 py-1 text-xs font-bold text-white hover:bg-red-600"
+                        >
+                          Clear
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2">
+                        {chapterImages.map((url, index) => (
+                          <div
+                            key={`${url}-${index}`}
+                            className="relative overflow-hidden rounded-lg border border-white/10 bg-zinc-900"
+                          >
+                            <img
+                              src={getCoverSrc(url)}
+                              alt={`Page ${index + 1}`}
+                              className="h-36 w-full object-cover"
+                            />
+                            <span className="absolute left-1 top-1 rounded bg-black/80 px-2 py-1 text-[10px] font-bold text-white">
+                              {index + 1}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <button
                   type="submit"
-                  disabled={savingChapter}
+                  disabled={savingChapter || uploadingChapterImages}
                   className="w-full rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {savingChapter ? "Хадгалж байна..." : "Chapter нэмэх"}
+                  {savingChapter ? "Хадгалж байна..." : "Chapter хадгалах"}
                 </button>
               </div>
             </form>
@@ -552,7 +695,7 @@ export default function EditorPage() {
                         }}
                         className="mt-3 rounded-lg bg-red-600 px-3 py-2 text-xs font-bold text-white hover:bg-red-500"
                       >
-                        Chapter нэмэх
+                        Chapter зураг нэмэх
                       </button>
                     </div>
                   </div>

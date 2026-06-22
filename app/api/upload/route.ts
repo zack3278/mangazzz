@@ -12,7 +12,7 @@ export async function POST(req: Request) {
 
     if (!file || !(file instanceof File)) {
       return NextResponse.json(
-        { message: "Зураг сонгогдоогүй байна" },
+        { message: "Файл сонгогдоогүй байна" },
         { status: 400 }
       );
     }
@@ -30,8 +30,7 @@ export async function POST(req: Request) {
     const uploadDir = path.join(process.cwd(), "public", "uploads");
     await mkdir(uploadDir, { recursive: true });
 
-    const originalExt = path.extname(file.name);
-    const ext = originalExt || ".jpg";
+    const ext = path.extname(file.name) || ".jpg";
     const fileName = `${crypto.randomUUID()}${ext}`;
     const filePath = path.join(uploadDir, fileName);
 
@@ -44,7 +43,7 @@ export async function POST(req: Request) {
     console.error("UPLOAD_ERROR:", error);
 
     return NextResponse.json(
-      { message: "Зураг upload хийхэд алдаа гарлаа" },
+      { message: "Upload хийхэд алдаа гарлаа" },
       { status: 500 }
     );
   }
