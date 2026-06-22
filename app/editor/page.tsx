@@ -24,6 +24,12 @@ type Chapter = {
   comicId?: string;
 };
 
+type UploadResult = {
+  message: string;
+  url: string;
+  key: string;
+};
+
 function makeSlug(text: string) {
   return text
     .toLowerCase()
@@ -45,6 +51,25 @@ function getCoverSrc(src?: string | null) {
   if (clean.startsWith("/")) return clean;
 
   return `/${clean}`;
+}
+
+async function uploadImage(file: File, folder: string): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("folder", folder);
+
+  const res = await fetch("/api/upload/r2", {
+    method: "POST",
+    body: formData,
+  });
+
+  const data = (await res.json()) as UploadResult;
+
+  if (!res.ok) {
+    throw new Error(data.message || "Upload алдаа");
+  }
+
+  return data.url;
 }
 
 export default function EditorPage() {
@@ -69,24 +94,6 @@ export default function EditorPage() {
   const [chapterNumber, setChapterNumber] = useState("");
   const [chapterImages, setChapterImages] = useState<string[]>([]);
   const [uploadingChapterImages, setUploadingChapterImages] = useState(false);
-
-  async function uploadImage(file: File) {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const res = await fetch("/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || "Upload алдаа");
-    }
-
-    return data.url as string;
-  }
 
   async function loadComics() {
     try {
@@ -132,7 +139,7 @@ export default function EditorPage() {
     setUploadingCover(true);
 
     try {
-      const url = await uploadImage(file);
+      const url = await uploadImage(file, "manga-covers");
       setCoverImage(url);
     } catch (error) {
       console.error(error);
@@ -148,13 +155,29 @@ export default function EditorPage() {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
+    if (!chapterComicId) {
+      alert("Эхлээд manga сонгоно уу");
+      e.target.value = "";
+      return;
+    }
+
+    if (!chapterNumber.trim()) {
+      alert("Эхлээд chapter дугаар оруулна уу");
+      e.target.value = "";
+      return;
+    }
+
+    const selectedComic = comics.find((comic) => comic.id === chapterComicId);
+    const selectedSlug = selectedComic?.slug || "comic";
+    const folder = `chapters/${selectedSlug}/chapter-${chapterNumber}`;
+
     setUploadingChapterImages(true);
 
     try {
       const urls: string[] = [];
 
       for (const file of files) {
-        const url = await uploadImage(file);
+        const url = await uploadImage(file, folder);
         urls.push(url);
       }
 
@@ -454,7 +477,7 @@ export default function EditorPage() {
 
                   {uploadingCover && (
                     <p className="mt-2 text-sm text-zinc-400">
-                      Cover upload хийж байна...
+                      Cover R2 руу upload хийж байна...
                     </p>
                   )}
 
@@ -465,6 +488,10 @@ export default function EditorPage() {
                         alt="Cover preview"
                         className="h-44 w-32 rounded-lg object-cover"
                       />
+
+                      <p className="mt-2 break-all text-xs text-green-400">
+                        {coverImage}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -507,7 +534,10 @@ export default function EditorPage() {
                   </label>
                   <select
                     value={chapterComicId}
-                    onChange={(e) => setChapterComicId(e.target.value)}
+                    onChange={(e) => {
+                      setChapterComicId(e.target.value);
+                      setChapterImages([]);
+                    }}
                     className="w-full rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-red-500"
                   >
                     <option value="">Manga сонгоно уу</option>
@@ -547,7 +577,10 @@ export default function EditorPage() {
                   </label>
                   <input
                     value={chapterNumber}
-                    onChange={(e) => setChapterNumber(e.target.value)}
+                    onChange={(e) => {
+                      setChapterNumber(e.target.value);
+                      setChapterImages([]);
+                    }}
                     placeholder="1"
                     type="number"
                     min="1"
@@ -580,9 +613,14 @@ export default function EditorPage() {
                     className="w-full rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-zinc-300 file:mr-4 file:rounded-lg file:border-0 file:bg-red-600 file:px-3 file:py-2 file:text-sm file:font-bold file:text-white hover:file:bg-red-500"
                   />
 
+                  <p className="mt-2 text-xs text-zinc-500">
+                    Эхлээд manga сонгоод chapter дугаараа оруулсны дараа зураг
+                    upload хийнэ.
+                  </p>
+
                   {uploadingChapterImages && (
                     <p className="mt-2 text-sm text-zinc-400">
-                      Chapter зургууд upload хийж байна...
+                      Chapter зургууд R2 руу upload хийж байна...
                     </p>
                   )}
 
@@ -692,6 +730,7 @@ export default function EditorPage() {
                           setChapterNumber(
                             String((comic.chapters?.length || 0) + 1)
                           );
+                          setChapterImages([]);
                         }}
                         className="mt-3 rounded-lg bg-red-600 px-3 py-2 text-xs font-bold text-white hover:bg-red-500"
                       >
