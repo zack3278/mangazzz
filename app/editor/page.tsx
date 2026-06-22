@@ -6,7 +6,7 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 
 type Comic = {
-  id: string;
+  id: number;
   title: string;
   slug: string;
   author?: string | null;
@@ -17,11 +17,11 @@ type Comic = {
 };
 
 type Chapter = {
-  id: string;
+  id: number;
   title: string;
   number: number;
   content?: string | null;
-  comicId?: string;
+  comicId?: number;
 };
 
 type UploadResult = {
@@ -142,7 +142,7 @@ export default function EditorPage() {
       const url = await uploadImage(file, "manga-covers");
       setCoverImage(url);
     } catch (error) {
-      console.error(error);
+      console.error("COVER_UPLOAD_ERROR:", error);
       alert("Cover зураг upload хийхэд алдаа гарлаа");
     } finally {
       setUploadingCover(false);
@@ -167,7 +167,10 @@ export default function EditorPage() {
       return;
     }
 
-    const selectedComic = comics.find((comic) => comic.id === chapterComicId);
+    const selectedComic = comics.find(
+      (comic) => String(comic.id) === chapterComicId
+    );
+
     const selectedSlug = selectedComic?.slug || "comic";
     const folder = `chapters/${selectedSlug}/chapter-${chapterNumber}`;
 
@@ -183,7 +186,7 @@ export default function EditorPage() {
 
       setChapterImages((prev) => [...prev, ...urls]);
     } catch (error) {
-      console.error(error);
+      console.error("CHAPTER_IMAGES_UPLOAD_ERROR:", error);
       alert("Chapter зураг upload хийхэд алдаа гарлаа");
     } finally {
       setUploadingChapterImages(false);
@@ -262,13 +265,13 @@ export default function EditorPage() {
   async function handleChapterSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!chapterComicId) {
-      alert("Manga сонгоно уу");
+    if (uploadingChapterImages) {
+      alert("Зураг upload дуусаагүй байна. Түр хүлээнэ үү");
       return;
     }
 
-    if (!chapterTitle.trim()) {
-      alert("Chapter гарчиг оруулна уу");
+    if (!chapterComicId) {
+      alert("Manga сонгоно уу");
       return;
     }
 
@@ -277,7 +280,18 @@ export default function EditorPage() {
       return;
     }
 
+    if (!chapterTitle.trim()) {
+      alert("Chapter гарчиг оруулна уу");
+      return;
+    }
+
+    const parsedComicId = Number(chapterComicId);
     const parsedNumber = Number(chapterNumber);
+
+    if (Number.isNaN(parsedComicId) || parsedComicId <= 0) {
+      alert("Manga ID буруу байна");
+      return;
+    }
 
     if (Number.isNaN(parsedNumber) || parsedNumber <= 0) {
       alert("Chapter дугаар зөв оруулна уу");
@@ -292,22 +306,33 @@ export default function EditorPage() {
     setSavingChapter(true);
 
     try {
+      const content = chapterImages.join("\n");
+
       const res = await fetch("/api/chapters", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          comicId: chapterComicId,
+          comicId: parsedComicId,
+          mangaId: parsedComicId,
+
           title: chapterTitle.trim(),
+          chapterTitle: chapterTitle.trim(),
+
           number: parsedNumber,
-          content: chapterImages.join("\n"),
+          chapterNumber: parsedNumber,
+
+          content,
+          images: chapterImages,
+          imageUrls: chapterImages,
         }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
+        console.error("CHAPTER_SAVE_RESPONSE:", data);
         alert(data.message || "Chapter нэмэхэд алдаа гарлаа");
         return;
       }
@@ -327,7 +352,9 @@ export default function EditorPage() {
     }
   }
 
-  const selectedComic = comics.find((comic) => comic.id === chapterComicId);
+  const selectedComic = comics.find(
+    (comic) => String(comic.id) === chapterComicId
+  );
 
   return (
     <main className="min-h-screen bg-[#020202] text-white">
@@ -542,7 +569,7 @@ export default function EditorPage() {
                   >
                     <option value="">Manga сонгоно уу</option>
                     {comics.map((comic) => (
-                      <option key={comic.id} value={comic.id}>
+                      <option key={comic.id} value={String(comic.id)}>
                         {comic.title}
                       </option>
                     ))}
@@ -614,8 +641,8 @@ export default function EditorPage() {
                   />
 
                   <p className="mt-2 text-xs text-zinc-500">
-                    Эхлээд manga сонгоод chapter дугаараа оруулсны дараа зураг
-                    upload хийнэ.
+                    Дараалал: Manga сонго → Chapter дугаар → Chapter нэр →
+                    зураг сонго → Chapter хадгалах.
                   </p>
 
                   {uploadingChapterImages && (
@@ -663,7 +690,14 @@ export default function EditorPage() {
 
                 <button
                   type="submit"
-                  disabled={savingChapter || uploadingChapterImages}
+                  disabled={
+                    savingChapter ||
+                    uploadingChapterImages ||
+                    !chapterComicId ||
+                    !chapterNumber ||
+                    !chapterTitle ||
+                    chapterImages.length === 0
+                  }
                   className="w-full rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {savingChapter ? "Хадгалж байна..." : "Chapter хадгалах"}
@@ -726,7 +760,8 @@ export default function EditorPage() {
                         type="button"
                         onClick={() => {
                           setActiveTab("chapter");
-                          setChapterComicId(comic.id);
+                          setChapterComicId(String(comic.id));
+                          setChapterTitle(`Chapter ${(comic.chapters?.length || 0) + 1}`);
                           setChapterNumber(
                             String((comic.chapters?.length || 0) + 1)
                           );
