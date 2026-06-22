@@ -1,53 +1,93 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireEditorOrAdmin } from "@/lib/auth";
+
+export async function GET() {
+  try {
+    const chapters = await prisma.chapter.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return NextResponse.json(chapters);
+  } catch (error) {
+    console.error("GET_CHAPTERS_ERROR:", error);
+
+    return NextResponse.json(
+      { message: "Chapter жагсаалт авахад алдаа гарлаа" },
+      { status: 500 }
+    );
+  }
+}
 
 export async function POST(req: Request) {
   try {
-    const user = await requireEditorOrAdmin();
+    const body = await req.json();
 
-    if (!user) {
+    const comicId = body.comicId || body.mangaId;
+    const title = body.title;
+    const number = Number(body.number);
+    const content = body.content || "";
+
+    if (!comicId) {
       return NextResponse.json(
-        { message: "Зөвхөн EDITOR эсвэл ADMIN chapter нэмэх эрхтэй" },
-        { status: 403 }
+        { message: "Manga сонгогдоогүй байна" },
+        { status: 400 }
       );
     }
 
-    const { title, number, comicId, images } = await req.json();
-
-    if (!title || !number || !comicId || !images?.length) {
+    if (!title || !String(title).trim()) {
       return NextResponse.json(
-        { message: "Chapter мэдээлэл дутуу байна" },
+        { message: "Chapter нэр дутуу байна" },
         { status: 400 }
+      );
+    }
+
+    if (!number || Number.isNaN(number) || number <= 0) {
+      return NextResponse.json(
+        { message: "Chapter дугаар дутуу эсвэл буруу байна" },
+        { status: 400 }
+      );
+    }
+
+    if (!content || !String(content).trim()) {
+      return NextResponse.json(
+        { message: "Chapter зураг дутуу байна" },
+        { status: 400 }
+      );
+    }
+
+    const comic = await prisma.comic.findUnique({
+      where: {
+        id: comicId,
+      },
+    });
+
+    if (!comic) {
+      return NextResponse.json(
+        { message: "Manga олдсонгүй" },
+        { status: 404 }
       );
     }
 
     const chapter = await prisma.chapter.create({
       data: {
-        title,
-        number: Number(number),
-        comicId: Number(comicId),
-        images: {
-          create: images.map((imageUrl: string, index: number) => ({
-            imageUrl,
-            order: index + 1,
-          })),
-        },
-      },
-      include: {
-        images: true,
+        title: String(title).trim(),
+        number,
+        content: String(content).trim(),
+        comicId,
       },
     });
 
     return NextResponse.json({
-      message: "Chapter нэмэгдлээ",
+      message: "Chapter амжилттай нэмэгдлээ",
       chapter,
     });
   } catch (error) {
-    console.error(error);
+    console.error("CREATE_CHAPTER_ERROR:", error);
 
     return NextResponse.json(
-      { message: "Chapter нэмэхэд алдаа гарлаа" },
+      { message: "Chapter хадгалах үед server алдаа гарлаа" },
       { status: 500 }
     );
   }
