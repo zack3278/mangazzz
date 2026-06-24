@@ -16,3 +16,11 @@ export const Role = {
 } as const
 
 export type Role = (typeof Role)[keyof typeof Role]
+
+
+export const OtpType = {
+  REGISTER: 'REGISTER',
+  RESET_PASSWORD: 'RESET_PASSWORD'
+} as const
+
+export type OtpType = (typeof OtpType)[keyof typeof OtpType]

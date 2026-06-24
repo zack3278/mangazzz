@@ -42,3 +42,8 @@ export type Chapter = Prisma.ChapterModel
  * 
  */
 export type ChapterImage = Prisma.ChapterImageModel
+/**
+ * Model OtpCode
+ * 
+ */
+export type OtpCode = Prisma.OtpCodeModel

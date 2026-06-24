@@ -55,7 +55,8 @@ export const ModelName = {
   PremiumOrder: 'PremiumOrder',
   Comic: 'Comic',
   Chapter: 'Chapter',
-  ChapterImage: 'ChapterImage'
+  ChapterImage: 'ChapterImage',
+  OtpCode: 'OtpCode'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -141,6 +142,19 @@ export const ChapterImageScalarFieldEnum = {
 } as const
 
 export type ChapterImageScalarFieldEnum = (typeof ChapterImageScalarFieldEnum)[keyof typeof ChapterImageScalarFieldEnum]
+
+
+export const OtpCodeScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  code: 'code',
+  type: 'type',
+  expiresAt: 'expiresAt',
+  used: 'used',
+  createdAt: 'createdAt'
+} as const
+
+export type OtpCodeScalarFieldEnum = (typeof OtpCodeScalarFieldEnum)[keyof typeof OtpCodeScalarFieldEnum]
 
 
 export const SortOrder = {
