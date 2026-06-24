@@ -8,6 +8,18 @@ function isImageUrl(url: string) {
   return /\.(png|jpg|jpeg|webp|gif|svg)(\?.*)?$/i.test(url);
 }
 
+function isQrImageUrl(url: string) {
+  const lower = url.toLowerCase();
+
+  return (
+    isImageUrl(url) &&
+    lower.includes("qr") &&
+    !lower.includes("icon") &&
+    !lower.includes("logo") &&
+    !lower.includes("launcher")
+  );
+}
+
 function extractWirePaymentData(value: any) {
   let paymentUrl: string | null = null;
   let qrImageUrl: string | null = null;
@@ -36,23 +48,8 @@ function extractWirePaymentData(value: any) {
         }
       }
 
-      if (
-        obj.startsWith("http") &&
-        isImageUrl(obj) &&
-        !obj.includes("launcher-icon") &&
-        !obj.includes("icon")
-      ) {
+      if (obj.startsWith("http") && isQrImageUrl(obj)) {
         qrImageUrl = qrImageUrl || obj;
-      }
-
-      if (
-        obj.startsWith("qpay://") ||
-        obj.startsWith("khanbank://") ||
-        obj.startsWith("statebank://") ||
-        obj.startsWith("tdbbank://") ||
-        obj.startsWith("socialpay://")
-      ) {
-        paymentUrl = paymentUrl || obj;
       }
 
       return;
@@ -83,15 +80,12 @@ function extractWirePaymentData(value: any) {
         obj.qr_image_url ||
         obj.qrImageUrl ||
         obj.qpay_qr_image ||
-        obj.qpayQrImage ||
-        obj.image_url ||
-        obj.imageUrl;
+        obj.qpayQrImage;
 
       if (
         typeof possibleQrImage === "string" &&
         possibleQrImage.startsWith("http") &&
-        !possibleQrImage.includes("launcher-icon") &&
-        !possibleQrImage.includes("icon")
+        isQrImageUrl(possibleQrImage)
       ) {
         qrImageUrl = qrImageUrl || possibleQrImage;
       }

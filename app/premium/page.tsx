@@ -3,36 +3,11 @@
 import { useState } from "react";
 
 const plans = [
-  {
-    months: 1,
-    name: "1 сар",
-    price: "5,000₮",
-    description: "Premium chapter унших эрх",
-  },
-  {
-    months: 2,
-    name: "2 сар",
-    price: "9,000₮",
-    description: "2 сарын premium эрх",
-  },
-  {
-    months: 3,
-    name: "3 сар",
-    price: "13,000₮",
-    description: "Илүү хэмнэлттэй багц",
-  },
-  {
-    months: 6,
-    name: "6 сар",
-    price: "22,000₮",
-    description: "Хагас жилийн premium эрх",
-  },
-  {
-    months: 12,
-    name: "12 сар",
-    price: "35,000₮",
-    description: "Хамгийн ашигтай багц",
-  },
+  { months: 1, name: "1 сар", price: "5,000₮", description: "Premium chapter унших эрх" },
+  { months: 2, name: "2 сар", price: "9,000₮", description: "2 сарын premium эрх" },
+  { months: 3, name: "3 сар", price: "13,000₮", description: "Илүү хэмнэлттэй багц" },
+  { months: 6, name: "6 сар", price: "22,000₮", description: "Хагас жилийн premium эрх" },
+  { months: 12, name: "12 сар", price: "35,000₮", description: "Хамгийн ашигтай багц" },
 ];
 
 type WirePaymentData = {
@@ -40,11 +15,6 @@ type WirePaymentData = {
   paymentUrl?: string | null;
   qrImageUrl?: string | null;
   qrText?: string | null;
-  appLinks?: {
-    name: string;
-    url: string;
-    logo?: string;
-  }[];
 };
 
 export default function PremiumPage() {
@@ -83,12 +53,9 @@ export default function PremiumPage() {
         paymentUrl: data.paymentUrl,
         qrImageUrl: data.qrImageUrl,
         qrText: data.qrText,
-        appLinks: data.appLinks || [],
       });
 
-      setMessage(
-        "Төлбөр үүслээ. QPay-р төлөөд, дараа нь төлбөр шалгах товч дарна уу."
-      );
+      setMessage("Төлбөр үүслээ. QPay-р төлөөд дараа нь “Төлбөр шалгах” дарна уу.");
     } catch (error) {
       console.error(error);
       setMessage("Wire төлбөр үүсгэхэд алдаа гарлаа");
@@ -147,8 +114,7 @@ export default function PremiumPage() {
           </h1>
 
           <p className="mx-auto mt-4 max-w-2xl text-zinc-400">
-            Wire.mn PaymentIntent + Webhook ашиглан төлбөр төлсний дараа premium
-            эрх автоматаар идэвхжинэ.
+            Wire.mn PaymentIntent + Webhook ашиглан төлбөр төлсний дараа premium эрх автоматаар идэвхжинэ.
           </p>
         </div>
 
@@ -165,8 +131,7 @@ export default function PremiumPage() {
             </h2>
 
             <p className="mt-2 text-sm text-zinc-400">
-              Төлбөр төлөгдсөний дараа webhook автоматаар premium эрх
-              идэвхжүүлнэ. Хэрвээ удаж байвал “Төлбөр шалгах” дар.
+              QR код уншуулж төлөөд, дараа нь “Төлбөр шалгах” товч дарна уу.
             </p>
 
             {paymentData.qrImageUrl ? (
@@ -174,19 +139,8 @@ export default function PremiumPage() {
                 <img
                   src={paymentData.qrImageUrl}
                   alt="QPay QR"
-                  className="h-64 w-64 rounded-2xl bg-white object-contain p-3"
+                  className="h-72 w-72 rounded-2xl bg-white object-contain p-4"
                 />
-              </div>
-            ) : null}
-
-            {paymentData.qrText ? (
-              <div className="mt-5 rounded-2xl bg-black/40 p-4 text-left">
-                <p className="mb-2 text-sm font-bold text-zinc-300">
-                  QR text:
-                </p>
-                <p className="break-words text-xs text-zinc-400">
-                  {paymentData.qrText}
-                </p>
               </div>
             ) : null}
 
@@ -199,29 +153,6 @@ export default function PremiumPage() {
               >
                 QPay-р төлөх
               </a>
-            ) : null}
-
-            {paymentData.appLinks && paymentData.appLinks.length > 0 ? (
-              <div className="mt-5 grid gap-3">
-                {paymentData.appLinks.map((app, index) => (
-                  <a
-                    key={`${app.name}-${index}`}
-                    href={app.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-center gap-3 rounded-xl bg-white/10 px-4 py-3 text-sm font-bold hover:bg-white/15"
-                  >
-                    {app.logo ? (
-                      <img
-                        src={app.logo}
-                        alt={app.name}
-                        className="h-6 w-6 rounded"
-                      />
-                    ) : null}
-                    {app.name}
-                  </a>
-                ))}
-              </div>
             ) : null}
 
             <button
