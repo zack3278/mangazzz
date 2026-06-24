@@ -1,44 +1,118 @@
 "use client";
 
-import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function submit(e: FormEvent) {
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
+    setMessage("");
+
+    if (!email || !password) {
+      setMessage("Email болон нууц үгээ оруулна уу");
+      return;
+    }
+
     setLoading(true);
+
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
       });
+
       const data = await res.json();
-      if (!res.ok) return alert(data.message || "Нэвтрэхэд алдаа гарлаа");
-      window.location.href = "/";
+
+      if (!res.ok) {
+        setMessage(data.message || "Нэвтрэхэд алдаа гарлаа");
+        return;
+      }
+
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
+
+      setMessage("Амжилттай нэвтэрлээ");
+
+      setTimeout(() => {
+        window.location.href = "/profile";
+      }, 700);
+    } catch {
+      setMessage("Сервертэй холбогдоход алдаа гарлаа");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <main className="grid min-h-screen place-items-center bg-[#080711] px-4 text-white">
-      <div className="w-full max-w-md rounded-[32px] border border-white/10 bg-white/[0.05] p-7 shadow-2xl shadow-black/50 backdrop-blur">
-        <Link href="/" className="mb-8 inline-flex items-center gap-3 font-black"><span className="grid h-10 w-10 place-items-center rounded-2xl bg-white text-black">M</span>MangaZet</Link>
-        <p className="text-xs font-black uppercase tracking-[0.35em] text-violet-300">Тавтай морил</p>
-        <h1 className="mt-2 text-4xl font-black">Нэвтрэх</h1>
-        <form onSubmit={submit} className="mt-7 space-y-4">
-          <input className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-4 outline-none focus:border-violet-400" placeholder="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <input className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-4 outline-none focus:border-violet-400" placeholder="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-          <button disabled={loading} className="w-full rounded-2xl bg-white py-4 font-black text-black disabled:opacity-60">{loading ? "Нэвтэрч байна..." : "Нэвтрэх"}</button>
+    <main className="min-h-screen bg-zinc-950 text-white flex items-center justify-center px-4">
+      <div className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900/90 p-6 shadow-xl">
+        <h1 className="text-2xl font-bold mb-2">Нэвтрэх</h1>
+
+        <p className="text-sm text-zinc-400 mb-6">
+          Mangazet account-аараа нэвтэрнэ үү.
+        </p>
+
+        <form onSubmit={handleLogin} className="space-y-4">
+          <input
+            type="email"
+            placeholder="Email"
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 outline-none focus:border-purple-500"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="Нууц үг"
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 outline-none focus:border-purple-500"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+
+          <div className="text-right">
+            <a
+              href="/forgot-password"
+              className="text-sm text-purple-400 hover:underline"
+            >
+              Нууц үгээ мартсан уу?
+            </a>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-lg bg-purple-600 py-3 font-semibold hover:bg-purple-700 disabled:opacity-60"
+          >
+            {loading ? "Нэвтэрч байна..." : "Нэвтрэх"}
+          </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-zinc-400">Бүртгэлгүй юу? <Link className="font-bold text-violet-200" href="/register">Бүртгүүлэх</Link></p>
+        {message && (
+          <p className="mt-4 rounded-lg bg-zinc-800 px-4 py-3 text-sm text-zinc-300">
+            {message}
+          </p>
+        )}
+
+        <p className="mt-6 text-center text-sm text-zinc-400">
+          Бүртгэлгүй юу?{" "}
+          <a href="/register" className="text-purple-400 hover:underline">
+            Бүртгүүлэх
+          </a>
+        </p>
       </div>
     </main>
   );

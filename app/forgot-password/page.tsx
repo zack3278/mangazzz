@@ -2,30 +2,23 @@
 
 import { useState } from "react";
 
-export default function RegisterPage() {
-  const [step, setStep] = useState<"form" | "otp">("form");
+export default function ForgotPasswordPage() {
+  const [step, setStep] = useState<"email" | "reset">("email");
 
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
   const [code, setCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function sendOtp(e: React.FormEvent) {
     e.preventDefault();
     setMessage("");
-
-    if (password.length < 6) {
-      setMessage("Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой");
-      return;
-    }
-
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/register/send-otp", {
+      const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -37,7 +30,7 @@ export default function RegisterPage() {
       setMessage(data.message || "Алдаа гарлаа");
 
       if (res.ok) {
-        setStep("otp");
+        setStep("reset");
       }
     } catch {
       setMessage("Сервертэй холбогдоход алдаа гарлаа");
@@ -46,28 +39,27 @@ export default function RegisterPage() {
     }
   }
 
-  async function verifyOtp(e: React.FormEvent) {
+  async function resetPassword(e: React.FormEvent) {
     e.preventDefault();
     setMessage("");
 
-    if (password.length < 6) {
-      setMessage("Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой");
+    if (newPassword.length < 6) {
+      setMessage("Шинэ нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой");
       return;
     }
 
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/register/verify", {
+      const res = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name,
           email,
-          password,
           code,
+          newPassword,
         }),
       });
 
@@ -89,41 +81,22 @@ export default function RegisterPage() {
   return (
     <main className="min-h-screen bg-zinc-950 text-white flex items-center justify-center px-4">
       <div className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900/90 p-6 shadow-xl">
-        <h1 className="text-2xl font-bold mb-2">Бүртгүүлэх</h1>
+        <h1 className="text-2xl font-bold mb-2">Нууц үг сэргээх</h1>
 
         <p className="text-sm text-zinc-400 mb-6">
-          {step === "form"
-            ? "Мэдээллээ оруулаад email OTP код авна."
-            : "Email дээр ирсэн 6 оронтой OTP кодоо оруулна уу."}
+          {step === "email"
+            ? "Бүртгэлтэй email хаягаа оруулж OTP код авна."
+            : "Email дээр ирсэн OTP код болон шинэ нууц үгээ оруулна уу."}
         </p>
 
-        {step === "form" ? (
+        {step === "email" ? (
           <form onSubmit={sendOtp} className="space-y-4">
-            <input
-              type="text"
-              placeholder="Нэр"
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 outline-none focus:border-purple-500"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-
             <input
               type="email"
               placeholder="Email"
               className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 outline-none focus:border-purple-500"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-
-            <input
-              type="password"
-              placeholder="Нууц үг / хамгийн багадаа 6 тэмдэгт"
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 outline-none focus:border-purple-500"
-              value={password}
-              minLength={6}
-              onChange={(e) => setPassword(e.target.value)}
               required
             />
 
@@ -136,7 +109,7 @@ export default function RegisterPage() {
             </button>
           </form>
         ) : (
-          <form onSubmit={verifyOtp} className="space-y-4">
+          <form onSubmit={resetPassword} className="space-y-4">
             <input
               type="text"
               placeholder="OTP код"
@@ -146,19 +119,30 @@ export default function RegisterPage() {
               required
             />
 
+            <input
+              type="password"
+              placeholder="Шинэ нууц үг / хамгийн багадаа 6 тэмдэгт"
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 outline-none focus:border-purple-500"
+              value={newPassword}
+              minLength={6}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+            />
+
             <button
               type="submit"
               disabled={loading}
               className="w-full rounded-lg bg-purple-600 py-3 font-semibold hover:bg-purple-700 disabled:opacity-60"
             >
-              {loading ? "Шалгаж байна..." : "Бүртгэл үүсгэх"}
+              {loading ? "Шинэчилж байна..." : "Нууц үг шинэчлэх"}
             </button>
 
             <button
               type="button"
               onClick={() => {
-                setStep("form");
+                setStep("email");
                 setCode("");
+                setNewPassword("");
                 setMessage("");
               }}
               className="w-full rounded-lg border border-zinc-700 py-3 text-sm text-zinc-300 hover:bg-zinc-800"
@@ -175,7 +159,7 @@ export default function RegisterPage() {
         )}
 
         <p className="mt-6 text-center text-sm text-zinc-400">
-          Бүртгэлтэй юу?{" "}
+          Санасан уу?{" "}
           <a href="/login" className="text-purple-400 hover:underline">
             Нэвтрэх
           </a>
