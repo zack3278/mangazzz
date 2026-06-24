@@ -27,14 +27,18 @@ type Comic = {
 
 const premiumPlans = [
   { months: 1, label: "1 сар", price: "5000₮" },
+  { months: 2, label: "2 сар", price: "9000₮" },
   { months: 3, label: "3 сар", price: "13000₮" },
-  { months: 6, label: "6 сар", price: "24000₮" },
-  { months: 12, label: "1 жил", price: "44000₮" },
+  { months: 6, label: "6 сар", price: "22000₮" },
+  { months: 12, label: "12 сар", price: "35000₮" },
 ];
 
 function premiumLabel(user: User) {
   if (!user.isPremium || !user.premiumExpiresAt) return "FREE";
-  return new Date(user.premiumExpiresAt).getTime() > Date.now() ? "ACTIVE" : "EXPIRED";
+
+  return new Date(user.premiumExpiresAt).getTime() > Date.now()
+    ? "ACTIVE"
+    : "EXPIRED";
 }
 
 export default function AdminPage() {
@@ -43,30 +47,55 @@ export default function AdminPage() {
   const [comics, setComics] = useState<Comic[]>([]);
 
   async function loadUsers() {
-    const res = await fetch("/api/admin/users", { credentials: "include" });
+    const res = await fetch("/api/admin/users", {
+      credentials: "include",
+    });
+
     const data = await res.json();
-    if (!res.ok) return alert(data.message || "Users ачаалахад алдаа гарлаа");
+
+    if (!res.ok) {
+      alert(data.message || "Users ачаалахад алдаа гарлаа");
+      return;
+    }
+
     setUsers(Array.isArray(data) ? data : data.users || []);
   }
 
   async function loadComics() {
-    const res = await fetch("/api/comics");
+    const res = await fetch("/api/comics", {
+      cache: "no-store",
+    });
+
     const data = await res.json();
+
     setComics(Array.isArray(data) ? data : data.comics || []);
   }
 
   useEffect(() => {
     async function checkAuth() {
       try {
-        const res = await fetch("/api/auth/me", { credentials: "include" });
+        const res = await fetch("/api/auth/me", {
+          credentials: "include",
+        });
+
         const data = await res.json();
-        if (!res.ok || !data.user) return (window.location.href = "/login");
-        if (data.user.role !== "ADMIN") return (window.location.href = "/");
+
+        if (!res.ok || !data.user) {
+          window.location.href = "/login";
+          return;
+        }
+
+        if (data.user.role !== "ADMIN") {
+          window.location.href = "/";
+          return;
+        }
+
         await Promise.all([loadUsers(), loadComics()]);
       } finally {
         setChecking(false);
       }
     }
+
     checkAuth();
   }, []);
 
@@ -74,10 +103,17 @@ export default function AdminPage() {
     const res = await fetch(`/api/admin/users/${userId}/role`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ role }),
     });
+
     const data = await res.json();
-    if (!res.ok) return alert(data.message || "Role өөрчлөхөд алдаа гарлаа");
+
+    if (!res.ok) {
+      alert(data.message || "Role өөрчлөхөд алдаа гарлаа");
+      return;
+    }
+
     await loadUsers();
   }
 
@@ -85,84 +121,207 @@ export default function AdminPage() {
     const res = await fetch(`/api/admin/users/${userId}/premium`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ isPremium: true, months }),
     });
+
     const data = await res.json();
-    if (!res.ok) return alert(data.message || "Premium эрх өөрчлөхөд алдаа гарлаа");
+
+    if (!res.ok) {
+      alert(data.message || "Premium эрх өөрчлөхөд алдаа гарлаа");
+      return;
+    }
+
     await loadUsers();
   }
 
   async function cancelPremium(userId: number) {
     const ok = confirm("Premium эрхийг цуцлах уу?");
+
     if (!ok) return;
+
     const res = await fetch(`/api/admin/users/${userId}/premium`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ isPremium: false }),
     });
+
     const data = await res.json();
-    if (!res.ok) return alert(data.message || "Premium цуцлахад алдаа гарлаа");
+
+    if (!res.ok) {
+      alert(data.message || "Premium цуцлахад алдаа гарлаа");
+      return;
+    }
+
     await loadUsers();
   }
 
   async function deleteComic(comicId: number) {
     const ok = confirm("Энэ comic-ийг устгах уу? Доторх chapter хамт устна.");
+
     if (!ok) return;
-    const res = await fetch(`/api/comics/${comicId}`, { method: "DELETE" });
+
+    const res = await fetch(`/api/comics/${comicId}`, {
+      method: "DELETE",
+    });
+
     const data = await res.json();
-    if (!res.ok) return alert(data.message || "Comic устгахад алдаа гарлаа");
+
+    if (!res.ok) {
+      alert(data.message || "Comic устгахад алдаа гарлаа");
+      return;
+    }
+
     await loadComics();
   }
 
   async function logout() {
-    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+
     window.location.href = "/login";
   }
 
-  if (checking) return <main className="grid min-h-screen place-items-center bg-[#080711] text-white">Шалгаж байна...</main>;
+  if (checking) {
+    return (
+      <main className="site-shell flex min-h-screen items-center justify-center text-white">
+        <div className="glass-card rounded-3xl p-8 text-lg font-black">
+          Шалгаж байна...
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <main className="min-h-screen bg-[#080711] text-white">
+    <main className="site-shell min-h-screen text-white">
       <Navbar />
-      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-        <div className="flex flex-col gap-4 rounded-[36px] border border-white/10 bg-gradient-to-br from-violet-500/20 via-white/[0.05] to-fuchsia-500/10 p-8 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.35em] text-violet-200">Admin control</p>
-            <h1 className="mt-2 text-5xl font-black">Dashboard</h1>
-            <p className="mt-2 text-zinc-300">Users, premium, role, series management.</p>
-          </div>
-          <div className="flex gap-3">
-            <Link href="/editor" className="rounded-2xl bg-white px-5 py-3 font-black text-black">Editor studio</Link>
-            <button onClick={logout} className="rounded-2xl border border-white/10 px-5 py-3 font-black hover:bg-white/10">Logout</button>
+
+      <section className="container-soft py-10">
+        <div className="glass-panel rounded-[2rem] p-6 md:p-8">
+          <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
+            <div>
+              <span className="badge badge-red">Admin control</span>
+
+              <h1 className="mt-4 text-4xl font-black">Dashboard</h1>
+
+              <p className="mt-2 text-zinc-400">
+                Users, premium, role, series management.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Link href="/editor" className="primary-btn">
+                Editor studio
+              </Link>
+
+              <button onClick={logout} className="secondary-btn">
+                Logout
+              </button>
+            </div>
           </div>
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6"><p className="text-xs text-zinc-500">Users</p><b className="text-4xl">{users.length}</b></div>
-          <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6"><p className="text-xs text-zinc-500">Comics</p><b className="text-4xl">{comics.length}</b></div>
-          <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6"><p className="text-xs text-zinc-500">Premium</p><b className="text-4xl">{users.filter((u) => premiumLabel(u) === "ACTIVE").length}</b></div>
+          <div className="glass-card rounded-3xl p-6">
+            <p className="text-sm font-bold text-zinc-500">Users</p>
+            <h2 className="mt-2 text-4xl font-black">{users.length}</h2>
+          </div>
+
+          <div className="glass-card rounded-3xl p-6">
+            <p className="text-sm font-bold text-zinc-500">Comics</p>
+            <h2 className="mt-2 text-4xl font-black">{comics.length}</h2>
+          </div>
+
+          <div className="glass-card rounded-3xl p-6">
+            <p className="text-sm font-bold text-zinc-500">Premium</p>
+            <h2 className="mt-2 text-4xl font-black">
+              {users.filter((u) => premiumLabel(u) === "ACTIVE").length}
+            </h2>
+          </div>
         </div>
 
-        <div className="mt-8 rounded-[28px] border border-white/10 bg-white/[0.04] p-5">
-          <h2 className="mb-4 text-2xl font-black">Хэрэглэгчид</h2>
+        <section className="mt-8 glass-panel overflow-hidden rounded-[2rem]">
+          <div className="border-b border-white/10 p-6">
+            <h2 className="text-2xl font-black">Хэрэглэгчид</h2>
+          </div>
+
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] border-separate border-spacing-y-2 text-left text-sm">
-              <thead className="text-xs uppercase tracking-[0.2em] text-zinc-500"><tr><th className="p-3">User</th><th>Role</th><th>Premium</th><th>Expires</th><th>Actions</th></tr></thead>
+            <table className="w-full min-w-[920px] text-left text-sm">
+              <thead className="bg-white/5 text-xs uppercase tracking-wider text-zinc-500">
+                <tr>
+                  <th className="px-5 py-4">User</th>
+                  <th className="px-5 py-4">Role</th>
+                  <th className="px-5 py-4">Premium</th>
+                  <th className="px-5 py-4">Expires</th>
+                  <th className="px-5 py-4">Actions</th>
+                </tr>
+              </thead>
+
               <tbody>
                 {users.map((user) => (
-                  <tr key={user.id} className="bg-black/25">
-                    <td className="rounded-l-2xl p-3"><b>{user.name}</b><p className="text-zinc-500">{user.email}</p></td>
-                    <td>
-                      <select value={user.role} onChange={(e) => changeRole(user.id, e.target.value as User["role"])} className="rounded-xl border border-white/10 bg-zinc-950 px-3 py-2">
-                        <option value="USER">USER</option><option value="EDITOR">EDITOR</option><option value="ADMIN">ADMIN</option>
+                  <tr key={user.id} className="border-t border-white/10">
+                    <td className="px-5 py-4">
+                      <p className="font-black text-white">{user.name}</p>
+                      <p className="mt-1 text-xs font-bold text-zinc-500">
+                        {user.email}
+                      </p>
+                    </td>
+
+                    <td className="px-5 py-4">
+                      <select
+                        value={user.role}
+                        onChange={(e) =>
+                          changeRole(user.id, e.target.value as User["role"])
+                        }
+                        className="soft-input py-2"
+                      >
+                        <option value="USER">USER</option>
+                        <option value="EDITOR">EDITOR</option>
+                        <option value="ADMIN">ADMIN</option>
                       </select>
                     </td>
-                    <td><span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black">{premiumLabel(user)}</span></td>
-                    <td>{user.premiumExpiresAt ? new Date(user.premiumExpiresAt).toLocaleDateString() : "—"}</td>
-                    <td className="rounded-r-2xl p-3">
+
+                    <td className="px-5 py-4">
+                      <span
+                        className={`badge ${
+                          premiumLabel(user) === "ACTIVE"
+                            ? "badge-green"
+                            : premiumLabel(user) === "EXPIRED"
+                            ? "badge-red"
+                            : ""
+                        }`}
+                      >
+                        {premiumLabel(user)}
+                      </span>
+                    </td>
+
+                    <td className="px-5 py-4 text-zinc-400">
+                      {user.premiumExpiresAt
+                        ? new Date(user.premiumExpiresAt).toLocaleDateString()
+                        : "—"}
+                    </td>
+
+                    <td className="px-5 py-4">
                       <div className="flex flex-wrap gap-2">
-                        {premiumPlans.map((plan) => <button key={plan.months} onClick={() => givePremium(user.id, plan.months)} className="rounded-xl bg-white px-3 py-2 text-xs font-black text-black">{plan.label}</button>)}
-                        <button onClick={() => cancelPremium(user.id)} className="rounded-xl border border-red-400/30 px-3 py-2 text-xs font-black text-red-200">Цуцлах</button>
+                        {premiumPlans.map((plan) => (
+                          <button
+                            key={plan.months}
+                            onClick={() => givePremium(user.id, plan.months)}
+                            className="secondary-btn px-3 py-2 text-xs"
+                          >
+                            {plan.label}
+                          </button>
+                        ))}
+
+                        <button
+                          onClick={() => cancelPremium(user.id)}
+                          className="danger-btn"
+                        >
+                          Цуцлах
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -170,23 +329,41 @@ export default function AdminPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </section>
 
-        <div className="mt-8 rounded-[28px] border border-white/10 bg-white/[0.04] p-5">
-          <h2 className="mb-4 text-2xl font-black">Series list</h2>
-          <div className="grid gap-3 md:grid-cols-2">
+        <section className="mt-8">
+          <h2 className="mb-5 text-2xl font-black">Series list</h2>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {comics.map((comic) => (
-              <div key={comic.id} className="flex gap-4 rounded-2xl border border-white/10 bg-black/25 p-3">
-                <img src={comic.coverImage} alt={comic.title} className="h-24 w-16 rounded-xl object-cover" />
-                <div className="min-w-0 flex-1">
-                  <Link href={`/comic/${comic.slug}`} className="font-black hover:text-violet-200">{comic.title}</Link>
-                  <p className="mt-1 text-sm text-zinc-500">{comic.genre} • {comic.chapters?.length || 0} chapters</p>
-                  <button onClick={() => deleteComic(comic.id)} className="mt-3 rounded-xl border border-red-400/30 px-3 py-2 text-xs font-black text-red-200">Устгах</button>
+              <div key={comic.id} className="glass-card rounded-3xl p-5">
+                <h3 className="line-clamp-1 text-xl font-black">
+                  {comic.title}
+                </h3>
+
+                <p className="mt-2 text-sm font-bold text-zinc-500">
+                  {comic.genre} • {comic.chapters?.length || 0} chapters
+                </p>
+
+                <div className="mt-4 flex gap-2">
+                  <Link
+                    href={`/comic/${comic.slug}`}
+                    className="secondary-btn px-3 py-2 text-xs"
+                  >
+                    View
+                  </Link>
+
+                  <button
+                    onClick={() => deleteComic(comic.id)}
+                    className="danger-btn"
+                  >
+                    Устгах
+                  </button>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </section>
       </section>
     </main>
   );

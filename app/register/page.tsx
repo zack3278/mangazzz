@@ -1,14 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 export default function RegisterPage() {
   const [step, setStep] = useState<"form" | "otp">("form");
-
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [code, setCode] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,9 +26,7 @@ export default function RegisterPage() {
     try {
       const res = await fetch("/api/auth/register/send-otp", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
 
@@ -60,15 +57,8 @@ export default function RegisterPage() {
     try {
       const res = await fetch("/api/auth/register/verify", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-          code,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password, code }),
       });
 
       const data = await res.json();
@@ -87,99 +77,104 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-white flex items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900/90 p-6 shadow-xl">
-        <h1 className="text-2xl font-bold mb-2">Бүртгүүлэх</h1>
+    <main className="site-shell flex min-h-screen items-center justify-center px-4 py-10 text-white">
+      <div className="w-full max-w-md">
+        <Link href="/" className="mx-auto mb-6 flex w-fit items-center gap-3">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500 to-purple-500 text-lg font-black">
+            M
+          </span>
+          <span className="text-xl font-black">Mangazet</span>
+        </Link>
 
-        <p className="text-sm text-zinc-400 mb-6">
-          {step === "form"
-            ? "Мэдээллээ оруулаад email OTP код авна."
-            : "Email дээр ирсэн 6 оронтой OTP кодоо оруулна уу."}
-        </p>
+        <form
+          onSubmit={step === "form" ? sendOtp : verifyOtp}
+          className="glass-panel rounded-[2rem] p-6 md:p-8"
+        >
+          <span className="badge badge-gold">
+            {step === "form" ? "Create account" : "Verify email"}
+          </span>
 
-        {step === "form" ? (
-          <form onSubmit={sendOtp} className="space-y-4">
-            <input
-              type="text"
-              placeholder="Нэр"
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 outline-none focus:border-purple-500"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
+          <h1 className="mt-4 text-3xl font-black">Бүртгүүлэх</h1>
 
-            <input
-              type="email"
-              placeholder="Email"
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 outline-none focus:border-purple-500"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-
-            <input
-              type="password"
-              placeholder="Нууц үг / хамгийн багадаа 6 тэмдэгт"
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 outline-none focus:border-purple-500"
-              value={password}
-              minLength={6}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-lg bg-purple-600 py-3 font-semibold hover:bg-purple-700 disabled:opacity-60"
-            >
-              {loading ? "OTP илгээж байна..." : "OTP код авах"}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={verifyOtp} className="space-y-4">
-            <input
-              type="text"
-              placeholder="OTP код"
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 outline-none focus:border-purple-500"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              required
-            />
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-lg bg-purple-600 py-3 font-semibold hover:bg-purple-700 disabled:opacity-60"
-            >
-              {loading ? "Шалгаж байна..." : "Бүртгэл үүсгэх"}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setStep("form");
-                setCode("");
-                setMessage("");
-              }}
-              className="w-full rounded-lg border border-zinc-700 py-3 text-sm text-zinc-300 hover:bg-zinc-800"
-            >
-              Email солих
-            </button>
-          </form>
-        )}
-
-        {message && (
-          <p className="mt-4 rounded-lg bg-zinc-800 px-4 py-3 text-sm text-zinc-300">
-            {message}
+          <p className="mt-2 text-sm font-medium leading-6 text-zinc-400">
+            {step === "form"
+              ? "Мэдээллээ оруулаад email OTP код авна."
+              : "Email дээр ирсэн 6 оронтой OTP кодоо оруулна уу."}
           </p>
-        )}
 
-        <p className="mt-6 text-center text-sm text-zinc-400">
-          Бүртгэлтэй юу?{" "}
-          <a href="/login" className="text-purple-400 hover:underline">
-            Нэвтрэх
-          </a>
-        </p>
+          {step === "form" ? (
+            <div className="mt-7 space-y-4">
+              <input
+                placeholder="Нэр"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="soft-input"
+                required
+              />
+
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="soft-input"
+                required
+              />
+
+              <input
+                type="password"
+                placeholder="Нууц үг / хамгийн багадаа 6 тэмдэгт"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="soft-input"
+                required
+              />
+
+              <button disabled={loading} className="primary-btn w-full" type="submit">
+                {loading ? "OTP илгээж байна..." : "OTP код авах"}
+              </button>
+            </div>
+          ) : (
+            <div className="mt-7 space-y-4">
+              <input
+                placeholder="OTP код"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                className="soft-input text-center text-2xl font-black tracking-[0.35em]"
+                required
+              />
+
+              <button disabled={loading} className="primary-btn w-full" type="submit">
+                {loading ? "Шалгаж байна..." : "Бүртгэл үүсгэх"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setStep("form");
+                  setCode("");
+                  setMessage("");
+                }}
+                className="secondary-btn w-full"
+              >
+                Email солих
+              </button>
+            </div>
+          )}
+
+          {message && (
+            <div className="mt-5 rounded-2xl border border-white/10 bg-black/25 p-4 text-sm font-bold text-zinc-200">
+              {message}
+            </div>
+          )}
+
+          <p className="mt-6 text-center text-sm font-bold text-zinc-500">
+            Бүртгэлтэй юу?{" "}
+            <Link href="/login" className="text-red-300 hover:text-red-200">
+              Нэвтрэх
+            </Link>
+          </p>
+        </form>
       </div>
     </main>
   );

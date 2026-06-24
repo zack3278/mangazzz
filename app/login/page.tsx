@@ -1,11 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -26,10 +26,8 @@ export default function LoginPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
@@ -56,63 +54,70 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-white flex items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900/90 p-6 shadow-xl">
-        <h1 className="text-2xl font-bold mb-2">Нэвтрэх</h1>
+    <main className="site-shell flex min-h-screen items-center justify-center px-4 py-10 text-white">
+      <div className="w-full max-w-md">
+        <Link href="/" className="mx-auto mb-6 flex w-fit items-center gap-3">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500 to-purple-500 text-lg font-black">
+            M
+          </span>
+          <span className="text-xl font-black">Mangazet</span>
+        </Link>
 
-        <p className="text-sm text-zinc-400 mb-6">
-          Mangazet account-аараа нэвтэрнэ үү.
-        </p>
+        <form onSubmit={handleLogin} className="glass-panel rounded-[2rem] p-6 md:p-8">
+          <span className="badge badge-red">Welcome back</span>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <input
-            type="email"
-            placeholder="Email"
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 outline-none focus:border-purple-500"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+          <h1 className="mt-4 text-3xl font-black">Нэвтрэх</h1>
 
-          <input
-            type="password"
-            placeholder="Нууц үг"
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 outline-none focus:border-purple-500"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <p className="mt-2 text-sm font-medium leading-6 text-zinc-400">
+            Premium manga уншихын тулд account-аараа нэвтэрнэ үү.
+          </p>
 
-          <div className="text-right">
-            <a
-              href="/forgot-password"
-              className="text-sm text-purple-400 hover:underline"
-            >
-              Нууц үгээ мартсан уу?
-            </a>
+          <div className="mt-7 space-y-4">
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="soft-input"
+              required
+            />
+
+            <input
+              type="password"
+              placeholder="Нууц үг"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="soft-input"
+              required
+            />
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-purple-600 py-3 font-semibold hover:bg-purple-700 disabled:opacity-60"
-          >
+          <div className="mt-4 flex justify-end">
+            <Link
+              href="/forgot-password"
+              className="text-sm font-bold text-red-300 hover:text-red-200"
+            >
+              Нууц үгээ мартсан уу?
+            </Link>
+          </div>
+
+          <button type="submit" disabled={loading} className="primary-btn mt-6 w-full">
             {loading ? "Нэвтэрч байна..." : "Нэвтрэх"}
           </button>
-        </form>
 
-        {message && (
-          <p className="mt-4 rounded-lg bg-zinc-800 px-4 py-3 text-sm text-zinc-300">
-            {message}
+          {message && (
+            <div className="mt-5 rounded-2xl border border-white/10 bg-black/25 p-4 text-sm font-bold text-zinc-200">
+              {message}
+            </div>
+          )}
+
+          <p className="mt-6 text-center text-sm font-bold text-zinc-500">
+            Бүртгэлгүй юу?{" "}
+            <Link href="/register" className="text-red-300 hover:text-red-200">
+              Бүртгүүлэх
+            </Link>
           </p>
-        )}
-
-        <p className="mt-6 text-center text-sm text-zinc-400">
-          Бүртгэлгүй юу?{" "}
-          <a href="/register" className="text-purple-400 hover:underline">
-            Бүртгүүлэх
-          </a>
-        </p>
+        </form>
       </div>
     </main>
   );

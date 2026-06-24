@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Mangazet",
-  description: "Manga унших сайт",
+  description: "Premium manga reader website",
 };
 
 export default function RootLayout({
@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="mn">
+    <html lang="mn" data-scroll-behavior="smooth">
       <body>{children}</body>
     </html>
   );
