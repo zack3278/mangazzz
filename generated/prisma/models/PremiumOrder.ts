@@ -48,6 +48,10 @@ export type PremiumOrderMinAggregateOutputType = {
   status: string | null
   invoiceId: string | null
   qrText: string | null
+  wirePaymentIntentId: string | null
+  wireClientSecret: string | null
+  wireStatus: string | null
+  wireNextAction: string | null
   createdAt: Date | null
   paidAt: Date | null
 }
@@ -60,6 +64,10 @@ export type PremiumOrderMaxAggregateOutputType = {
   status: string | null
   invoiceId: string | null
   qrText: string | null
+  wirePaymentIntentId: string | null
+  wireClientSecret: string | null
+  wireStatus: string | null
+  wireNextAction: string | null
   createdAt: Date | null
   paidAt: Date | null
 }
@@ -72,6 +80,10 @@ export type PremiumOrderCountAggregateOutputType = {
   status: number
   invoiceId: number
   qrText: number
+  wirePaymentIntentId: number
+  wireClientSecret: number
+  wireStatus: number
+  wireNextAction: number
   createdAt: number
   paidAt: number
   _all: number
@@ -100,6 +112,10 @@ export type PremiumOrderMinAggregateInputType = {
   status?: true
   invoiceId?: true
   qrText?: true
+  wirePaymentIntentId?: true
+  wireClientSecret?: true
+  wireStatus?: true
+  wireNextAction?: true
   createdAt?: true
   paidAt?: true
 }
@@ -112,6 +128,10 @@ export type PremiumOrderMaxAggregateInputType = {
   status?: true
   invoiceId?: true
   qrText?: true
+  wirePaymentIntentId?: true
+  wireClientSecret?: true
+  wireStatus?: true
+  wireNextAction?: true
   createdAt?: true
   paidAt?: true
 }
@@ -124,6 +144,10 @@ export type PremiumOrderCountAggregateInputType = {
   status?: true
   invoiceId?: true
   qrText?: true
+  wirePaymentIntentId?: true
+  wireClientSecret?: true
+  wireStatus?: true
+  wireNextAction?: true
   createdAt?: true
   paidAt?: true
   _all?: true
@@ -223,6 +247,10 @@ export type PremiumOrderGroupByOutputType = {
   status: string
   invoiceId: string | null
   qrText: string | null
+  wirePaymentIntentId: string | null
+  wireClientSecret: string | null
+  wireStatus: string | null
+  wireNextAction: string | null
   createdAt: Date
   paidAt: Date | null
   _count: PremiumOrderCountAggregateOutputType | null
@@ -258,6 +286,10 @@ export type PremiumOrderWhereInput = {
   status?: Prisma.StringFilter<"PremiumOrder"> | string
   invoiceId?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
   qrText?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  wirePaymentIntentId?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  wireClientSecret?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  wireStatus?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  wireNextAction?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
   createdAt?: Prisma.DateTimeFilter<"PremiumOrder"> | Date | string
   paidAt?: Prisma.DateTimeNullableFilter<"PremiumOrder"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -271,6 +303,10 @@ export type PremiumOrderOrderByWithRelationInput = {
   status?: Prisma.SortOrder
   invoiceId?: Prisma.SortOrderInput | Prisma.SortOrder
   qrText?: Prisma.SortOrderInput | Prisma.SortOrder
+  wirePaymentIntentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  wireClientSecret?: Prisma.SortOrderInput | Prisma.SortOrder
+  wireStatus?: Prisma.SortOrderInput | Prisma.SortOrder
+  wireNextAction?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   paidAt?: Prisma.SortOrderInput | Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -279,6 +315,7 @@ export type PremiumOrderOrderByWithRelationInput = {
 export type PremiumOrderWhereUniqueInput = Prisma.AtLeast<{
   id?: number
   invoiceId?: string
+  wirePaymentIntentId?: string
   AND?: Prisma.PremiumOrderWhereInput | Prisma.PremiumOrderWhereInput[]
   OR?: Prisma.PremiumOrderWhereInput[]
   NOT?: Prisma.PremiumOrderWhereInput | Prisma.PremiumOrderWhereInput[]
@@ -287,10 +324,13 @@ export type PremiumOrderWhereUniqueInput = Prisma.AtLeast<{
   amount?: Prisma.IntFilter<"PremiumOrder"> | number
   status?: Prisma.StringFilter<"PremiumOrder"> | string
   qrText?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  wireClientSecret?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  wireStatus?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  wireNextAction?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
   createdAt?: Prisma.DateTimeFilter<"PremiumOrder"> | Date | string
   paidAt?: Prisma.DateTimeNullableFilter<"PremiumOrder"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-}, "id" | "invoiceId">
+}, "id" | "invoiceId" | "wirePaymentIntentId">
 
 export type PremiumOrderOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -300,6 +340,10 @@ export type PremiumOrderOrderByWithAggregationInput = {
   status?: Prisma.SortOrder
   invoiceId?: Prisma.SortOrderInput | Prisma.SortOrder
   qrText?: Prisma.SortOrderInput | Prisma.SortOrder
+  wirePaymentIntentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  wireClientSecret?: Prisma.SortOrderInput | Prisma.SortOrder
+  wireStatus?: Prisma.SortOrderInput | Prisma.SortOrder
+  wireNextAction?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   paidAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.PremiumOrderCountOrderByAggregateInput
@@ -320,6 +364,10 @@ export type PremiumOrderScalarWhereWithAggregatesInput = {
   status?: Prisma.StringWithAggregatesFilter<"PremiumOrder"> | string
   invoiceId?: Prisma.StringNullableWithAggregatesFilter<"PremiumOrder"> | string | null
   qrText?: Prisma.StringNullableWithAggregatesFilter<"PremiumOrder"> | string | null
+  wirePaymentIntentId?: Prisma.StringNullableWithAggregatesFilter<"PremiumOrder"> | string | null
+  wireClientSecret?: Prisma.StringNullableWithAggregatesFilter<"PremiumOrder"> | string | null
+  wireStatus?: Prisma.StringNullableWithAggregatesFilter<"PremiumOrder"> | string | null
+  wireNextAction?: Prisma.StringNullableWithAggregatesFilter<"PremiumOrder"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"PremiumOrder"> | Date | string
   paidAt?: Prisma.DateTimeNullableWithAggregatesFilter<"PremiumOrder"> | Date | string | null
 }
@@ -330,6 +378,10 @@ export type PremiumOrderCreateInput = {
   status?: string
   invoiceId?: string | null
   qrText?: string | null
+  wirePaymentIntentId?: string | null
+  wireClientSecret?: string | null
+  wireStatus?: string | null
+  wireNextAction?: string | null
   createdAt?: Date | string
   paidAt?: Date | string | null
   user: Prisma.UserCreateNestedOneWithoutPremiumOrdersInput
@@ -343,6 +395,10 @@ export type PremiumOrderUncheckedCreateInput = {
   status?: string
   invoiceId?: string | null
   qrText?: string | null
+  wirePaymentIntentId?: string | null
+  wireClientSecret?: string | null
+  wireStatus?: string | null
+  wireNextAction?: string | null
   createdAt?: Date | string
   paidAt?: Date | string | null
 }
@@ -353,6 +409,10 @@ export type PremiumOrderUpdateInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   invoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qrText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wirePaymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wireClientSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wireStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wireNextAction?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutPremiumOrdersNestedInput
@@ -366,6 +426,10 @@ export type PremiumOrderUncheckedUpdateInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   invoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qrText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wirePaymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wireClientSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wireStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wireNextAction?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -378,6 +442,10 @@ export type PremiumOrderCreateManyInput = {
   status?: string
   invoiceId?: string | null
   qrText?: string | null
+  wirePaymentIntentId?: string | null
+  wireClientSecret?: string | null
+  wireStatus?: string | null
+  wireNextAction?: string | null
   createdAt?: Date | string
   paidAt?: Date | string | null
 }
@@ -388,6 +456,10 @@ export type PremiumOrderUpdateManyMutationInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   invoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qrText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wirePaymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wireClientSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wireStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wireNextAction?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -400,6 +472,10 @@ export type PremiumOrderUncheckedUpdateManyInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   invoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qrText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wirePaymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wireClientSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wireStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wireNextAction?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -422,6 +498,10 @@ export type PremiumOrderCountOrderByAggregateInput = {
   status?: Prisma.SortOrder
   invoiceId?: Prisma.SortOrder
   qrText?: Prisma.SortOrder
+  wirePaymentIntentId?: Prisma.SortOrder
+  wireClientSecret?: Prisma.SortOrder
+  wireStatus?: Prisma.SortOrder
+  wireNextAction?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   paidAt?: Prisma.SortOrder
 }
@@ -441,6 +521,10 @@ export type PremiumOrderMaxOrderByAggregateInput = {
   status?: Prisma.SortOrder
   invoiceId?: Prisma.SortOrder
   qrText?: Prisma.SortOrder
+  wirePaymentIntentId?: Prisma.SortOrder
+  wireClientSecret?: Prisma.SortOrder
+  wireStatus?: Prisma.SortOrder
+  wireNextAction?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   paidAt?: Prisma.SortOrder
 }
@@ -453,6 +537,10 @@ export type PremiumOrderMinOrderByAggregateInput = {
   status?: Prisma.SortOrder
   invoiceId?: Prisma.SortOrder
   qrText?: Prisma.SortOrder
+  wirePaymentIntentId?: Prisma.SortOrder
+  wireClientSecret?: Prisma.SortOrder
+  wireStatus?: Prisma.SortOrder
+  wireNextAction?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   paidAt?: Prisma.SortOrder
 }
@@ -516,6 +604,10 @@ export type PremiumOrderCreateWithoutUserInput = {
   status?: string
   invoiceId?: string | null
   qrText?: string | null
+  wirePaymentIntentId?: string | null
+  wireClientSecret?: string | null
+  wireStatus?: string | null
+  wireNextAction?: string | null
   createdAt?: Date | string
   paidAt?: Date | string | null
 }
@@ -527,6 +619,10 @@ export type PremiumOrderUncheckedCreateWithoutUserInput = {
   status?: string
   invoiceId?: string | null
   qrText?: string | null
+  wirePaymentIntentId?: string | null
+  wireClientSecret?: string | null
+  wireStatus?: string | null
+  wireNextAction?: string | null
   createdAt?: Date | string
   paidAt?: Date | string | null
 }
@@ -568,6 +664,10 @@ export type PremiumOrderScalarWhereInput = {
   status?: Prisma.StringFilter<"PremiumOrder"> | string
   invoiceId?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
   qrText?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  wirePaymentIntentId?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  wireClientSecret?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  wireStatus?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
+  wireNextAction?: Prisma.StringNullableFilter<"PremiumOrder"> | string | null
   createdAt?: Prisma.DateTimeFilter<"PremiumOrder"> | Date | string
   paidAt?: Prisma.DateTimeNullableFilter<"PremiumOrder"> | Date | string | null
 }
@@ -579,6 +679,10 @@ export type PremiumOrderCreateManyUserInput = {
   status?: string
   invoiceId?: string | null
   qrText?: string | null
+  wirePaymentIntentId?: string | null
+  wireClientSecret?: string | null
+  wireStatus?: string | null
+  wireNextAction?: string | null
   createdAt?: Date | string
   paidAt?: Date | string | null
 }
@@ -589,6 +693,10 @@ export type PremiumOrderUpdateWithoutUserInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   invoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qrText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wirePaymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wireClientSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wireStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wireNextAction?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -600,6 +708,10 @@ export type PremiumOrderUncheckedUpdateWithoutUserInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   invoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qrText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wirePaymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wireClientSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wireStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wireNextAction?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -611,6 +723,10 @@ export type PremiumOrderUncheckedUpdateManyWithoutUserInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   invoiceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qrText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wirePaymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wireClientSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wireStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wireNextAction?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -625,6 +741,10 @@ export type PremiumOrderSelect<ExtArgs extends runtime.Types.Extensions.Internal
   status?: boolean
   invoiceId?: boolean
   qrText?: boolean
+  wirePaymentIntentId?: boolean
+  wireClientSecret?: boolean
+  wireStatus?: boolean
+  wireNextAction?: boolean
   createdAt?: boolean
   paidAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -638,6 +758,10 @@ export type PremiumOrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   status?: boolean
   invoiceId?: boolean
   qrText?: boolean
+  wirePaymentIntentId?: boolean
+  wireClientSecret?: boolean
+  wireStatus?: boolean
+  wireNextAction?: boolean
   createdAt?: boolean
   paidAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -651,6 +775,10 @@ export type PremiumOrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   status?: boolean
   invoiceId?: boolean
   qrText?: boolean
+  wirePaymentIntentId?: boolean
+  wireClientSecret?: boolean
+  wireStatus?: boolean
+  wireNextAction?: boolean
   createdAt?: boolean
   paidAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -664,11 +792,15 @@ export type PremiumOrderSelectScalar = {
   status?: boolean
   invoiceId?: boolean
   qrText?: boolean
+  wirePaymentIntentId?: boolean
+  wireClientSecret?: boolean
+  wireStatus?: boolean
+  wireNextAction?: boolean
   createdAt?: boolean
   paidAt?: boolean
 }
 
-export type PremiumOrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "months" | "amount" | "status" | "invoiceId" | "qrText" | "createdAt" | "paidAt", ExtArgs["result"]["premiumOrder"]>
+export type PremiumOrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "months" | "amount" | "status" | "invoiceId" | "qrText" | "wirePaymentIntentId" | "wireClientSecret" | "wireStatus" | "wireNextAction" | "createdAt" | "paidAt", ExtArgs["result"]["premiumOrder"]>
 export type PremiumOrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -692,6 +824,10 @@ export type $PremiumOrderPayload<ExtArgs extends runtime.Types.Extensions.Intern
     status: string
     invoiceId: string | null
     qrText: string | null
+    wirePaymentIntentId: string | null
+    wireClientSecret: string | null
+    wireStatus: string | null
+    wireNextAction: string | null
     createdAt: Date
     paidAt: Date | null
   }, ExtArgs["result"]["premiumOrder"]>
@@ -1125,6 +1261,10 @@ export interface PremiumOrderFieldRefs {
   readonly status: Prisma.FieldRef<"PremiumOrder", 'String'>
   readonly invoiceId: Prisma.FieldRef<"PremiumOrder", 'String'>
   readonly qrText: Prisma.FieldRef<"PremiumOrder", 'String'>
+  readonly wirePaymentIntentId: Prisma.FieldRef<"PremiumOrder", 'String'>
+  readonly wireClientSecret: Prisma.FieldRef<"PremiumOrder", 'String'>
+  readonly wireStatus: Prisma.FieldRef<"PremiumOrder", 'String'>
+  readonly wireNextAction: Prisma.FieldRef<"PremiumOrder", 'String'>
   readonly createdAt: Prisma.FieldRef<"PremiumOrder", 'DateTime'>
   readonly paidAt: Prisma.FieldRef<"PremiumOrder", 'DateTime'>
 }

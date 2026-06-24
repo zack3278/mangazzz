@@ -26,8 +26,17 @@ model PremiumOrder {
   months    Int       @default(1)
   amount    Int
   status    String    @default("PENDING")
+
+  // Хуучин QPay / invoice талбаруудыг үлдээж байна
   invoiceId String?   @unique
   qrText    String?
+
+  // Wire.mn payment талбарууд
+  wirePaymentIntentId String? @unique
+  wireClientSecret    String?
+  wireStatus          String?
+  wireNextAction      String?
+
   createdAt DateTime  @default(now())
   paidAt    DateTime?
 

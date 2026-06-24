@@ -914,6 +914,10 @@ export const PremiumOrderScalarFieldEnum = {
   status: 'status',
   invoiceId: 'invoiceId',
   qrText: 'qrText',
+  wirePaymentIntentId: 'wirePaymentIntentId',
+  wireClientSecret: 'wireClientSecret',
+  wireStatus: 'wireStatus',
+  wireNextAction: 'wireNextAction',
   createdAt: 'createdAt',
   paidAt: 'paidAt'
 } as const
