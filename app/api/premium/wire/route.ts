@@ -15,6 +15,15 @@ export async function POST(req: Request) {
       );
     }
 
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+    if (!siteUrl) {
+      return NextResponse.json(
+        { message: "NEXT_PUBLIC_SITE_URL env тохируулаагүй байна" },
+        { status: 500 }
+      );
+    }
+
     const body = await req.json();
     const months = Number(body.months);
 
@@ -57,9 +66,9 @@ export async function POST(req: Request) {
           allowed_operators: [],
           metadata: {
             type: "premium",
-            orderId: order.id,
-            userId: user.id,
-            months: plan.months,
+            orderId: String(order.id),
+            userId: String(user.id),
+            months: String(plan.months),
           },
         },
       }
@@ -71,7 +80,7 @@ export async function POST(req: Request) {
         method: "POST",
         idempotencyKey: `${idempotencyKey}-confirm`,
         body: {
-          return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/premium/success?orderId=${order.id}`,
+          return_url: `${siteUrl}/premium/success?orderId=${order.id}`,
         },
       }
     );
@@ -96,10 +105,15 @@ export async function POST(req: Request) {
       clientSecret: confirmed.client_secret,
     });
   } catch (error) {
-    console.error(error);
+    console.error("CREATE WIRE PAYMENT ERROR:", error);
 
     return NextResponse.json(
-      { message: "Wire төлбөр үүсгэхэд алдаа гарлаа" },
+      {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Wire төлбөр үүсгэхэд алдаа гарлаа",
+      },
       { status: 500 }
     );
   }

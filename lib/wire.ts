@@ -1,4 +1,4 @@
-const WIRE_API_URL = "https://api.wirepayment.mn";
+const WIRE_API_URL = "https://api.wire.mn";
 
 type WireRequestOptions = {
   method?: "GET" | "POST" | "DELETE";
@@ -30,7 +30,7 @@ export async function wireRequest<T>(
   const apiKey = process.env.WIRE_API_KEY;
 
   if (!apiKey) {
-    throw new Error("WIRE_API_KEY тохируулаагүй байна");
+    throw new Error("WIRE_API_KEY env тохируулаагүй байна");
   }
 
   const headers: Record<string, string> = {
@@ -49,11 +49,30 @@ export async function wireRequest<T>(
     cache: "no-store",
   });
 
-  const data = await res.json().catch(() => null);
+  const text = await res.text();
+
+  let data: any = null;
+
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = {
+      raw: text,
+    };
+  }
 
   if (!res.ok) {
-    console.error("Wire API error:", data);
-    throw new Error(data?.error?.message || "Wire API request failed");
+    console.error("WIRE API FAILED:", {
+      status: res.status,
+      path,
+      data,
+    });
+
+    throw new Error(
+      data?.error?.message ||
+        data?.message ||
+        `Wire API error ${res.status}`
+    );
   }
 
   return data as T;
