@@ -1,52 +1,25 @@
-import nodemailer from "nodemailer";
-import SMTPTransport from "nodemailer/lib/smtp-transport";
-import dns from "dns/promises";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendMail(to: string, subject: string, html: string) {
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS?.replace(/\s/g, "");
-  const from = process.env.SMTP_FROM || user;
+  const from = process.env.RESEND_FROM || "Mangazet <onboarding@resend.dev>";
 
-  if (!user || !pass) {
-    throw new Error("SMTP_USER эсвэл SMTP_PASS тохируулаагүй байна");
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error("RESEND_API_KEY тохируулаагүй байна");
   }
 
-  // Gmail SMTP-ийн IPv4 address авах
-  const addresses = await dns.resolve4("smtp.gmail.com");
-
-  if (!addresses.length) {
-    throw new Error("smtp.gmail.com IPv4 address олдсонгүй");
-  }
-
-  const smtpIp = addresses[0];
-
-  const options: SMTPTransport.Options = {
-    host: smtpIp,
-    port: 587,
-    secure: false,
-    requireTLS: true,
-
-    connectionTimeout: 20000,
-    greetingTimeout: 20000,
-    socketTimeout: 20000,
-
-    auth: {
-      user,
-      pass,
-    },
-
-    // IP-р холбогдож байгаа ч TLS certificate нь smtp.gmail.com нэрээр шалгагдана
-    tls: {
-      servername: "smtp.gmail.com",
-    },
-  };
-
-  const transporter = nodemailer.createTransport(options);
-
-  await transporter.sendMail({
+  const { data, error } = await resend.emails.send({
     from,
     to,
     subject,
     html,
   });
+
+  if (error) {
+    console.error("RESEND MAIL ERROR:", error);
+    throw new Error(error.message || "Email илгээхэд алдаа гарлаа");
+  }
+
+  return data;
 }

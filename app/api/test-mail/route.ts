@@ -4,7 +4,7 @@ import { sendMail } from "@/lib/mail";
 export async function GET() {
   try {
     await sendMail(
-      process.env.SMTP_USER!,
+      process.env.SMTP_USER || "өөрийнgmail@gmail.com",
       "Mangazet test mail",
       "<h1>Email амжилттай ажиллаж байна</h1>"
     );
@@ -18,6 +18,7 @@ export async function GET() {
     return NextResponse.json(
       {
         message: "Email илгээхэд алдаа гарлаа",
+        error: String(error),
       },
       { status: 500 }
     );
