@@ -1,135 +1,200 @@
-import Link from "next/link";
-import Navbar from "@/components/Navbar";
+"use client";
+
+import { useState } from "react";
 
 const plans = [
   {
+    months: 1,
     name: "1 сар",
     price: "5,000₮",
-    desc: "Эхлээд туршиж үзэхэд тохиромжтой",
-    best: false,
+    description: "Premium chapter унших эрх",
   },
   {
+    months: 2,
+    name: "2 сар",
+    price: "9,000₮",
+    description: "2 сарын premium эрх",
+  },
+  {
+    months: 3,
     name: "3 сар",
     price: "13,000₮",
-    desc: "Хамгийн боломжийн багц",
-    best: true,
+    description: "Илүү хэмнэлттэй багц",
   },
   {
+    months: 6,
     name: "6 сар",
-    price: "24,000₮",
-    desc: "Урт хугацаанд уншигчдад",
-    best: false,
+    price: "22,000₮",
+    description: "Хагас жилийн premium эрх",
   },
   {
-    name: "1 жил",
-    price: "44,000₮",
-    desc: "Бүтэн жилийн premium эрх",
-    best: false,
+    months: 12,
+    name: "12 сар",
+    price: "35,000₮",
+    description: "Хамгийн ашигтай багц",
   },
 ];
 
 export default function PremiumPage() {
+  const [loadingPlan, setLoadingPlan] = useState<number | null>(null);
+  const [checkingOrderId, setCheckingOrderId] = useState<number | null>(null);
+  const [lastOrderId, setLastOrderId] = useState<number | null>(null);
+  const [message, setMessage] = useState("");
+
+  async function createWirePayment(months: number) {
+    try {
+      setMessage("");
+      setLoadingPlan(months);
+
+      const res = await fetch("/api/premium/wire", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ months }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMessage(data.message || "Төлбөр үүсгэхэд алдаа гарлаа");
+        return;
+      }
+
+      setLastOrderId(data.orderId);
+      setMessage("Төлбөр үүслээ. Төлбөрийн цонх руу шилжүүлж байна...");
+
+      const nextAction = data.nextAction;
+
+      if (typeof nextAction === "string") {
+        window.location.href = nextAction;
+        return;
+      }
+
+      if (nextAction?.url) {
+        window.location.href = nextAction.url;
+        return;
+      }
+
+      if (nextAction?.redirect_url) {
+        window.location.href = nextAction.redirect_url;
+        return;
+      }
+
+      if (nextAction?.deeplink) {
+        window.location.href = nextAction.deeplink;
+        return;
+      }
+
+      setMessage(
+        "Төлбөр үүслээ. Гэхдээ Wire next_action URL буцаасангүй. Wire dashboard/API response-оо шалгана уу."
+      );
+    } catch (error) {
+      console.error(error);
+      setMessage("Wire төлбөр үүсгэхэд алдаа гарлаа");
+    } finally {
+      setLoadingPlan(null);
+    }
+  }
+
+  async function checkPayment(orderId: number) {
+    try {
+      setCheckingOrderId(orderId);
+      setMessage("");
+
+      const res = await fetch("/api/premium/wire/check", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ orderId }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMessage(data.message || "Төлбөр шалгахад алдаа гарлаа");
+        return;
+      }
+
+      setMessage(data.message);
+
+      if (data.paid) {
+        setTimeout(() => {
+          window.location.href = "/profile";
+        }, 1200);
+      }
+    } catch (error) {
+      console.error(error);
+      setMessage("Төлбөр шалгахад алдаа гарлаа");
+    } finally {
+      setCheckingOrderId(null);
+    }
+  }
+
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#03030a] text-white">
-      <Navbar />
-
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(126,34,206,0.22),transparent_35%),radial-gradient(circle_at_right,rgba(185,28,28,0.16),transparent_30%),linear-gradient(180deg,#050507,#03030a_45%,#03030a)]" />
-
-      <section className="mx-auto max-w-[1320px] px-4 py-10 sm:px-6">
-        <div className="mb-8 overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-purple-950/50 via-zinc-950 to-black p-8 shadow-[0_24px_80px_rgba(0,0,0,0.65)]">
-          <p className="text-xs font-bold uppercase tracking-[0.28em] text-purple-300">
-            Premium Access
+    <main className="min-h-screen bg-zinc-950 px-4 py-10 text-white">
+      <section className="mx-auto max-w-6xl">
+        <div className="mb-10 text-center">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-yellow-400">
+            Mangazet Premium
           </p>
 
-          <h1 className="mt-3 max-w-3xl text-4xl font-bold leading-tight tracking-[-0.03em] text-white md:text-6xl">
-            Premium эрх авсанаар бүх зурагт номнуудыг хязгааргүй унших боломжтой.
+          <h1 className="text-4xl font-black md:text-5xl">
+            Premium эрх авах
           </h1>
 
-          <p className="mt-4 max-w-2xl text-sm font-medium leading-7 text-zinc-400 md:text-base">
+          <p className="mx-auto mt-4 max-w-2xl text-zinc-400">
+            Wire.mn ашиглан төлбөрөө төлөөд premium chapter-уудыг уншаарай.
           </p>
         </div>
 
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        {message ? (
+          <div className="mb-8 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-center text-sm text-yellow-200">
+            {message}
+          </div>
+        ) : null}
+
+        {lastOrderId ? (
+          <div className="mb-8 flex justify-center">
+            <button
+              onClick={() => checkPayment(lastOrderId)}
+              disabled={checkingOrderId === lastOrderId}
+              className="rounded-xl bg-emerald-500 px-6 py-3 font-bold text-black transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {checkingOrderId === lastOrderId
+                ? "Шалгаж байна..."
+                : "Төлбөр шалгах"}
+            </button>
+          </div>
+        ) : null}
+
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-5">
           {plans.map((plan) => (
             <div
-              key={plan.name}
-              className={
-                plan.best
-                  ? "relative rounded-3xl border border-purple-500/80 bg-purple-950/40 p-6 shadow-[0_18px_60px_rgba(126,34,206,0.25)]"
-                  : "relative rounded-3xl border border-white/10 bg-[#111118] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.45)]"
-              }
+              key={plan.months}
+              className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-2xl shadow-black/30"
             >
-              {plan.best && (
-                <span className="absolute right-5 top-5 rounded-full bg-white px-4 py-1 text-xs font-bold text-black">
-                  BEST
-                </span>
-              )}
+              <h2 className="text-2xl font-black">{plan.name}</h2>
 
-              <h2 className="text-2xl font-bold tracking-[-0.02em] text-white">
-                {plan.name}
-              </h2>
+              <p className="mt-2 text-sm text-zinc-400">
+                {plan.description}
+              </p>
 
-              <p className="mt-5 text-4xl font-bold tracking-[-0.04em] text-white">
+              <div className="mt-6 text-3xl font-black text-yellow-400">
                 {plan.price}
-              </p>
+              </div>
 
-              <p className="mt-4 min-h-[48px] text-sm font-medium leading-6 text-zinc-400">
-                {plan.desc}
-              </p>
-
-              <Link
-                href="#payment"
-                className="mt-6 flex h-12 items-center justify-center rounded-2xl bg-white text-base font-bold text-black transition hover:bg-red-600 hover:text-white"
+              <button
+                onClick={() => createWirePayment(plan.months)}
+                disabled={loadingPlan === plan.months}
+                className="mt-6 w-full rounded-xl bg-yellow-400 px-4 py-3 font-bold text-black transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Сонгох
-              </Link>
+                {loadingPlan === plan.months ? "Үүсгэж байна..." : "Wire-р төлөх"}
+              </button>
             </div>
           ))}
         </div>
-
-        <section
-          id="payment"
-          className="mt-8 grid gap-6 rounded-3xl border border-white/10 bg-[#111118] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.55)] lg:grid-cols-[1fr_1fr]"
-        >
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.32em] text-purple-300">
-              Дансаар шилжүүлэх
-            </p>
-
-            <h2 className="mt-4 max-w-xl text-3xl font-bold leading-tight tracking-[-0.03em] text-white md:text-4xl">
-              Төлбөр хийхдээ гүйлгээний утган дээрээ имэйл ээ бичнэ үү.
-            </h2>
-
-            <p className="mt-4 max-w-xl text-sm font-medium leading-7 text-zinc-400">
-              Төлбөр орсны дараа admin premium эрхийг баталгаажуулна. Хэрвээ
-              төлбөр хийсэн ч эрх ороогүй бол page хуудас руу
-              хандана уу.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <div className="rounded-2xl bg-black/45 p-5">
-              <p className="text-sm font-medium text-zinc-500">Банк</p>
-              <p className="mt-1 text-lg font-bold text-white">Хаан банк</p>
-            </div>
-
-            <div className="rounded-2xl bg-black/45 p-5">
-              <p className="text-sm font-medium text-zinc-500">Данс</p>
-              <p className="mt-1 text-lg font-bold text-white">
-                45000 500 5779514888
-              </p>
-            </div>
-
-            <div className="rounded-2xl bg-black/45 p-5">
-              <p className="text-sm font-medium text-zinc-500">
-                Гүйлгээний утга
-              </p>
-              <p className="mt-1 text-lg font-bold text-white">
-                Өөрийн email + сонгосон багц
-              </p>
-            </div>
-          </div>
-        </section>
       </section>
     </main>
   );
