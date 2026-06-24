@@ -4,6 +4,14 @@ import { getCurrentUser } from "@/lib/auth";
 import { wireRequest, WirePaymentIntent } from "@/lib/wire";
 import { activatePremiumByOrderId } from "@/lib/premium";
 
+function isPaidStatus(status?: string | null) {
+  if (!status) return false;
+
+  return ["paid", "succeeded", "success", "completed"].includes(
+    status.toLowerCase()
+  );
+}
+
 export async function POST(req: Request) {
   try {
     const user = await getCurrentUser();
@@ -50,28 +58,29 @@ export async function POST(req: Request) {
       },
     });
 
-    if (
-      paymentIntent.status === "succeeded" ||
-      paymentIntent.status === "paid"
-    ) {
+    if (isPaidStatus(paymentIntent.status)) {
       await activatePremiumByOrderId(order.id);
 
       return NextResponse.json({
         paid: true,
-        message: "Төлбөр амжилттай. Premium эрх идэвхжлээ.",
+        status: paymentIntent.status,
+        message: "Төлбөр амжилттай. Premium эрх автоматаар идэвхжлээ.",
       });
     }
 
     return NextResponse.json({
       paid: false,
       status: paymentIntent.status,
-      message: "Төлбөр хараахан баталгаажаагүй байна.",
+      message: `Төлбөр хараахан баталгаажаагүй байна. Status: ${paymentIntent.status}`,
     });
   } catch (error) {
-    console.error(error);
+    console.error("CHECK WIRE PAYMENT ERROR:", error);
 
     return NextResponse.json(
-      { message: "Төлбөр шалгахад алдаа гарлаа" },
+      {
+        message:
+          error instanceof Error ? error.message : "Төлбөр шалгахад алдаа гарлаа",
+      },
       { status: 500 }
     );
   }

@@ -5,61 +5,169 @@ import { getPremiumPlan, isValidPremiumMonths } from "@/lib/premium";
 import { wireRequest, WirePaymentIntent } from "@/lib/wire";
 
 function isImageUrl(url: string) {
-  const lower = url.toLowerCase();
-
-  return (
-    lower.includes("launcher-icon") ||
-    lower.includes("icon") ||
-    lower.endsWith(".jpg") ||
-    lower.endsWith(".jpeg") ||
-    lower.endsWith(".png") ||
-    lower.endsWith(".webp") ||
-    lower.endsWith(".svg")
-  );
+  return /\.(png|jpg|jpeg|webp|gif|svg)(\?.*)?$/i.test(url);
 }
 
-function isValidPaymentUrl(url: unknown): url is string {
-  if (typeof url !== "string") return false;
-  if (!url.startsWith("http")) return false;
-  if (isImageUrl(url)) return false;
+function extractWirePaymentData(value: any) {
+  let paymentUrl: string | null = null;
+  let qrImageUrl: string | null = null;
+  let qrText: string | null = null;
 
-  return true;
-}
+  const appLinks: { name: string; url: string; logo?: string }[] = [];
 
-function getWireRedirectUrl(nextAction: unknown): string | null {
-  if (!nextAction) return null;
+  function walk(obj: any) {
+    if (!obj) return;
 
-  if (isValidPaymentUrl(nextAction)) {
-    return nextAction;
-  }
+    if (typeof obj === "string") {
+      if (
+        obj.startsWith("http") &&
+        !isImageUrl(obj) &&
+        !obj.includes("launcher-icon") &&
+        !obj.includes("icon")
+      ) {
+        if (
+          obj.includes("pay.wire.mn") ||
+          obj.includes("checkout") ||
+          obj.includes("payment") ||
+          obj.includes("invoice") ||
+          obj.includes("qpay.mn")
+        ) {
+          paymentUrl = paymentUrl || obj;
+        }
+      }
 
-  if (typeof nextAction !== "object") return null;
+      if (
+        obj.startsWith("http") &&
+        isImageUrl(obj) &&
+        !obj.includes("launcher-icon") &&
+        !obj.includes("icon")
+      ) {
+        qrImageUrl = qrImageUrl || obj;
+      }
 
-  const action = nextAction as any;
+      if (
+        obj.startsWith("qpay://") ||
+        obj.startsWith("khanbank://") ||
+        obj.startsWith("statebank://") ||
+        obj.startsWith("tdbbank://") ||
+        obj.startsWith("socialpay://")
+      ) {
+        paymentUrl = paymentUrl || obj;
+      }
 
-  const possibleUrls = [
-    action.checkout_url,
-    action.checkoutUrl,
-    action.payment_url,
-    action.paymentUrl,
-    action.redirect_url,
-    action.redirectUrl,
-    action.web_url,
-    action.webUrl,
-    action.url,
-    action.deeplink,
-    action.deep_link,
-    action.qpay_url,
-    action.qpayUrl,
-  ];
+      return;
+    }
 
-  for (const url of possibleUrls) {
-    if (isValidPaymentUrl(url)) {
-      return url;
+    if (Array.isArray(obj)) {
+      for (const item of obj) walk(item);
+      return;
+    }
+
+    if (typeof obj === "object") {
+      const possibleQrText =
+        obj.qr_text ||
+        obj.qrText ||
+        obj.qr ||
+        obj.qr_data ||
+        obj.qrData ||
+        obj.qpay_qr_text ||
+        obj.qpayQrText;
+
+      if (typeof possibleQrText === "string") {
+        qrText = qrText || possibleQrText;
+      }
+
+      const possibleQrImage =
+        obj.qr_image ||
+        obj.qrImage ||
+        obj.qr_image_url ||
+        obj.qrImageUrl ||
+        obj.qpay_qr_image ||
+        obj.qpayQrImage ||
+        obj.image_url ||
+        obj.imageUrl;
+
+      if (
+        typeof possibleQrImage === "string" &&
+        possibleQrImage.startsWith("http") &&
+        !possibleQrImage.includes("launcher-icon") &&
+        !possibleQrImage.includes("icon")
+      ) {
+        qrImageUrl = qrImageUrl || possibleQrImage;
+      }
+
+      const possiblePaymentUrl =
+        obj.payment_url ||
+        obj.paymentUrl ||
+        obj.checkout_url ||
+        obj.checkoutUrl ||
+        obj.invoice_url ||
+        obj.invoiceUrl ||
+        obj.redirect_url ||
+        obj.redirectUrl ||
+        obj.deeplink ||
+        obj.deep_link ||
+        obj.link;
+
+      if (
+        typeof possiblePaymentUrl === "string" &&
+        !possiblePaymentUrl.includes("launcher-icon") &&
+        !possiblePaymentUrl.includes("icon")
+      ) {
+        paymentUrl = paymentUrl || possiblePaymentUrl;
+      }
+
+      const appName =
+        obj.name ||
+        obj.app_name ||
+        obj.appName ||
+        obj.bank_name ||
+        obj.bankName ||
+        obj.description;
+
+      const appUrl =
+        obj.url ||
+        obj.link ||
+        obj.deeplink ||
+        obj.deep_link ||
+        obj.payment_url ||
+        obj.paymentUrl;
+
+      const logo =
+        obj.logo ||
+        obj.logo_url ||
+        obj.logoUrl ||
+        obj.icon ||
+        obj.icon_url ||
+        obj.iconUrl;
+
+      if (
+        typeof appName === "string" &&
+        typeof appUrl === "string" &&
+        (appUrl.startsWith("http") || appUrl.includes("://")) &&
+        !appUrl.includes("launcher-icon")
+      ) {
+        appLinks.push({
+          name: appName,
+          url: appUrl,
+          logo: typeof logo === "string" ? logo : undefined,
+        });
+      }
+
+      for (const key of Object.keys(obj)) {
+        walk(obj[key]);
+      }
     }
   }
 
-  return null;
+  walk(value);
+
+  return {
+    paymentUrl,
+    qrImageUrl,
+    qrText,
+    appLinks,
+  };
 }
 
 export async function POST(req: Request) {
@@ -144,7 +252,7 @@ export async function POST(req: Request) {
       }
     );
 
-    const redirectUrl = getWireRedirectUrl(confirmed.next_action);
+    const paymentData = extractWirePaymentData(confirmed);
 
     await prisma.premiumOrder.update({
       where: { id: order.id },
@@ -155,6 +263,7 @@ export async function POST(req: Request) {
         wireNextAction: confirmed.next_action
           ? JSON.stringify(confirmed.next_action)
           : null,
+        qrText: paymentData.qrText || null,
       },
     });
 
@@ -163,9 +272,11 @@ export async function POST(req: Request) {
       orderId: order.id,
       paymentIntentId: confirmed.id,
       status: confirmed.status,
-      redirectUrl,
+      paymentUrl: paymentData.paymentUrl,
+      qrImageUrl: paymentData.qrImageUrl,
+      qrText: paymentData.qrText,
+      appLinks: paymentData.appLinks,
       nextAction: confirmed.next_action || null,
-      clientSecret: confirmed.client_secret || null,
       rawPaymentIntent: confirmed,
     });
   } catch (error) {

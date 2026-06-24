@@ -1,46 +1,137 @@
 "use client";
 
+import { useState } from "react";
+
 const plans = [
   {
     months: 1,
     name: "1 сар",
     price: "5,000₮",
     description: "Premium chapter унших эрх",
-    paymentLink: "https://pay.wire.mn/link/plink_3y34nzin3jq5ulu6kfrf3maski",
   },
   {
     months: 2,
     name: "2 сар",
     price: "9,000₮",
     description: "2 сарын premium эрх",
-    paymentLink: "https://pay.wire.mn/link/plink_iqprgge4w2zs4oebnvvt7d6bii",
   },
   {
     months: 3,
     name: "3 сар",
     price: "13,000₮",
     description: "Илүү хэмнэлттэй багц",
-    paymentLink: "https://pay.wire.mn/link/plink_qsagwz2bib34h2ej5ol5kzj1pu",
   },
   {
     months: 6,
     name: "6 сар",
     price: "22,000₮",
     description: "Хагас жилийн premium эрх",
-    paymentLink: "https://pay.wire.mn/link/plink_lhyymm676wqbfuctquguyttfm",
   },
   {
     months: 12,
     name: "12 сар",
     price: "35,000₮",
     description: "Хамгийн ашигтай багц",
-    paymentLink: "https://pay.wire.mn/link/plink_kcp6gytianawvj5dfgg3gnoxue",
   },
 ];
 
+type WirePaymentData = {
+  orderId: number;
+  paymentUrl?: string | null;
+  qrImageUrl?: string | null;
+  qrText?: string | null;
+  appLinks?: {
+    name: string;
+    url: string;
+    logo?: string;
+  }[];
+};
+
 export default function PremiumPage() {
-  function openPayment(link: string) {
-    window.location.href = link;
+  const [loadingPlan, setLoadingPlan] = useState<number | null>(null);
+  const [checkingOrderId, setCheckingOrderId] = useState<number | null>(null);
+  const [message, setMessage] = useState("");
+  const [paymentData, setPaymentData] = useState<WirePaymentData | null>(null);
+  const [debug, setDebug] = useState<any>(null);
+
+  async function createWirePayment(months: number) {
+    try {
+      setMessage("");
+      setDebug(null);
+      setPaymentData(null);
+      setLoadingPlan(months);
+
+      const res = await fetch("/api/premium/wire", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ months }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMessage(data.message || "Төлбөр үүсгэхэд алдаа гарлаа");
+        setDebug(data);
+        return;
+      }
+
+      setDebug(data);
+      setPaymentData({
+        orderId: data.orderId,
+        paymentUrl: data.paymentUrl,
+        qrImageUrl: data.qrImageUrl,
+        qrText: data.qrText,
+        appLinks: data.appLinks || [],
+      });
+
+      setMessage(
+        "Төлбөр үүслээ. QPay-р төлөөд, дараа нь төлбөр шалгах товч дарна уу."
+      );
+    } catch (error) {
+      console.error(error);
+      setMessage("Wire төлбөр үүсгэхэд алдаа гарлаа");
+    } finally {
+      setLoadingPlan(null);
+    }
+  }
+
+  async function checkPayment(orderId: number) {
+    try {
+      setCheckingOrderId(orderId);
+      setMessage("");
+
+      const res = await fetch("/api/premium/wire/check", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ orderId }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMessage(data.message || "Төлбөр шалгахад алдаа гарлаа");
+        setDebug(data);
+        return;
+      }
+
+      setMessage(data.message);
+      setDebug(data);
+
+      if (data.paid) {
+        setTimeout(() => {
+          window.location.href = "/profile";
+        }, 1200);
+      }
+    } catch (error) {
+      console.error(error);
+      setMessage("Төлбөр шалгахад алдаа гарлаа");
+    } finally {
+      setCheckingOrderId(null);
+    }
   }
 
   return (
@@ -56,14 +147,94 @@ export default function PremiumPage() {
           </h1>
 
           <p className="mx-auto mt-4 max-w-2xl text-zinc-400">
-            Wire.mn төлбөрийн линкээр төлбөрөө төлөөд premium chapter-уудыг
-            уншаарай.
+            Wire.mn PaymentIntent + Webhook ашиглан төлбөр төлсний дараа premium
+            эрх автоматаар идэвхжинэ.
           </p>
         </div>
 
-        <div className="mb-8 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-center text-sm font-semibold text-yellow-200">
-          Төлбөр төлсний дараа админ шалгаад premium эрхийг идэвхжүүлнэ.
-        </div>
+        {message ? (
+          <div className="mb-8 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-center text-sm font-semibold text-yellow-200">
+            {message}
+          </div>
+        ) : null}
+
+        {paymentData ? (
+          <div className="mx-auto mb-10 max-w-xl rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-center shadow-2xl shadow-black/30">
+            <h2 className="text-2xl font-black text-yellow-400">
+              QPay төлбөр
+            </h2>
+
+            <p className="mt-2 text-sm text-zinc-400">
+              Төлбөр төлөгдсөний дараа webhook автоматаар premium эрх
+              идэвхжүүлнэ. Хэрвээ удаж байвал “Төлбөр шалгах” дар.
+            </p>
+
+            {paymentData.qrImageUrl ? (
+              <div className="mt-5 flex justify-center">
+                <img
+                  src={paymentData.qrImageUrl}
+                  alt="QPay QR"
+                  className="h-64 w-64 rounded-2xl bg-white object-contain p-3"
+                />
+              </div>
+            ) : null}
+
+            {paymentData.qrText ? (
+              <div className="mt-5 rounded-2xl bg-black/40 p-4 text-left">
+                <p className="mb-2 text-sm font-bold text-zinc-300">
+                  QR text:
+                </p>
+                <p className="break-words text-xs text-zinc-400">
+                  {paymentData.qrText}
+                </p>
+              </div>
+            ) : null}
+
+            {paymentData.paymentUrl ? (
+              <a
+                href={paymentData.paymentUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-5 inline-flex rounded-xl bg-yellow-400 px-6 py-3 font-bold text-black transition hover:bg-yellow-300"
+              >
+                QPay-р төлөх
+              </a>
+            ) : null}
+
+            {paymentData.appLinks && paymentData.appLinks.length > 0 ? (
+              <div className="mt-5 grid gap-3">
+                {paymentData.appLinks.map((app, index) => (
+                  <a
+                    key={`${app.name}-${index}`}
+                    href={app.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-center gap-3 rounded-xl bg-white/10 px-4 py-3 text-sm font-bold hover:bg-white/15"
+                  >
+                    {app.logo ? (
+                      <img
+                        src={app.logo}
+                        alt={app.name}
+                        className="h-6 w-6 rounded"
+                      />
+                    ) : null}
+                    {app.name}
+                  </a>
+                ))}
+              </div>
+            ) : null}
+
+            <button
+              onClick={() => checkPayment(paymentData.orderId)}
+              disabled={checkingOrderId === paymentData.orderId}
+              className="mt-5 w-full rounded-xl bg-emerald-500 px-6 py-3 font-bold text-black transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {checkingOrderId === paymentData.orderId
+                ? "Шалгаж байна..."
+                : "Төлбөр шалгах"}
+            </button>
+          </div>
+        ) : null}
 
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-5">
           {plans.map((plan) => (
@@ -82,25 +253,29 @@ export default function PremiumPage() {
               </div>
 
               <button
-                onClick={() => openPayment(plan.paymentLink)}
-                className="mt-6 w-full rounded-xl bg-yellow-400 px-4 py-3 font-bold text-black transition hover:bg-yellow-300"
+                onClick={() => createWirePayment(plan.months)}
+                disabled={loadingPlan === plan.months}
+                className="mt-6 w-full rounded-xl bg-yellow-400 px-4 py-3 font-bold text-black transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Wire-р төлөх
+                {loadingPlan === plan.months
+                  ? "Үүсгэж байна..."
+                  : "Wire-р төлөх"}
               </button>
             </div>
           ))}
         </div>
 
-        <div className="mt-10 rounded-3xl border border-white/10 bg-white/[0.04] p-6">
-          <h2 className="text-xl font-black text-yellow-400">
-            Төлбөр төлсний дараа
-          </h2>
+        {debug ? (
+          <div className="mt-10 rounded-2xl border border-white/10 bg-black/40 p-5">
+            <h2 className="mb-3 text-lg font-bold text-yellow-400">
+              Wire debug response
+            </h2>
 
-          <p className="mt-3 text-sm leading-7 text-zinc-300">
-            Wire/QPay дээр төлбөр амжилттай төлөгдсөний дараа админ төлбөрийг
-            шалгаад таны premium эрхийг сонгосон хугацаагаар идэвхжүүлнэ.
-          </p>
-        </div>
+            <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap break-words rounded-xl bg-black p-4 text-xs text-zinc-300">
+              {JSON.stringify(debug, null, 2)}
+            </pre>
+          </div>
+        ) : null}
       </section>
     </main>
   );

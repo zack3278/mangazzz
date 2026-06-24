@@ -43,9 +43,7 @@ export function isPremiumActive(user: {
 export async function activatePremiumByOrderId(orderId: number) {
   const order = await prisma.premiumOrder.findUnique({
     where: { id: orderId },
-    include: {
-      user: true,
-    },
+    include: { user: true },
   });
 
   if (!order) {

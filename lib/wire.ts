@@ -56,9 +56,7 @@ export async function wireRequest<T>(
   try {
     data = text ? JSON.parse(text) : null;
   } catch {
-    data = {
-      raw: text,
-    };
+    data = { raw: text };
   }
 
   if (!res.ok) {
