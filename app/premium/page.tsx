@@ -8,7 +8,7 @@ const plans = [
     months: 1,
     name: "1 сар",
     price: "5,000₮",
-    description: "Premium chapter унших эрх",
+    description: "Premium эрх",
   },
   {
     months: 2,
@@ -186,8 +186,6 @@ export default function PremiumPage() {
           </h1>
 
           <p className="mx-auto mt-4 max-w-2xl text-zinc-400">
-            Wire.mn PaymentIntent + Webhook ашиглан төлбөр төлсний дараа premium
-            эрх автоматаар идэвхжинэ.
           </p>
         </div>
 
@@ -206,8 +204,6 @@ export default function PremiumPage() {
                 </h2>
 
                 <p className="mt-2 text-sm text-zinc-400">
-                  Төлбөр төлсний дараа webhook автоматаар premium эрх идэвхжүүлнэ.
-                  Хэрвээ удаж байвал “Төлбөр шалгах” дарна.
                 </p>
 
                 <div className="mt-3 space-y-1 text-sm text-zinc-300">
@@ -319,7 +315,7 @@ export default function PremiumPage() {
               >
                 {loadingPlan === plan.months
                   ? "Үүсгэж байна..."
-                  : "Wire-р төлөх"}
+                  : "Төлөх"}
               </button>
             </div>
           ))}
