@@ -1,34 +1,103 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import QRCode from "qrcode";
 
 const plans = [
-  { months: 1, name: "1 сар", price: "5,000₮", description: "Premium chapter унших эрх" },
-  { months: 2, name: "2 сар", price: "9,000₮", description: "2 сарын premium эрх" },
-  { months: 3, name: "3 сар", price: "13,000₮", description: "Илүү хэмнэлттэй багц" },
-  { months: 6, name: "6 сар", price: "22,000₮", description: "Хагас жилийн premium эрх" },
-  { months: 12, name: "12 сар", price: "35,000₮", description: "Хамгийн ашигтай багц" },
+  {
+    months: 1,
+    name: "1 сар",
+    price: "5,000₮",
+    description: "Premium chapter унших эрх",
+  },
+  {
+    months: 2,
+    name: "2 сар",
+    price: "9,000₮",
+    description: "2 сарын premium эрх",
+  },
+  {
+    months: 3,
+    name: "3 сар",
+    price: "13,000₮",
+    description: "Илүү хэмнэлттэй багц",
+  },
+  {
+    months: 6,
+    name: "6 сар",
+    price: "22,000₮",
+    description: "Хагас жилийн premium эрх",
+  },
+  {
+    months: 12,
+    name: "12 сар",
+    price: "35,000₮",
+    description: "Хамгийн ашигтай багц",
+  },
 ];
 
-type WirePaymentData = {
+type AppLink = {
+  name: string;
+  url: string;
+  logo?: string;
+};
+
+type PaymentData = {
   orderId: number;
+  paymentIntentId?: string;
   paymentUrl?: string | null;
-  qrImageUrl?: string | null;
   qrText?: string | null;
+  appLinks?: AppLink[];
 };
 
 export default function PremiumPage() {
   const [loadingPlan, setLoadingPlan] = useState<number | null>(null);
   const [checkingOrderId, setCheckingOrderId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
-  const [paymentData, setPaymentData] = useState<WirePaymentData | null>(null);
+  const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
   const [debug, setDebug] = useState<any>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string>("");
+
+  useEffect(() => {
+    let active = true;
+
+    async function generateQr() {
+      try {
+        setQrDataUrl("");
+
+        const value =
+          paymentData?.qrText ||
+          paymentData?.paymentUrl ||
+          "";
+
+        if (!value) return;
+
+        const url = await QRCode.toDataURL(value, {
+          width: 340,
+          margin: 1,
+        });
+
+        if (active) {
+          setQrDataUrl(url);
+        }
+      } catch (error) {
+        console.error("QR generate error:", error);
+      }
+    }
+
+    generateQr();
+
+    return () => {
+      active = false;
+    };
+  }, [paymentData?.qrText, paymentData?.paymentUrl]);
 
   async function createWirePayment(months: number) {
     try {
       setMessage("");
       setDebug(null);
       setPaymentData(null);
+      setQrDataUrl("");
       setLoadingPlan(months);
 
       const res = await fetch("/api/premium/wire", {
@@ -47,15 +116,18 @@ export default function PremiumPage() {
         return;
       }
 
-      setDebug(data);
       setPaymentData({
         orderId: data.orderId,
+        paymentIntentId: data.paymentIntentId,
         paymentUrl: data.paymentUrl,
-        qrImageUrl: data.qrImageUrl,
         qrText: data.qrText,
+        appLinks: data.appLinks || [],
       });
 
-      setMessage("Төлбөр үүслээ. QPay-р төлөөд дараа нь “Төлбөр шалгах” дарна уу.");
+      setDebug(data);
+      setMessage(
+        "Төлбөр үүслээ. QR кодоор төлөөд дараа нь “Төлбөр шалгах” дарна уу."
+      );
     } catch (error) {
       console.error(error);
       setMessage("Wire төлбөр үүсгэхэд алдаа гарлаа");
@@ -114,7 +186,8 @@ export default function PremiumPage() {
           </h1>
 
           <p className="mx-auto mt-4 max-w-2xl text-zinc-400">
-            Wire.mn PaymentIntent + Webhook ашиглан төлбөр төлсний дараа premium эрх автоматаар идэвхжинэ.
+            Wire.mn PaymentIntent + Webhook ашиглан төлбөр төлсний дараа premium
+            эрх автоматаар идэвхжинэ.
           </p>
         </div>
 
@@ -125,45 +198,101 @@ export default function PremiumPage() {
         ) : null}
 
         {paymentData ? (
-          <div className="mx-auto mb-10 max-w-xl rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-center shadow-2xl shadow-black/30">
-            <h2 className="text-2xl font-black text-yellow-400">
-              QPay төлбөр
-            </h2>
+          <div className="mx-auto mb-10 max-w-3xl rounded-3xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl shadow-black/30">
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-3xl font-black text-yellow-400">
+                  QPay төлбөр
+                </h2>
 
-            <p className="mt-2 text-sm text-zinc-400">
-              QR код уншуулж төлөөд, дараа нь “Төлбөр шалгах” товч дарна уу.
-            </p>
+                <p className="mt-2 text-sm text-zinc-400">
+                  Төлбөр төлсний дараа webhook автоматаар premium эрх идэвхжүүлнэ.
+                  Хэрвээ удаж байвал “Төлбөр шалгах” дарна.
+                </p>
 
-            {paymentData.qrImageUrl ? (
-              <div className="mt-5 flex justify-center">
-                <img
-                  src={paymentData.qrImageUrl}
-                  alt="QPay QR"
-                  className="h-72 w-72 rounded-2xl bg-white object-contain p-4"
-                />
+                <div className="mt-3 space-y-1 text-sm text-zinc-300">
+                  <p>
+                    <span className="font-bold">Order ID:</span>{" "}
+                    {paymentData.orderId}
+                  </p>
+                  {paymentData.paymentIntentId ? (
+                    <p>
+                      <span className="font-bold">PaymentIntent ID:</span>{" "}
+                      {paymentData.paymentIntentId}
+                    </p>
+                  ) : null}
+                </div>
               </div>
-            ) : null}
+            </div>
 
-            {paymentData.paymentUrl ? (
-              <a
-                href={paymentData.paymentUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-5 inline-flex rounded-xl bg-yellow-400 px-6 py-3 font-bold text-black transition hover:bg-yellow-300"
+            <div className="rounded-3xl border border-white/10 bg-[#06111d] p-5">
+              {(qrDataUrl || paymentData.qrText) ? (
+                <div className="flex justify-center">
+                  <div className="rounded-2xl bg-white p-5">
+                    {qrDataUrl ? (
+                      <img
+                        src={qrDataUrl}
+                        alt="QPay QR"
+                        className="h-[320px] w-[320px] object-contain"
+                      />
+                    ) : null}
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-2xl bg-black/30 p-6 text-center text-sm text-zinc-400">
+                  QR код олдсонгүй. Доорх QPay link ашиглаж төлнө үү.
+                </div>
+              )}
+
+              <div className="mt-5 flex flex-wrap justify-center gap-3">
+                {paymentData.paymentUrl ? (
+                  <a
+                    href={paymentData.paymentUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-xl bg-yellow-400 px-6 py-3 font-bold text-black transition hover:bg-yellow-300"
+                  >
+                    QPay-р төлөх
+                  </a>
+                ) : null}
+              </div>
+
+              {paymentData.appLinks && paymentData.appLinks.length > 0 ? (
+                <div className="mt-5 grid gap-3 md:grid-cols-2">
+                  {paymentData.appLinks.map((app, index) => (
+                    <a
+                      key={`${app.name}-${index}`}
+                      href={app.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold transition hover:bg-white/[0.08]"
+                    >
+                      {app.logo ? (
+                        <img
+                          src={app.logo}
+                          alt={app.name}
+                          className="h-7 w-7 rounded-md object-contain bg-white"
+                        />
+                      ) : (
+                        <div className="h-7 w-7 rounded-md bg-white/10" />
+                      )}
+
+                      <span>{app.name}</span>
+                    </a>
+                  ))}
+                </div>
+              ) : null}
+
+              <button
+                onClick={() => checkPayment(paymentData.orderId)}
+                disabled={checkingOrderId === paymentData.orderId}
+                className="mt-6 w-full rounded-xl bg-emerald-500 px-6 py-4 text-lg font-bold text-black transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                QPay-р төлөх
-              </a>
-            ) : null}
-
-            <button
-              onClick={() => checkPayment(paymentData.orderId)}
-              disabled={checkingOrderId === paymentData.orderId}
-              className="mt-5 w-full rounded-xl bg-emerald-500 px-6 py-3 font-bold text-black transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {checkingOrderId === paymentData.orderId
-                ? "Шалгаж байна..."
-                : "Төлбөр шалгах"}
-            </button>
+                {checkingOrderId === paymentData.orderId
+                  ? "Шалгаж байна..."
+                  : "ТӨЛБӨР ШАЛГАХ"}
+              </button>
+            </div>
           </div>
         ) : null}
 

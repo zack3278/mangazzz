@@ -52,9 +52,7 @@ export async function POST(req: Request) {
     );
 
     await prisma.premiumOrder.update({
-      where: {
-        id: order.id,
-      },
+      where: { id: order.id },
       data: {
         wireStatus: paymentIntent.status,
       },
@@ -66,7 +64,7 @@ export async function POST(req: Request) {
       return NextResponse.json({
         paid: true,
         status: paymentIntent.status,
-        message: "Төлбөр амжилттай. Premium эрх идэвхжлээ.",
+        message: "Төлбөр амжилттай. Premium эрх автоматаар идэвхжлээ.",
       });
     }
 
@@ -81,7 +79,9 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         message:
-          error instanceof Error ? error.message : "Төлбөр шалгахад алдаа гарлаа",
+          error instanceof Error
+            ? error.message
+            : "Төлбөр шалгахад алдаа гарлаа",
       },
       { status: 500 }
     );

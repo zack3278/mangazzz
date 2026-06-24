@@ -4,59 +4,73 @@ import { getCurrentUser } from "@/lib/auth";
 import { getPremiumPlan, isValidPremiumMonths } from "@/lib/premium";
 import { wireRequest, WirePaymentIntent } from "@/lib/wire";
 
-function isImageUrl(url: string) {
-  return /\.(png|jpg|jpeg|webp|gif|svg)(\?.*)?$/i.test(url);
+type AppLink = {
+  name: string;
+  url: string;
+  logo?: string;
+};
+
+function isHttpUrl(value: string) {
+  return /^https?:\/\//i.test(value);
 }
 
-function isQrImageUrl(url: string) {
-  const lower = url.toLowerCase();
+function looksLikeQrText(value: string) {
+  const v = value.trim();
 
   return (
-    isImageUrl(url) &&
-    lower.includes("qr") &&
-    !lower.includes("icon") &&
-    !lower.includes("logo") &&
-    !lower.includes("launcher")
+    v.startsWith("000201") ||
+    v.includes("qPay_QRcode=") ||
+    v.includes("QPAY") ||
+    v.includes("bankReference=") ||
+    v.includes("invoice=")
   );
 }
 
-function extractWirePaymentData(value: any) {
+function extractWirePaymentData(payload: any) {
   let paymentUrl: string | null = null;
-  let qrImageUrl: string | null = null;
   let qrText: string | null = null;
+  const appLinks: AppLink[] = [];
 
-  const appLinks: { name: string; url: string; logo?: string }[] = [];
+  function pushAppLink(name: string, url: string, logo?: string) {
+    if (!name || !url) return;
+
+    const exists = appLinks.some((item) => item.name === name && item.url === url);
+    if (exists) return;
+
+    appLinks.push({
+      name,
+      url,
+      logo,
+    });
+  }
 
   function walk(obj: any) {
     if (!obj) return;
 
     if (typeof obj === "string") {
-      if (
-        obj.startsWith("http") &&
-        !isImageUrl(obj) &&
-        !obj.includes("launcher-icon") &&
-        !obj.includes("icon")
-      ) {
-        if (
-          obj.includes("pay.wire.mn") ||
-          obj.includes("checkout") ||
-          obj.includes("payment") ||
-          obj.includes("invoice") ||
-          obj.includes("qpay.mn")
-        ) {
-          paymentUrl = paymentUrl || obj;
-        }
+      if (!qrText && looksLikeQrText(obj)) {
+        qrText = obj;
       }
 
-      if (obj.startsWith("http") && isQrImageUrl(obj)) {
-        qrImageUrl = qrImageUrl || obj;
+      if (
+        !paymentUrl &&
+        isHttpUrl(obj) &&
+        (obj.includes("pay.wire.mn") ||
+          obj.includes("qpay") ||
+          obj.includes("payment") ||
+          obj.includes("checkout") ||
+          obj.includes("invoice"))
+      ) {
+        paymentUrl = obj;
       }
 
       return;
     }
 
     if (Array.isArray(obj)) {
-      for (const item of obj) walk(item);
+      for (const item of obj) {
+        walk(item);
+      }
       return;
     }
 
@@ -64,30 +78,19 @@ function extractWirePaymentData(value: any) {
       const possibleQrText =
         obj.qr_text ||
         obj.qrText ||
-        obj.qr ||
         obj.qr_data ||
         obj.qrData ||
+        obj.qr_code ||
+        obj.qrCode ||
+        obj.qrcode ||
+        obj.qr ||
         obj.qpay_qr_text ||
-        obj.qpayQrText;
+        obj.qpayQrText ||
+        obj.invoice_qr_text ||
+        obj.invoiceQrText;
 
-      if (typeof possibleQrText === "string") {
-        qrText = qrText || possibleQrText;
-      }
-
-      const possibleQrImage =
-        obj.qr_image ||
-        obj.qrImage ||
-        obj.qr_image_url ||
-        obj.qrImageUrl ||
-        obj.qpay_qr_image ||
-        obj.qpayQrImage;
-
-      if (
-        typeof possibleQrImage === "string" &&
-        possibleQrImage.startsWith("http") &&
-        isQrImageUrl(possibleQrImage)
-      ) {
-        qrImageUrl = qrImageUrl || possibleQrImage;
+      if (typeof possibleQrText === "string" && !qrText) {
+        qrText = possibleQrText;
       }
 
       const possiblePaymentUrl =
@@ -99,16 +102,15 @@ function extractWirePaymentData(value: any) {
         obj.invoiceUrl ||
         obj.redirect_url ||
         obj.redirectUrl ||
-        obj.deeplink ||
-        obj.deep_link ||
-        obj.link;
+        obj.link ||
+        obj.url;
 
       if (
         typeof possiblePaymentUrl === "string" &&
-        !possiblePaymentUrl.includes("launcher-icon") &&
-        !possiblePaymentUrl.includes("icon")
+        !paymentUrl &&
+        isHttpUrl(possiblePaymentUrl)
       ) {
-        paymentUrl = paymentUrl || possiblePaymentUrl;
+        paymentUrl = possiblePaymentUrl;
       }
 
       const appName =
@@ -120,14 +122,14 @@ function extractWirePaymentData(value: any) {
         obj.description;
 
       const appUrl =
-        obj.url ||
-        obj.link ||
         obj.deeplink ||
         obj.deep_link ||
+        obj.url ||
+        obj.link ||
         obj.payment_url ||
         obj.paymentUrl;
 
-      const logo =
+      const appLogo =
         obj.logo ||
         obj.logo_url ||
         obj.logoUrl ||
@@ -138,27 +140,25 @@ function extractWirePaymentData(value: any) {
       if (
         typeof appName === "string" &&
         typeof appUrl === "string" &&
-        (appUrl.startsWith("http") || appUrl.includes("://")) &&
-        !appUrl.includes("launcher-icon")
+        (appUrl.includes("://") || isHttpUrl(appUrl))
       ) {
-        appLinks.push({
-          name: appName,
-          url: appUrl,
-          logo: typeof logo === "string" ? logo : undefined,
-        });
+        pushAppLink(
+          appName,
+          appUrl,
+          typeof appLogo === "string" ? appLogo : undefined
+        );
       }
 
-      for (const key of Object.keys(obj)) {
-        walk(obj[key]);
+      for (const value of Object.values(obj)) {
+        walk(value);
       }
     }
   }
 
-  walk(value);
+  walk(payload);
 
   return {
     paymentUrl,
-    qrImageUrl,
     qrText,
     appLinks,
   };
@@ -267,10 +267,8 @@ export async function POST(req: Request) {
       paymentIntentId: confirmed.id,
       status: confirmed.status,
       paymentUrl: paymentData.paymentUrl,
-      qrImageUrl: paymentData.qrImageUrl,
       qrText: paymentData.qrText,
       appLinks: paymentData.appLinks,
-      nextAction: confirmed.next_action || null,
       rawPaymentIntent: confirmed,
     });
   } catch (error) {
