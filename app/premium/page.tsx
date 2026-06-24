@@ -1,187 +1,46 @@
 "use client";
 
-import { useState } from "react";
-
 const plans = [
   {
     months: 1,
     name: "1 сар",
     price: "5,000₮",
     description: "Premium chapter унших эрх",
+    paymentLink: "https://pay.wire.mn/link/plink_3y34nzin3jq5ulu6kfrf3maski",
   },
   {
     months: 2,
     name: "2 сар",
     price: "9,000₮",
     description: "2 сарын premium эрх",
+    paymentLink: "https://pay.wire.mn/link/plink_iqprgge4w2zs4oebnvvt7d6bii",
   },
   {
     months: 3,
     name: "3 сар",
     price: "13,000₮",
     description: "Илүү хэмнэлттэй багц",
+    paymentLink: "https://pay.wire.mn/link/plink_qsagwz2bib34h2ej5ol5kzj1pu",
   },
   {
     months: 6,
     name: "6 сар",
     price: "22,000₮",
     description: "Хагас жилийн premium эрх",
+    paymentLink: "https://pay.wire.mn/link/plink_lhyymm676wqbfuctquguyttfm",
   },
   {
     months: 12,
     name: "12 сар",
     price: "35,000₮",
     description: "Хамгийн ашигтай багц",
+    paymentLink: "https://pay.wire.mn/link/plink_kcp6gytianawvj5dfgg3gnoxue",
   },
 ];
 
-function isImageUrl(url: string) {
-  const lower = url.toLowerCase();
-
-  return (
-    lower.includes("launcher-icon") ||
-    lower.includes("icon") ||
-    lower.endsWith(".jpg") ||
-    lower.endsWith(".jpeg") ||
-    lower.endsWith(".png") ||
-    lower.endsWith(".webp") ||
-    lower.endsWith(".svg")
-  );
-}
-
-function isValidPaymentUrl(url: unknown): url is string {
-  if (typeof url !== "string") return false;
-  if (!url.startsWith("http")) return false;
-  if (isImageUrl(url)) return false;
-
-  return true;
-}
-
-function getPaymentUrlFromNextAction(nextAction: any): string | null {
-  if (!nextAction) return null;
-
-  if (isValidPaymentUrl(nextAction)) {
-    return nextAction;
-  }
-
-  if (typeof nextAction !== "object") {
-    return null;
-  }
-
-  const possibleUrls = [
-    nextAction.checkout_url,
-    nextAction.checkoutUrl,
-    nextAction.payment_url,
-    nextAction.paymentUrl,
-    nextAction.redirect_url,
-    nextAction.redirectUrl,
-    nextAction.web_url,
-    nextAction.webUrl,
-    nextAction.url,
-    nextAction.deeplink,
-    nextAction.deep_link,
-    nextAction.qpay_url,
-    nextAction.qpayUrl,
-  ];
-
-  for (const url of possibleUrls) {
-    if (isValidPaymentUrl(url)) {
-      return url;
-    }
-  }
-
-  return null;
-}
-
 export default function PremiumPage() {
-  const [loadingPlan, setLoadingPlan] = useState<number | null>(null);
-  const [checkingOrderId, setCheckingOrderId] = useState<number | null>(null);
-  const [lastOrderId, setLastOrderId] = useState<number | null>(null);
-  const [message, setMessage] = useState("");
-  const [debug, setDebug] = useState<any>(null);
-
-  async function createWirePayment(months: number) {
-    try {
-      setMessage("");
-      setDebug(null);
-      setLoadingPlan(months);
-
-      const res = await fetch("/api/premium/wire", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ months }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setMessage(data.message || "Төлбөр үүсгэхэд алдаа гарлаа");
-        setDebug(data);
-        return;
-      }
-
-      setLastOrderId(data.orderId);
-      setDebug(data);
-
-      const paymentUrl =
-        data.redirectUrl || getPaymentUrlFromNextAction(data.nextAction);
-
-      if (paymentUrl) {
-        setMessage(
-          "Төлбөр үүслээ. QPay/Wire төлбөрийн цонх руу шилжүүлж байна..."
-        );
-        window.location.href = paymentUrl;
-        return;
-      }
-
-      setMessage(
-        "Төлбөр үүслээ. Гэхдээ Wire-ээс төлбөр төлөх URL ирсэнгүй. Доорх Wire debug response-г screenshot хийгээд явуул."
-      );
-    } catch (error) {
-      console.error(error);
-      setMessage("Wire төлбөр үүсгэхэд алдаа гарлаа");
-    } finally {
-      setLoadingPlan(null);
-    }
-  }
-
-  async function checkPayment(orderId: number) {
-    try {
-      setCheckingOrderId(orderId);
-      setMessage("");
-
-      const res = await fetch("/api/premium/wire/check", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ orderId }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setMessage(data.message || "Төлбөр шалгахад алдаа гарлаа");
-        setDebug(data);
-        return;
-      }
-
-      setMessage(data.message);
-      setDebug(data);
-
-      if (data.paid) {
-        setTimeout(() => {
-          window.location.href = "/profile";
-        }, 1200);
-      }
-    } catch (error) {
-      console.error(error);
-      setMessage("Төлбөр шалгахад алдаа гарлаа");
-    } finally {
-      setCheckingOrderId(null);
-    }
+  function openPayment(link: string) {
+    window.location.href = link;
   }
 
   return (
@@ -197,29 +56,14 @@ export default function PremiumPage() {
           </h1>
 
           <p className="mx-auto mt-4 max-w-2xl text-zinc-400">
-            Wire.mn ашиглан төлбөрөө төлөөд premium chapter-уудыг уншаарай.
+            Wire.mn төлбөрийн линкээр төлбөрөө төлөөд premium chapter-уудыг
+            уншаарай.
           </p>
         </div>
 
-        {message ? (
-          <div className="mb-8 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-center text-sm font-semibold text-yellow-200">
-            {message}
-          </div>
-        ) : null}
-
-        {lastOrderId ? (
-          <div className="mb-8 flex justify-center">
-            <button
-              onClick={() => checkPayment(lastOrderId)}
-              disabled={checkingOrderId === lastOrderId}
-              className="rounded-xl bg-emerald-500 px-6 py-3 font-bold text-black transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {checkingOrderId === lastOrderId
-                ? "Шалгаж байна..."
-                : "Төлбөр шалгах"}
-            </button>
-          </div>
-        ) : null}
+        <div className="mb-8 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-center text-sm font-semibold text-yellow-200">
+          Төлбөр төлсний дараа админ шалгаад premium эрхийг идэвхжүүлнэ.
+        </div>
 
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-5">
           {plans.map((plan) => (
@@ -238,29 +82,25 @@ export default function PremiumPage() {
               </div>
 
               <button
-                onClick={() => createWirePayment(plan.months)}
-                disabled={loadingPlan === plan.months}
-                className="mt-6 w-full rounded-xl bg-yellow-400 px-4 py-3 font-bold text-black transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => openPayment(plan.paymentLink)}
+                className="mt-6 w-full rounded-xl bg-yellow-400 px-4 py-3 font-bold text-black transition hover:bg-yellow-300"
               >
-                {loadingPlan === plan.months
-                  ? "Үүсгэж байна..."
-                  : "Wire-р төлөх"}
+                Wire-р төлөх
               </button>
             </div>
           ))}
         </div>
 
-        {debug ? (
-          <div className="mt-10 rounded-2xl border border-white/10 bg-black/40 p-5">
-            <h2 className="mb-3 text-lg font-bold text-yellow-400">
-              Wire debug response
-            </h2>
+        <div className="mt-10 rounded-3xl border border-white/10 bg-white/[0.04] p-6">
+          <h2 className="text-xl font-black text-yellow-400">
+            Төлбөр төлсний дараа
+          </h2>
 
-            <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap break-words rounded-xl bg-black p-4 text-xs text-zinc-300">
-              {JSON.stringify(debug, null, 2)}
-            </pre>
-          </div>
-        ) : null}
+          <p className="mt-3 text-sm leading-7 text-zinc-300">
+            Wire/QPay дээр төлбөр амжилттай төлөгдсөний дараа админ төлбөрийг
+            шалгаад таны premium эрхийг сонгосон хугацаагаар идэвхжүүлнэ.
+          </p>
+        </div>
       </section>
     </main>
   );
