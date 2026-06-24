@@ -35,45 +35,58 @@ const plans = [
   },
 ];
 
-function findUrlFromAnyObject(value: any): string | null {
-  if (!value) return null;
+function isImageUrl(url: string) {
+  const lower = url.toLowerCase();
 
-  if (typeof value === "string") {
-    if (value.startsWith("http")) return value;
+  return (
+    lower.includes("launcher-icon") ||
+    lower.includes("icon") ||
+    lower.endsWith(".jpg") ||
+    lower.endsWith(".jpeg") ||
+    lower.endsWith(".png") ||
+    lower.endsWith(".webp") ||
+    lower.endsWith(".svg")
+  );
+}
+
+function isValidPaymentUrl(url: unknown): url is string {
+  if (typeof url !== "string") return false;
+  if (!url.startsWith("http")) return false;
+  if (isImageUrl(url)) return false;
+
+  return true;
+}
+
+function getPaymentUrlFromNextAction(nextAction: any): string | null {
+  if (!nextAction) return null;
+
+  if (isValidPaymentUrl(nextAction)) {
+    return nextAction;
+  }
+
+  if (typeof nextAction !== "object") {
     return null;
   }
 
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      const found = findUrlFromAnyObject(item);
-      if (found) return found;
-    }
+  const possibleUrls = [
+    nextAction.checkout_url,
+    nextAction.checkoutUrl,
+    nextAction.payment_url,
+    nextAction.paymentUrl,
+    nextAction.redirect_url,
+    nextAction.redirectUrl,
+    nextAction.web_url,
+    nextAction.webUrl,
+    nextAction.url,
+    nextAction.deeplink,
+    nextAction.deep_link,
+    nextAction.qpay_url,
+    nextAction.qpayUrl,
+  ];
 
-    return null;
-  }
-
-  if (typeof value === "object") {
-    const directUrl =
-      value.url ||
-      value.redirect_url ||
-      value.redirectUrl ||
-      value.checkout_url ||
-      value.checkoutUrl ||
-      value.payment_url ||
-      value.paymentUrl ||
-      value.deeplink ||
-      value.deep_link ||
-      value.qpay_url ||
-      value.qpayUrl ||
-      value.link;
-
-    if (typeof directUrl === "string" && directUrl.startsWith("http")) {
-      return directUrl;
-    }
-
-    for (const key of Object.keys(value)) {
-      const found = findUrlFromAnyObject(value[key]);
-      if (found) return found;
+  for (const url of possibleUrls) {
+    if (isValidPaymentUrl(url)) {
+      return url;
     }
   }
 
@@ -112,19 +125,19 @@ export default function PremiumPage() {
       setLastOrderId(data.orderId);
       setDebug(data);
 
-      const url =
-        data.redirectUrl ||
-        findUrlFromAnyObject(data.nextAction) ||
-        findUrlFromAnyObject(data.rawPaymentIntent);
+      const paymentUrl =
+        data.redirectUrl || getPaymentUrlFromNextAction(data.nextAction);
 
-      if (url) {
-        setMessage("Төлбөр үүслээ. QPay/Wire төлбөрийн цонх руу шилжүүлж байна...");
-        window.location.href = url;
+      if (paymentUrl) {
+        setMessage(
+          "Төлбөр үүслээ. QPay/Wire төлбөрийн цонх руу шилжүүлж байна..."
+        );
+        window.location.href = paymentUrl;
         return;
       }
 
       setMessage(
-        "Төлбөр үүслээ. Гэхдээ Wire-ээс төлбөр төлөх URL ирсэнгүй. Доорх debug мэдээллийг screenshot хийгээд явуул."
+        "Төлбөр үүслээ. Гэхдээ Wire-ээс төлбөр төлөх URL ирсэнгүй. Доорх Wire debug response-г screenshot хийгээд явуул."
       );
     } catch (error) {
       console.error(error);
@@ -229,7 +242,9 @@ export default function PremiumPage() {
                 disabled={loadingPlan === plan.months}
                 className="mt-6 w-full rounded-xl bg-yellow-400 px-4 py-3 font-bold text-black transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loadingPlan === plan.months ? "Үүсгэж байна..." : "Wire-р төлөх"}
+                {loadingPlan === plan.months
+                  ? "Үүсгэж байна..."
+                  : "Wire-р төлөх"}
               </button>
             </div>
           ))}

@@ -4,32 +4,62 @@ import { getCurrentUser } from "@/lib/auth";
 import { getPremiumPlan, isValidPremiumMonths } from "@/lib/premium";
 import { wireRequest, WirePaymentIntent } from "@/lib/wire";
 
+function isImageUrl(url: string) {
+  const lower = url.toLowerCase();
+
+  return (
+    lower.includes("launcher-icon") ||
+    lower.includes("icon") ||
+    lower.endsWith(".jpg") ||
+    lower.endsWith(".jpeg") ||
+    lower.endsWith(".png") ||
+    lower.endsWith(".webp") ||
+    lower.endsWith(".svg")
+  );
+}
+
+function isValidPaymentUrl(url: unknown): url is string {
+  if (typeof url !== "string") return false;
+  if (!url.startsWith("http")) return false;
+  if (isImageUrl(url)) return false;
+
+  return true;
+}
+
 function getWireRedirectUrl(nextAction: unknown): string | null {
   if (!nextAction) return null;
 
-  if (typeof nextAction === "string") {
-    if (nextAction.startsWith("http")) return nextAction;
-    return null;
+  if (isValidPaymentUrl(nextAction)) {
+    return nextAction;
   }
 
   if (typeof nextAction !== "object") return null;
 
   const action = nextAction as any;
 
-  return (
-    action.url ||
-    action.redirect_url ||
-    action.redirectUrl ||
-    action.checkout_url ||
-    action.checkoutUrl ||
-    action.payment_url ||
-    action.paymentUrl ||
-    action.deeplink ||
-    action.deep_link ||
-    action.qpay_url ||
-    action.qpayUrl ||
-    null
-  );
+  const possibleUrls = [
+    action.checkout_url,
+    action.checkoutUrl,
+    action.payment_url,
+    action.paymentUrl,
+    action.redirect_url,
+    action.redirectUrl,
+    action.web_url,
+    action.webUrl,
+    action.url,
+    action.deeplink,
+    action.deep_link,
+    action.qpay_url,
+    action.qpayUrl,
+  ];
+
+  for (const url of possibleUrls) {
+    if (isValidPaymentUrl(url)) {
+      return url;
+    }
+  }
+
+  return null;
 }
 
 export async function POST(req: Request) {
