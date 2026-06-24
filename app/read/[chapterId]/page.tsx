@@ -32,7 +32,7 @@ export default async function ReadChapterPage({ params }: Props) {
   if (!tokenUser) {
     return (
       <main className="site-shell flex min-h-screen items-center justify-center px-4 text-white">
-        <div className="glass-panel max-w-lg rounded-[2rem] p-8 text-center">
+        <div className="max-w-lg rounded-[2rem] border border-white/10 bg-[#111] p-8 text-center">
           <h1 className="text-3xl font-black">Login шаардлагатай</h1>
 
           <p className="mt-3 text-zinc-400">
@@ -53,7 +53,9 @@ export default async function ReadChapterPage({ params }: Props) {
   }
 
   const dbUser = await prisma.user.findUnique({
-    where: { id: tokenUser.id },
+    where: {
+      id: tokenUser.id,
+    },
     select: {
       id: true,
       isPremium: true,
@@ -69,7 +71,9 @@ export default async function ReadChapterPage({ params }: Props) {
 
   if (dbUser && premiumExpired) {
     await prisma.user.update({
-      where: { id: dbUser.id },
+      where: {
+        id: dbUser.id,
+      },
       data: {
         isPremium: false,
         premiumExpiresAt: null,
@@ -80,8 +84,10 @@ export default async function ReadChapterPage({ params }: Props) {
   if (!dbUser || (!dbUser.isPremium && dbUser.role !== "ADMIN")) {
     return (
       <main className="site-shell flex min-h-screen items-center justify-center px-4 text-white">
-        <div className="glass-panel max-w-lg rounded-[2rem] p-8 text-center">
-          <span className="badge badge-gold">Premium required</span>
+        <div className="max-w-lg rounded-[2rem] border border-white/10 bg-[#111] p-8 text-center">
+          <span className="rounded-md bg-yellow-400 px-3 py-1 text-xs font-black text-black">
+            Premium required
+          </span>
 
           <h1 className="mt-4 text-3xl font-black">
             Premium эрх шаардлагатай
@@ -147,73 +153,74 @@ export default async function ReadChapterPage({ params }: Props) {
 
   return (
     <main className="min-h-screen bg-black text-white">
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-black/80 backdrop-blur-xl">
-        <div className="container-soft flex flex-col gap-4 py-4 md:flex-row md:items-center md:justify-between">
+      <header className="border-b border-white/10 bg-[#070707]">
+        <div className="mx-auto flex max-w-[980px] flex-col gap-4 px-4 py-5 md:flex-row md:items-center md:justify-between">
           <div>
             <Link
               href={`/comic/${chapter.comic.slug}`}
-              className="text-sm font-black text-red-300 hover:text-red-200"
+              className="text-sm font-black text-yellow-300 hover:text-yellow-200"
             >
               ← Буцах
             </Link>
 
-            <h1 className="mt-1 line-clamp-1 text-xl font-black md:text-2xl">
+            <h1 className="mt-2 line-clamp-2 text-xl font-black md:text-2xl">
               {chapter.comic.title}
             </h1>
 
-            <p className="text-sm font-bold text-zinc-500">
+            <p className="mt-1 text-sm font-bold text-zinc-500">
               Chapter {chapter.number}: {chapter.title}
             </p>
           </div>
 
-          <Link href="/" className="secondary-btn px-4 py-3 text-sm">
-            Home
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/"
+              className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-black text-white transition hover:bg-white/10"
+            >
+              Home
+            </Link>
+
+            <Link
+              href={`/comic/${chapter.comic.slug}`}
+              className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-black text-white transition hover:bg-white/10"
+            >
+              Chapter list
+            </Link>
+          </div>
         </div>
       </header>
 
-      <nav className="container-soft flex flex-wrap items-center justify-center gap-3 py-5">
+      <nav className="mx-auto flex max-w-[980px] flex-wrap items-center justify-center gap-3 px-4 py-5">
         {prevChapter ? (
           <Link
             href={`/read/${prevChapter.id}`}
-            className="secondary-btn px-4 py-3 text-sm"
+            className="rounded-xl border border-white/10 bg-[#111] px-5 py-3 text-sm font-black text-white transition hover:bg-[#181818]"
           >
             ← Өмнөх
           </Link>
         ) : (
-          <span className="secondary-btn px-4 py-3 text-sm opacity-40">
+          <span className="rounded-xl border border-white/10 bg-[#111] px-5 py-3 text-sm font-black text-zinc-600">
             ← Өмнөх
           </span>
         )}
 
-        <Link
-          href={`/comic/${chapter.comic.slug}`}
-          className="secondary-btn px-4 py-3 text-sm"
-        >
-          Chapter list
-        </Link>
+        <span className="rounded-xl border border-yellow-400/20 bg-yellow-400/10 px-5 py-3 text-sm font-black text-yellow-300">
+          {currentIndex + 1} / {chapters.length}
+        </span>
 
         {nextChapter ? (
           <Link
             href={`/read/${nextChapter.id}`}
-            className="primary-btn px-4 py-3 text-sm"
+            className="rounded-xl bg-yellow-400 px-5 py-3 text-sm font-black text-black transition hover:bg-yellow-300"
           >
             Дараах →
           </Link>
         ) : (
-          <span className="secondary-btn px-4 py-3 text-sm opacity-40">
+          <span className="rounded-xl border border-white/10 bg-[#111] px-5 py-3 text-sm font-black text-zinc-600">
             Дараах →
           </span>
         )}
       </nav>
-
-      <div className="container-soft mb-5 flex flex-wrap justify-center gap-2">
-        <span className="badge">{chapter.images.length} pages</span>
-        <span className="badge">
-          {currentIndex + 1} / {chapters.length} chapter
-        </span>
-        <span className="badge badge-gold">Premium</span>
-      </div>
 
       <section className="mx-auto max-w-[980px] pb-8">
         {chapter.images.length === 0 ? (
@@ -226,29 +233,25 @@ export default async function ReadChapterPage({ params }: Props) {
               key={image.id}
               src={imageSrc(image.imageUrl)}
               alt={`Page ${image.order}`}
-              className="reader-image"
+              className="mx-auto block w-full max-w-[900px] bg-black"
             />
           ))
         )}
       </section>
 
-      <nav className="container-soft flex flex-wrap items-center justify-center gap-3 pb-10">
+      <nav className="mx-auto flex max-w-[980px] flex-wrap items-center justify-center gap-3 px-4 pb-10">
         {prevChapter ? (
           <Link
             href={`/read/${prevChapter.id}`}
-            className="secondary-btn px-4 py-3 text-sm"
+            className="rounded-xl border border-white/10 bg-[#111] px-5 py-3 text-sm font-black text-white transition hover:bg-[#181818]"
           >
-            ← Өмнөх
+            ← Өмнөх chapter
           </Link>
-        ) : (
-          <span className="secondary-btn px-4 py-3 text-sm opacity-40">
-            ← Өмнөх
-          </span>
-        )}
+        ) : null}
 
         <Link
           href={`/comic/${chapter.comic.slug}`}
-          className="secondary-btn px-4 py-3 text-sm"
+          className="rounded-xl border border-white/10 bg-[#111] px-5 py-3 text-sm font-black text-white transition hover:bg-[#181818]"
         >
           Chapter list
         </Link>
@@ -256,15 +259,11 @@ export default async function ReadChapterPage({ params }: Props) {
         {nextChapter ? (
           <Link
             href={`/read/${nextChapter.id}`}
-            className="primary-btn px-4 py-3 text-sm"
+            className="rounded-xl bg-yellow-400 px-5 py-3 text-sm font-black text-black transition hover:bg-yellow-300"
           >
-            Дараах →
+            Дараах chapter →
           </Link>
-        ) : (
-          <span className="secondary-btn px-4 py-3 text-sm opacity-40">
-            Дараах →
-          </span>
-        )}
+        ) : null}
       </nav>
     </main>
   );

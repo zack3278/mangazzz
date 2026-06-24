@@ -28,14 +28,14 @@ function imageSrc(src?: string | null) {
 function StatusBadge({ status }: { status?: string | null }) {
   if (status === "COMPLETED") {
     return (
-      <span className="absolute left-3 top-3 rounded-md bg-emerald-500 px-2 py-1 text-[10px] font-black text-black">
+      <span className="absolute left-3 top-3 rounded-md bg-emerald-500 px-2 py-1 text-[10px] font-black text-black shadow-lg">
         COMPLETED
       </span>
     );
   }
 
   return (
-    <span className="absolute left-3 top-3 rounded-md bg-yellow-400 px-2 py-1 text-[10px] font-black text-black">
+    <span className="absolute left-3 top-3 rounded-md bg-yellow-400 px-2 py-1 text-[10px] font-black text-black shadow-lg">
       ONGOING
     </span>
   );
@@ -151,7 +151,7 @@ export default async function HomePage({ searchParams }: Props) {
                       <Link
                         key={comic.id}
                         href={`/comic/${comic.slug}`}
-                        className="grid grid-cols-[34px_54px_1fr] items-center gap-3"
+                        className="grid grid-cols-[34px_54px_1fr] items-center gap-3 rounded-lg p-1 transition hover:bg-white/5"
                       >
                         <span className="text-xl font-black text-white">
                           {String(index + 1).padStart(2, "0")}
@@ -183,11 +183,15 @@ export default async function HomePage({ searchParams }: Props) {
 
           <Link
             href="/premium"
-            className="mt-10 block overflow-hidden rounded-xl bg-gradient-to-r from-yellow-300 via-yellow-400 to-orange-500 text-black transition hover:brightness-105"
+            className="group mt-10 block overflow-hidden rounded-2xl bg-gradient-to-r from-yellow-300 via-yellow-400 to-orange-500 text-black shadow-[0_20px_70px_rgba(250,204,21,0.18)] transition hover:brightness-105"
           >
             <div className="relative min-h-[170px] px-8 py-8 md:px-11">
               <div className="relative z-10 max-w-[620px]">
-                <h2 className="text-3xl font-black md:text-4xl">
+                <span className="inline-flex rounded-full bg-black/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-black">
+                  Mangazet Premium
+                </span>
+
+                <h2 className="mt-4 text-3xl font-black md:text-4xl">
                   PREMIUM ЭРХ АВАХ
                 </h2>
 
@@ -195,8 +199,9 @@ export default async function HomePage({ searchParams }: Props) {
                   Бүх manga/chapter унших • QPay төлбөр • Шууд идэвхжинэ
                 </p>
 
-                <div className="mt-6 inline-flex rounded-md border-2 border-black px-6 py-3 text-sm font-black">
-                  Premium page рүү очих →
+                <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-red-600 to-black px-7 py-3 text-sm font-black text-white shadow-[0_12px_35px_rgba(0,0,0,0.35)] transition group-hover:scale-105 group-hover:from-black group-hover:to-red-600">
+                  Premium авах
+                  <span className="text-lg leading-none">→</span>
                 </div>
               </div>
 
@@ -207,7 +212,7 @@ export default async function HomePage({ searchParams }: Props) {
                       key={comic.id}
                       src={imageSrc(comic.coverImage)}
                       alt={comic.title}
-                      className="-ml-5 h-40 w-28 rounded-t-xl object-cover shadow-2xl"
+                      className="-ml-5 h-40 w-28 rounded-t-xl object-cover shadow-2xl transition group-hover:-translate-y-1"
                     />
                   ))}
                 </div>
