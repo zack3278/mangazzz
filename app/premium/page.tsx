@@ -35,15 +35,62 @@ const plans = [
   },
 ];
 
+function findUrlFromAnyObject(value: any): string | null {
+  if (!value) return null;
+
+  if (typeof value === "string") {
+    if (value.startsWith("http")) return value;
+    return null;
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findUrlFromAnyObject(item);
+      if (found) return found;
+    }
+
+    return null;
+  }
+
+  if (typeof value === "object") {
+    const directUrl =
+      value.url ||
+      value.redirect_url ||
+      value.redirectUrl ||
+      value.checkout_url ||
+      value.checkoutUrl ||
+      value.payment_url ||
+      value.paymentUrl ||
+      value.deeplink ||
+      value.deep_link ||
+      value.qpay_url ||
+      value.qpayUrl ||
+      value.link;
+
+    if (typeof directUrl === "string" && directUrl.startsWith("http")) {
+      return directUrl;
+    }
+
+    for (const key of Object.keys(value)) {
+      const found = findUrlFromAnyObject(value[key]);
+      if (found) return found;
+    }
+  }
+
+  return null;
+}
+
 export default function PremiumPage() {
   const [loadingPlan, setLoadingPlan] = useState<number | null>(null);
   const [checkingOrderId, setCheckingOrderId] = useState<number | null>(null);
   const [lastOrderId, setLastOrderId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
+  const [debug, setDebug] = useState<any>(null);
 
   async function createWirePayment(months: number) {
     try {
       setMessage("");
+      setDebug(null);
       setLoadingPlan(months);
 
       const res = await fetch("/api/premium/wire", {
@@ -58,36 +105,26 @@ export default function PremiumPage() {
 
       if (!res.ok) {
         setMessage(data.message || "Төлбөр үүсгэхэд алдаа гарлаа");
+        setDebug(data);
         return;
       }
 
       setLastOrderId(data.orderId);
-      setMessage("Төлбөр үүслээ. Төлбөрийн цонх руу шилжүүлж байна...");
+      setDebug(data);
 
-      const nextAction = data.nextAction;
+      const url =
+        data.redirectUrl ||
+        findUrlFromAnyObject(data.nextAction) ||
+        findUrlFromAnyObject(data.rawPaymentIntent);
 
-      if (typeof nextAction === "string") {
-        window.location.href = nextAction;
-        return;
-      }
-
-      if (nextAction?.url) {
-        window.location.href = nextAction.url;
-        return;
-      }
-
-      if (nextAction?.redirect_url) {
-        window.location.href = nextAction.redirect_url;
-        return;
-      }
-
-      if (nextAction?.deeplink) {
-        window.location.href = nextAction.deeplink;
+      if (url) {
+        setMessage("Төлбөр үүслээ. QPay/Wire төлбөрийн цонх руу шилжүүлж байна...");
+        window.location.href = url;
         return;
       }
 
       setMessage(
-        "Төлбөр үүслээ. Гэхдээ Wire next_action URL буцаасангүй. Wire dashboard/API response-оо шалгана уу."
+        "Төлбөр үүслээ. Гэхдээ Wire-ээс төлбөр төлөх URL ирсэнгүй. Доорх debug мэдээллийг screenshot хийгээд явуул."
       );
     } catch (error) {
       console.error(error);
@@ -114,10 +151,12 @@ export default function PremiumPage() {
 
       if (!res.ok) {
         setMessage(data.message || "Төлбөр шалгахад алдаа гарлаа");
+        setDebug(data);
         return;
       }
 
       setMessage(data.message);
+      setDebug(data);
 
       if (data.paid) {
         setTimeout(() => {
@@ -137,7 +176,7 @@ export default function PremiumPage() {
       <section className="mx-auto max-w-6xl">
         <div className="mb-10 text-center">
           <p className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-yellow-400">
-            Mangazet Premium
+            MANGAZET PREMIUM
           </p>
 
           <h1 className="text-4xl font-black md:text-5xl">
@@ -150,7 +189,7 @@ export default function PremiumPage() {
         </div>
 
         {message ? (
-          <div className="mb-8 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-center text-sm text-yellow-200">
+          <div className="mb-8 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-center text-sm font-semibold text-yellow-200">
             {message}
           </div>
         ) : null}
@@ -195,6 +234,18 @@ export default function PremiumPage() {
             </div>
           ))}
         </div>
+
+        {debug ? (
+          <div className="mt-10 rounded-2xl border border-white/10 bg-black/40 p-5">
+            <h2 className="mb-3 text-lg font-bold text-yellow-400">
+              Wire debug response
+            </h2>
+
+            <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap break-words rounded-xl bg-black p-4 text-xs text-zinc-300">
+              {JSON.stringify(debug, null, 2)}
+            </pre>
+          </div>
+        ) : null}
       </section>
     </main>
   );

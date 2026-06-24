@@ -4,6 +4,34 @@ import { getCurrentUser } from "@/lib/auth";
 import { getPremiumPlan, isValidPremiumMonths } from "@/lib/premium";
 import { wireRequest, WirePaymentIntent } from "@/lib/wire";
 
+function getWireRedirectUrl(nextAction: unknown): string | null {
+  if (!nextAction) return null;
+
+  if (typeof nextAction === "string") {
+    if (nextAction.startsWith("http")) return nextAction;
+    return null;
+  }
+
+  if (typeof nextAction !== "object") return null;
+
+  const action = nextAction as any;
+
+  return (
+    action.url ||
+    action.redirect_url ||
+    action.redirectUrl ||
+    action.checkout_url ||
+    action.checkoutUrl ||
+    action.payment_url ||
+    action.paymentUrl ||
+    action.deeplink ||
+    action.deep_link ||
+    action.qpay_url ||
+    action.qpayUrl ||
+    null
+  );
+}
+
 export async function POST(req: Request) {
   try {
     const user = await getCurrentUser();
@@ -62,8 +90,8 @@ export async function POST(req: Request) {
         body: {
           amount: plan.amount,
           currency: "MNT",
-          automatic_operator: true,
-          allowed_operators: [],
+          automatic_operator: false,
+          allowed_operators: ["qpay"],
           metadata: {
             type: "premium",
             orderId: String(order.id),
@@ -80,10 +108,13 @@ export async function POST(req: Request) {
         method: "POST",
         idempotencyKey: `${idempotencyKey}-confirm`,
         body: {
+          operator: "qpay",
           return_url: `${siteUrl}/premium/success?orderId=${order.id}`,
         },
       }
     );
+
+    const redirectUrl = getWireRedirectUrl(confirmed.next_action);
 
     await prisma.premiumOrder.update({
       where: { id: order.id },
@@ -100,9 +131,12 @@ export async function POST(req: Request) {
     return NextResponse.json({
       message: "Wire төлбөр үүслээ",
       orderId: order.id,
-      paymentIntent: confirmed,
-      nextAction: confirmed.next_action,
-      clientSecret: confirmed.client_secret,
+      paymentIntentId: confirmed.id,
+      status: confirmed.status,
+      redirectUrl,
+      nextAction: confirmed.next_action || null,
+      clientSecret: confirmed.client_secret || null,
+      rawPaymentIntent: confirmed,
     });
   } catch (error) {
     console.error("CREATE WIRE PAYMENT ERROR:", error);
