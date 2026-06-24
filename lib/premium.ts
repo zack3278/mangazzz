@@ -42,8 +42,12 @@ export function isPremiumActive(user: {
 
 export async function activatePremiumByOrderId(orderId: number) {
   const order = await prisma.premiumOrder.findUnique({
-    where: { id: orderId },
-    include: { user: true },
+    where: {
+      id: orderId,
+    },
+    include: {
+      user: true,
+    },
   });
 
   if (!order) {
@@ -64,24 +68,28 @@ export async function activatePremiumByOrderId(orderId: number) {
 
   const premiumExpiresAt = addMonths(startDate, order.months);
 
-  const updatedOrder = await prisma.$transaction(async (tx) => {
-    await tx.user.update({
-      where: { id: order.userId },
+  const [, updatedOrder] = await prisma.$transaction([
+    prisma.user.update({
+      where: {
+        id: order.userId,
+      },
       data: {
         isPremium: true,
         premiumExpiresAt,
       },
-    });
+    }),
 
-    return tx.premiumOrder.update({
-      where: { id: order.id },
+    prisma.premiumOrder.update({
+      where: {
+        id: order.id,
+      },
       data: {
         status: "PAID",
         paidAt: now,
         wireStatus: "succeeded",
       },
-    });
-  });
+    }),
+  ]);
 
   return updatedOrder;
 }
