@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Navbar from "@/components/Navbar";
+import FavoriteButton from "@/components/FavoriteButton";
 
 type Props = {
   params: Promise<{
@@ -85,13 +86,13 @@ export default async function ComicDetailPage({ params }: Props) {
 
             <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-black/50" />
 
-            <div className="relative grid gap-7 md:grid-cols-[230px_1fr]">
+            <div className="relative grid gap-7 md:grid-cols-[210px_1fr]">
               <div className="flex justify-center md:justify-start">
                 <div className="rounded-2xl border border-white/10 bg-black p-3">
                   <img
                     src={imageSrc(comic.coverImage)}
                     alt={comic.title}
-                    className="h-[330px] w-[220px] rounded-xl object-contain"
+                    className="h-[300px] w-[200px] rounded-xl object-contain"
                   />
                 </div>
               </div>
@@ -133,6 +134,8 @@ export default async function ComicDetailPage({ params }: Props) {
                       Start reading
                     </Link>
                   )}
+
+                  <FavoriteButton comicId={comic.id} />
 
                   <Link
                     href="/"

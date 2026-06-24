@@ -15,8 +15,14 @@ model User {
   role             Role           @default(USER)
   isPremium        Boolean        @default(false)
   premiumExpiresAt DateTime?
+  profileImage     String?
+  avatarPreset     String         @default("boy")
+  xp               Int            @default(0)
+  level            Int            @default(1)
   createdAt        DateTime       @default(now())
+
   premiumOrders    PremiumOrder[]
+  favoriteMangas   FavoriteManga[]
 }
 
 model PremiumOrder {
@@ -57,7 +63,20 @@ model Comic {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  chapters Chapter[]
+  chapters      Chapter[]
+  favoriteBy    FavoriteManga[]
+}
+
+model FavoriteManga {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  comicId   Int
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comic Comic @relation(fields: [comicId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, comicId])
 }
 
 model Chapter {
