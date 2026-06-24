@@ -27,6 +27,8 @@ export async function POST(req: Request) {
 
     const code = generateOtp();
 
+    console.log("REGISTER OTP CREATE START:", email);
+
     await prisma.otpCode.create({
       data: {
         email,
@@ -35,6 +37,8 @@ export async function POST(req: Request) {
         expiresAt: otpExpiresAt(),
       },
     });
+
+    console.log("REGISTER OTP DB SAVED:", email);
 
     await sendMail(
       email,
@@ -49,6 +53,8 @@ export async function POST(req: Request) {
       `
     );
 
+    console.log("REGISTER OTP MAIL SENT:", email);
+
     return NextResponse.json({
       message: "OTP код email рүү илгээгдлээ",
     });
@@ -56,7 +62,10 @@ export async function POST(req: Request) {
     console.error("REGISTER SEND OTP ERROR:", error);
 
     return NextResponse.json(
-      { message: "OTP илгээхэд алдаа гарлаа" },
+      {
+        message: "OTP илгээхэд алдаа гарлаа",
+        error: String(error),
+      },
       { status: 500 }
     );
   }
