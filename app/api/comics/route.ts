@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireEditorOrAdmin } from "@/lib/auth";
 
 export async function GET() {
   try {
@@ -26,7 +26,7 @@ export async function GET() {
 
     return NextResponse.json(comics);
   } catch (error) {
-    console.error(error);
+    console.error("GET_COMICS_ERROR:", error);
 
     return NextResponse.json(
       { message: "Comic авахад алдаа гарлаа" },
@@ -37,11 +37,11 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const admin = await requireAdmin();
+    const editor = await requireEditorOrAdmin();
 
-    if (!admin) {
+    if (!editor) {
       return NextResponse.json(
-        { message: "Зөвхөн ADMIN comic нэмэх эрхтэй" },
+        { message: "Зөвхөн ADMIN эсвэл EDITOR comic нэмэх эрхтэй" },
         { status: 403 }
       );
     }
@@ -51,29 +51,50 @@ export async function POST(req: Request) {
       slug,
       description,
       coverImage,
+      bannerImage,
       author,
       genre,
       genre2,
       genre3,
+      status,
     } = await req.json();
 
     if (!title || !slug || !description || !coverImage || !genre) {
       return NextResponse.json(
-        { message: "Title, slug, description, coverImage, genre шаардлагатай" },
+        {
+          message: "Title, slug, description, coverImage, genre шаардлагатай",
+        },
+        { status: 400 }
+      );
+    }
+
+    const cleanStatus = status === "COMPLETED" ? "COMPLETED" : "ONGOING";
+
+    const exists = await prisma.comic.findUnique({
+      where: {
+        slug: String(slug).trim(),
+      },
+    });
+
+    if (exists) {
+      return NextResponse.json(
+        { message: "Энэ slug аль хэдийн ашиглагдсан байна" },
         { status: 400 }
       );
     }
 
     const comic = await prisma.comic.create({
       data: {
-        title,
-        slug,
-        description,
-        coverImage,
-        author: author || null,
-        genre,
-        genre2: genre2 || null,
-        genre3: genre3 || null,
+        title: String(title).trim(),
+        slug: String(slug).trim(),
+        description: String(description).trim(),
+        coverImage: String(coverImage).trim(),
+        bannerImage: bannerImage ? String(bannerImage).trim() : null,
+        author: author ? String(author).trim() : null,
+        genre: String(genre).trim(),
+        genre2: genre2 ? String(genre2).trim() : null,
+        genre3: genre3 ? String(genre3).trim() : null,
+        status: cleanStatus,
       },
     });
 
@@ -82,7 +103,7 @@ export async function POST(req: Request) {
       comic,
     });
   } catch (error) {
-    console.error(error);
+    console.error("CREATE_COMIC_ERROR:", error);
 
     return NextResponse.json(
       { message: "Comic нэмэхэд алдаа гарлаа" },

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireEditorOrAdmin } from "@/lib/auth";
 
 type ChapterBody = {
   comicId?: string | number;
@@ -13,17 +14,13 @@ type ChapterBody = {
   imageUrls?: string[];
 };
 
-function normalizeImages(body: ChapterBody): string[] {
-  if (Array.isArray(body.imageUrls) && body.imageUrls.length > 0) {
-    return body.imageUrls
-      .map((url) => String(url).trim())
-      .filter(Boolean);
+function normalizeImages(body: ChapterBody) {
+  if (Array.isArray(body.images) && body.images.length > 0) {
+    return body.images.map((url) => String(url).trim()).filter(Boolean);
   }
 
-  if (Array.isArray(body.images) && body.images.length > 0) {
-    return body.images
-      .map((url) => String(url).trim())
-      .filter(Boolean);
+  if (Array.isArray(body.imageUrls) && body.imageUrls.length > 0) {
+    return body.imageUrls.map((url) => String(url).trim()).filter(Boolean);
   }
 
   if (typeof body.content === "string" && body.content.trim()) {
@@ -48,7 +45,6 @@ export async function GET() {
             order: "asc",
           },
         },
-        comic: true,
       },
     });
 
@@ -65,77 +61,50 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    const editor = await requireEditorOrAdmin();
+
+    if (!editor) {
+      return NextResponse.json(
+        { message: "Зөвхөн ADMIN эсвэл EDITOR chapter нэмэх эрхтэй" },
+        { status: 403 }
+      );
+    }
+
     const body = (await req.json()) as ChapterBody;
 
-    console.log("CHAPTER_CREATE_BODY:", body);
-
-    const rawComicId = body.comicId ?? body.mangaId;
+    const rawComicId = body.comicId || body.mangaId;
     const comicId = Number(rawComicId);
 
-    const title = String(body.title || body.chapterTitle || "").trim();
-
-    const rawNumber = body.number ?? body.chapterNumber;
+    const title = body.title || body.chapterTitle || "";
+    const rawNumber = body.number || body.chapterNumber;
     const number = Number(rawNumber);
 
     const imageUrls = normalizeImages(body);
 
     if (!comicId || Number.isNaN(comicId)) {
       return NextResponse.json(
-        {
-          message: "Manga сонгогдоогүй байна",
-          debug: {
-            rawComicId,
-            comicId,
-            title,
-            number,
-            imageCount: imageUrls.length,
-          },
-        },
+        { message: "Manga сонгогдоогүй байна" },
         { status: 400 }
       );
     }
 
-    if (!title) {
+    if (!title.trim()) {
       return NextResponse.json(
-        {
-          message: "Chapter нэр дутуу байна",
-          debug: {
-            comicId,
-            title,
-            number,
-            imageCount: imageUrls.length,
-          },
-        },
+        { message: "Chapter нэр дутуу байна" },
         { status: 400 }
       );
     }
 
     if (!number || Number.isNaN(number) || number <= 0) {
       return NextResponse.json(
-        {
-          message: "Chapter дугаар дутуу эсвэл буруу байна",
-          debug: {
-            comicId,
-            title,
-            number,
-            imageCount: imageUrls.length,
-          },
-        },
+        { message: "Chapter дугаар дутуу эсвэл буруу байна" },
         { status: 400 }
       );
     }
 
     if (imageUrls.length === 0) {
       return NextResponse.json(
-        {
-          message: "Chapter зураг дутуу байна",
-          debug: {
-            comicId,
-            title,
-            number,
-            imageCount: imageUrls.length,
-          },
-        },
+        { message: "Chapter зураг дутуу байна" },
         { status: 400 }
       );
     }
@@ -153,20 +122,16 @@ export async function POST(req: Request) {
       );
     }
 
-    const sameChapter = await prisma.chapter.findUnique({
+    const sameChapter = await prisma.chapter.findFirst({
       where: {
-        comicId_number: {
-          comicId,
-          number,
-        },
+        comicId,
+        number,
       },
     });
 
     if (sameChapter) {
       return NextResponse.json(
-        {
-          message: "Энэ manga дээр ийм дугаартай chapter аль хэдийн байна",
-        },
+        { message: "Энэ manga дээр ийм дугаартай chapter аль хэдийн байна" },
         { status: 400 }
       );
     }
@@ -174,7 +139,7 @@ export async function POST(req: Request) {
     const chapter = await prisma.chapter.create({
       data: {
         comicId,
-        title,
+        title: title.trim(),
         number,
         images: {
           create: imageUrls.map((imageUrl, index) => ({
