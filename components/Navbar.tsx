@@ -55,6 +55,10 @@ export default function Navbar() {
             ZET
           </div>
         </div>
+
+        <span className="rounded-md bg-emerald-500 px-1.5 py-0.5 text-[10px] font-black text-black">
+          v1
+        </span>
       </Link>
 
       <form action="/" className="hidden flex-1 md:block">
@@ -72,10 +76,10 @@ export default function Navbar() {
 
       <nav className="hidden items-center gap-8 text-sm font-black md:flex">
         <Link href="/" className="text-yellow-400">
-          Home
+          Нүүр
         </Link>
-        <Link href="/?genre=" className="text-white hover:text-yellow-400">
-          Manga List
+        <Link href="/" className="text-white hover:text-yellow-400">
+          Манганууд
         </Link>
         <Link href="/premium" className="text-white hover:text-yellow-400">
           Premium
@@ -83,13 +87,13 @@ export default function Navbar() {
 
         {user?.role === "ADMIN" && (
           <Link href="/admin" className="text-white hover:text-yellow-400">
-            Admin
+            Админ
           </Link>
         )}
 
         {(user?.role === "ADMIN" || user?.role === "EDITOR") && (
           <Link href="/editor" className="text-white hover:text-yellow-400">
-            Editor
+            Эдитор
           </Link>
         )}
       </nav>
@@ -110,7 +114,7 @@ export default function Navbar() {
               onClick={logout}
               className="hidden rounded-full bg-white/10 px-4 py-2 text-xs font-black text-white hover:bg-white/20 md:block"
             >
-              Logout
+              Гарах
             </button>
           </>
         ) : (
@@ -118,7 +122,7 @@ export default function Navbar() {
             href="/login"
             className="rounded-full bg-yellow-400 px-5 py-2.5 text-xs font-black text-black"
           >
-            Sign In
+            Нэвтрэх
           </Link>
         )}
       </div>

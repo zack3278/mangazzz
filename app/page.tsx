@@ -128,7 +128,7 @@ export default async function HomePage({ searchParams }: Props) {
             <div>
               <div className="mb-5 flex items-center gap-2 text-xl font-black text-yellow-400">
                 <span>✣</span>
-                <span>New</span>
+                <span>Шинэ</span>
               </div>
 
               <HomeHeroSlider items={heroItems} />
@@ -137,7 +137,7 @@ export default async function HomePage({ searchParams }: Props) {
             <aside>
               <div className="mb-5 flex items-center gap-2 text-xl font-black text-yellow-400">
                 <span>✣</span>
-                <span>Trending</span>
+                <span>Алдартай</span>
               </div>
 
               <div className="rounded-xl bg-[#171717] p-5">
@@ -188,7 +188,7 @@ export default async function HomePage({ searchParams }: Props) {
             <div className="relative min-h-[170px] px-8 py-8 md:px-11">
               <div className="relative z-10 max-w-[620px]">
                 <span className="inline-flex rounded-full bg-black/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-black">
-                  Mangazet Premium
+                  Premium
                 </span>
 
                 <h2 className="mt-4 text-3xl font-black md:text-4xl">
@@ -196,7 +196,7 @@ export default async function HomePage({ searchParams }: Props) {
                 </h2>
 
                 <p className="mt-3 text-sm font-black">
-                  Бүх manga/chapter унших • QPay төлбөр • Шууд идэвхжинэ
+                  Premium эрхээ аваад хязгааргүй уншаарай.
                 </p>
 
                 <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-red-600 to-black px-7 py-3 text-sm font-black text-white shadow-[0_12px_35px_rgba(0,0,0,0.35)] transition group-hover:scale-105 group-hover:from-black group-hover:to-red-600">

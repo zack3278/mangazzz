@@ -340,7 +340,6 @@ export default function ProfilePage() {
             <h2 className="text-2xl font-black">Profile зураг</h2>
 
             <p className="mt-2 text-sm font-medium leading-6 text-zinc-400">
-              Өөрийн зураг upload хийх эсвэл Mangazet default avatar сонгоно.
             </p>
 
             <label className="mt-5 block rounded-2xl border border-dashed border-white/15 bg-black/25 p-5">
@@ -373,7 +372,6 @@ export default function ProfilePage() {
                 }`}
               >
                 <DefaultAvatar preset="boy" size="small" />
-                <p className="mt-3 text-sm font-black">Mangazet boy</p>
               </button>
 
               <button
@@ -386,7 +384,6 @@ export default function ProfilePage() {
                 }`}
               >
                 <DefaultAvatar preset="girl" size="small" />
-                <p className="mt-3 text-sm font-black">Mangazet girl</p>
               </button>
             </div>
           </div>
@@ -465,10 +462,9 @@ export default function ProfilePage() {
             href="/"
             className="rounded-2xl border border-white/10 bg-[#111] p-5 transition hover:bg-[#181818]"
           >
-            <p className="text-2xl">🏠</p>
-            <h3 className="mt-3 font-black">Home</h3>
+            <p className="text-2xl"></p>
+            <h2 className="mt-3 font-black">Нүүр хуудас</h2>
             <p className="mt-1 text-xs font-bold text-zinc-500">
-              Manga жагсаалт руу буцах
             </p>
           </Link>
 
@@ -476,10 +472,9 @@ export default function ProfilePage() {
             href="/premium"
             className="rounded-2xl border border-white/10 bg-[#111] p-5 transition hover:bg-[#181818]"
           >
-            <p className="text-2xl">👑</p>
+            <p className="text-2xl"></p>
             <h3 className="mt-3 font-black">Premium</h3>
             <p className="mt-1 text-xs font-bold text-zinc-500">
-              Эрх авах / сунгах
             </p>
           </Link>
 
@@ -487,10 +482,9 @@ export default function ProfilePage() {
             href="/editor"
             className="rounded-2xl border border-white/10 bg-[#111] p-5 transition hover:bg-[#181818]"
           >
-            <p className="text-2xl">✍️</p>
+            <p className="text-2xl"></p>
             <h3 className="mt-3 font-black">Editor</h3>
             <p className="mt-1 text-xs font-bold text-zinc-500">
-              Manga chapter нэмэх
             </p>
           </Link>
 
@@ -498,16 +492,15 @@ export default function ProfilePage() {
             href="/admin"
             className="rounded-2xl border border-white/10 bg-[#111] p-5 transition hover:bg-[#181818]"
           >
-            <p className="text-2xl">🛠️</p>
+            <p className="text-2xl"></p>
             <h3 className="mt-3 font-black">Admin</h3>
             <p className="mt-1 text-xs font-bold text-zinc-500">
-              Хэрэглэгч удирдах
             </p>
           </Link>
         </div>
 
         <button onClick={logout} className="danger-btn mt-6 px-6 py-3 text-sm">
-          Logout
+          Гарах
         </button>
       </section>
     </main>

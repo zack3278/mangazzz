@@ -64,12 +64,11 @@ export default function LoginPage() {
         </Link>
 
         <form onSubmit={handleLogin} className="glass-panel rounded-[2rem] p-6 md:p-8">
-          <span className="badge badge-red">Welcome back</span>
+          <span className="badge badge-red">Тавтай морил</span>
 
           <h1 className="mt-4 text-3xl font-black">Нэвтрэх</h1>
 
           <p className="mt-2 text-sm font-medium leading-6 text-zinc-400">
-            Premium manga уншихын тулд account-аараа нэвтэрнэ үү.
           </p>
 
           <div className="mt-7 space-y-4">

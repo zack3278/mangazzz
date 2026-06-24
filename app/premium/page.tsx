@@ -161,8 +161,6 @@ export default function PremiumPage() {
           </h1>
 
           <p className="mt-4 max-w-2xl text-base font-medium leading-8 text-zinc-300">
-            QPay QR-р төлөөд premium эрхээ автоматаар идэвхжүүл. Төлбөр
-            амжилттай болсны дараа “Төлбөр шалгах” дарна.
           </p>
         </div>
 
@@ -213,7 +211,6 @@ export default function PremiumPage() {
               <h2 className="text-2xl font-black">QPay app link</h2>
 
               <p className="mt-2 text-sm font-medium leading-6 text-zinc-400">
-                QR уншихгүй байвал доорх link-үүдээр төлж болно.
               </p>
 
               {paymentData.paymentUrl ? (
