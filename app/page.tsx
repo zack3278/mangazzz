@@ -6,7 +6,6 @@ import Navbar from "@/components/Navbar";
 type Props = {
   searchParams: Promise<{
     q?: string;
-    genre?: string;
   }>;
 };
 
@@ -27,270 +26,256 @@ function coverSrc(src?: string | null) {
 export default async function HomePage({ searchParams }: Props) {
   const params = await searchParams;
   const q = params.q?.trim() || "";
-  const selectedGenre = params.genre?.trim() || "";
-
-  const genreSource = await prisma.comic.findMany({
-    select: {
-      genre: true,
-      genre2: true,
-      genre3: true,
-    },
-  });
-
-  const genres = Array.from(
-    new Set(
-      genreSource
-        .flatMap((comic) => [comic.genre, comic.genre2, comic.genre3])
-        .filter((genre): genre is string => Boolean(genre && genre.trim()))
-    )
-  ).sort();
 
   const comics = await prisma.comic.findMany({
-    where: {
-      AND: [
-        q
-          ? {
-              OR: [
-                { title: { contains: q, mode: "insensitive" } },
-                { author: { contains: q, mode: "insensitive" } },
-                { genre: { contains: q, mode: "insensitive" } },
-                { genre2: { contains: q, mode: "insensitive" } },
-                { genre3: { contains: q, mode: "insensitive" } },
-              ],
-            }
-          : {},
-        selectedGenre
-          ? {
-              OR: [
-                { genre: selectedGenre },
-                { genre2: selectedGenre },
-                { genre3: selectedGenre },
-              ],
-            }
-          : {},
-      ],
-    },
+    where: q
+      ? {
+          OR: [
+            { title: { contains: q, mode: "insensitive" } },
+            { author: { contains: q, mode: "insensitive" } },
+            { genre: { contains: q, mode: "insensitive" } },
+            { genre2: { contains: q, mode: "insensitive" } },
+            { genre3: { contains: q, mode: "insensitive" } },
+          ],
+        }
+      : {},
     orderBy: { createdAt: "desc" },
     include: {
       chapters: true,
     },
   });
 
-  const popularComics = await prisma.comic.findMany({
+  const trending = await prisma.comic.findMany({
     orderBy: {
       views: "desc",
     },
-    take: 8,
+    take: 5,
     include: {
       chapters: true,
     },
   });
 
-  const heroComic = comics[0] || popularComics[0];
+  const hero = comics[0] || trending[0];
+  const continueList = comics.slice(0, 10);
 
   return (
-    <main className="site-shell text-white">
-      <Navbar />
+    <main className="min-h-screen bg-[#191713] p-2 text-white md:p-4">
+      <div className="mx-auto min-h-[calc(100vh-32px)] max-w-[1440px] overflow-hidden rounded-[22px] bg-[#070707] shadow-2xl">
+        <Navbar />
 
-      <section className="container-soft py-10 md:py-14">
-        <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-stretch">
-          <div className="glass-panel overflow-hidden rounded-[2rem] p-6 md:p-10">
-            <span className="badge badge-red">Mangazet Premium Reader</span>
+        <section className="px-5 pb-10 md:px-10">
+          <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+            <div>
+              <div className="mb-5 flex items-center gap-2 text-xl font-black text-yellow-400">
+                <span>✣</span>
+                <span>New</span>
+              </div>
 
-            <h1 className="mt-6 max-w-3xl text-4xl font-black tracking-tight md:text-6xl">
-              Manga, manhwa, webtoon-оо{" "}
-              <span className="bg-gradient-to-r from-red-400 via-orange-300 to-purple-300 bg-clip-text text-transparent">
-                premium style
-              </span>
-              -аар унш.
-            </h1>
-
-            <p className="mt-5 max-w-2xl text-base font-medium leading-8 text-zinc-300 md:text-lg">
-              Шинэ chapter, premium lock, QPay төлбөр, editor upload бүгд нэг
-              дор. Илүү цэвэр, хурдан, mobile дээр гоё харагдах UI.
-            </p>
-
-            <form
-              action="/"
-              className="mt-8 grid gap-3 rounded-3xl border border-white/10 bg-black/30 p-3 md:grid-cols-[1fr_auto]"
-            >
-              <input
-                name="q"
-                defaultValue={q}
-                placeholder="Manga нэр, author, genre хайх..."
-                className="soft-input"
-              />
-              <button className="primary-btn" type="submit">
-                Хайх
-              </button>
-            </form>
-
-            <div className="mt-6 flex flex-wrap gap-2">
-              <Link
-                href="/"
-                className={`badge ${!selectedGenre ? "badge-gold" : ""}`}
-              >
-                Бүгд
-              </Link>
-
-              {genres.slice(0, 12).map((genre) => (
+              {hero ? (
                 <Link
-                  key={genre}
-                  href={`/?genre=${encodeURIComponent(genre)}`}
-                  className={`badge ${
-                    selectedGenre === genre ? "badge-gold" : ""
-                  }`}
+                  href={`/comic/${hero.slug}`}
+                  className="group relative block h-[330px] overflow-hidden rounded-lg bg-zinc-900 md:h-[520px]"
                 >
-                  {genre}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          <div className="glass-card overflow-hidden rounded-[2rem] p-4">
-            {heroComic ? (
-              <Link href={`/comic/${heroComic.slug}`} className="group block">
-                <div className="relative aspect-[3/4] overflow-hidden rounded-[1.5rem] bg-zinc-950">
                   <img
-                    src={coverSrc(heroComic.coverImage)}
-                    alt={heroComic.title}
-                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    src={coverSrc(hero.coverImage)}
+                    alt={hero.title}
+                    className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105"
                   />
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black via-black/50 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
 
-                  <div className="absolute bottom-0 left-0 right-0 p-5">
-                    <span className="badge badge-gold">Featured</span>
-                    <h2 className="mt-3 line-clamp-2 text-3xl font-black">
-                      {heroComic.title}
-                    </h2>
-                    <p className="mt-2 text-sm font-bold text-zinc-300">
-                      {heroComic.chapters.length} chapters • {heroComic.views}{" "}
-                      views
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            ) : (
-              <div className="flex aspect-[3/4] items-center justify-center rounded-[1.5rem] border border-dashed border-white/10 text-center text-zinc-500">
-                Manga нэмэгдээгүй байна
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section className="container-soft pb-14">
-        <div className="mb-5 flex flex-col justify-between gap-3 md:flex-row md:items-end">
-          <div>
-            <span className="badge">Latest updates</span>
-            <h2 className="mt-3 text-3xl font-black">
-              {q || selectedGenre ? "Хайлтын үр дүн" : "Шинээр нэмэгдсэн manga"}
-            </h2>
-          </div>
-
-          <p className="text-sm font-bold text-zinc-500">Нийт: {comics.length}</p>
-        </div>
-
-        {comics.length === 0 ? (
-          <div className="glass-card rounded-3xl p-10 text-center">
-            <h3 className="text-2xl font-black">Comic олдсонгүй</h3>
-            <p className="mt-2 text-zinc-400">
-              Хайлтын үгээ өөрчлөөд дахин оролдоно уу.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {comics.map((comic) => {
-              const comicGenres = [comic.genre, comic.genre2, comic.genre3].filter(Boolean);
-
-              return (
-                <Link
-                  key={comic.id}
-                  href={`/comic/${comic.slug}`}
-                  className="cover-card group"
-                >
-                  <div className="aspect-[3/4] overflow-hidden bg-zinc-950">
-                    <img
-                      src={coverSrc(comic.coverImage)}
-                      alt={comic.title}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-
-                  <div className="p-3">
-                    <h3 className="line-clamp-2 text-sm font-black text-white">
-                      {comic.title}
-                    </h3>
-                    <p className="mt-1 line-clamp-1 text-xs font-bold text-zinc-500">
-                      {comic.author || "Unknown author"}
+                  <div className="absolute bottom-10 left-8 max-w-[520px]">
+                    <p className="mb-4 text-xs font-black text-white/80">
+                      Home | TV
                     </p>
 
-                    <div className="mt-3 flex flex-wrap gap-1">
-                      {comicGenres.slice(0, 2).map((genre) => (
-                        <span
-                          key={genre}
-                          className="rounded-full bg-white/8 px-2 py-1 text-[10px] font-black text-red-200"
-                        >
-                          {genre}
-                        </span>
-                      ))}
+                    <h1 className="text-4xl font-black leading-tight md:text-5xl">
+                      {hero.title}
+                    </h1>
+
+                    <p className="mt-4 text-sm font-black text-white/70">
+                      EP {hero.chapters.length || 1} • 24m
+                    </p>
+
+                    <div className="mt-4 flex gap-2">
+                      <span className="rounded-md bg-emerald-500 px-3 py-1 text-xs font-black text-black">
+                        SUB
+                      </span>
+                      <span className="rounded-md bg-emerald-500 px-3 py-1 text-xs font-black text-black">
+                        HD
+                      </span>
+                      <span className="rounded-md bg-emerald-500 px-3 py-1 text-xs font-black text-black">
+                        DUB
+                      </span>
                     </div>
 
-                    <p className="mt-3 text-[11px] font-black text-zinc-400">
-                      {comic.chapters.length} ch • {comic.views} views
+                    <p className="mt-5 line-clamp-3 max-w-[430px] text-sm font-medium leading-6 text-white/80">
+                      {hero.description ||
+                        "Premium manga унших боломжтой. Шинэ chapter, өндөр чанартай зураг, хурдан унших систем."}
                     </p>
                   </div>
+
+                  <div className="absolute right-7 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white text-2xl font-black text-black">
+                    →
+                  </div>
+
+                  <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
+                    <span className="h-2 w-2 rounded-full bg-yellow-400" />
+                    <span className="h-2 w-2 rounded-full bg-white/40" />
+                    <span className="h-2 w-2 rounded-full bg-white/40" />
+                    <span className="h-2 w-2 rounded-full bg-white/40" />
+                  </div>
                 </Link>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      <section className="container-soft pb-16">
-        <div className="glass-panel rounded-[2rem] p-5 md:p-7">
-          <div className="mb-5 flex items-center justify-between">
-            <div>
-              <span className="badge badge-gold">Ranking</span>
-              <h2 className="mt-3 text-2xl font-black">Popular manga</h2>
+              ) : (
+                <div className="flex h-[520px] items-center justify-center rounded-lg bg-zinc-900 text-zinc-500">
+                  Manga нэмэгдээгүй байна
+                </div>
+              )}
             </div>
+
+            <aside>
+              <div className="mb-5 flex items-center gap-2 text-xl font-black text-yellow-400">
+                <span>✣</span>
+                <span>Trending</span>
+              </div>
+
+              <div className="rounded-lg bg-[#171717] p-5">
+                <div className="space-y-5">
+                  {trending.length === 0 ? (
+                    <p className="text-sm font-bold text-zinc-500">
+                      Trending хоосон байна.
+                    </p>
+                  ) : (
+                    trending.map((comic, index) => (
+                      <Link
+                        key={comic.id}
+                        href={`/comic/${comic.slug}`}
+                        className="grid grid-cols-[34px_54px_1fr] items-center gap-3"
+                      >
+                        <span className="text-xl font-black text-white">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+
+                        <img
+                          src={coverSrc(comic.coverImage)}
+                          alt={comic.title}
+                          className="h-[70px] w-[54px] rounded object-cover"
+                        />
+
+                        <div className="min-w-0">
+                          <h3 className="line-clamp-1 text-sm font-black text-white">
+                            {comic.title}
+                          </h3>
+
+                          <div className="mt-2 flex items-center gap-4 text-xs font-semibold text-zinc-400">
+                            <span>👁 {comic.views || 0}</span>
+                            <span>♡ {comic.chapters.length}</span>
+                          </div>
+                        </div>
+                      </Link>
+                    ))
+                  )}
+                </div>
+              </div>
+            </aside>
           </div>
 
-          {popularComics.length === 0 ? (
-            <p className="text-sm font-bold text-zinc-500">
-              Ranking одоогоор хоосон байна.
-            </p>
-          ) : (
-            <div className="grid gap-3 md:grid-cols-2">
-              {popularComics.map((comic, index) => (
-                <Link
-                  key={comic.id}
-                  href={`/comic/${comic.slug}`}
-                  className="flex items-center gap-4 rounded-2xl border border-white/10 bg-black/25 p-3 transition hover:bg-white/8"
-                >
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-sm font-black text-black">
-                    #{index + 1}
-                  </span>
+          <section className="mt-10 overflow-hidden rounded-lg bg-gradient-to-r from-yellow-300 via-yellow-400 to-orange-500 text-black">
+            <div className="relative min-h-[190px] px-8 py-8 md:px-11">
+              <div className="relative z-10 max-w-[560px]">
+                <h2 className="text-3xl font-black md:text-4xl">
+                  READ MANGA ONLINE
+                </h2>
 
-                  <img
-                    src={coverSrc(comic.coverImage)}
-                    alt={comic.title}
-                    className="h-16 w-12 rounded-xl object-cover"
-                  />
+                <p className="mt-3 text-sm font-black">
+                  Highest Quality | No signups | No Ads
+                </p>
 
-                  <div className="min-w-0">
-                    <h3 className="line-clamp-1 font-black">{comic.title}</h3>
+                <div className="mt-6 flex flex-wrap gap-4">
+                  <Link
+                    href={hero ? `/comic/${hero.slug}` : "/"}
+                    className="rounded bg-black px-6 py-3 text-sm font-black text-white"
+                  >
+                    Read Now
+                  </Link>
+
+                  <Link
+                    href="/premium"
+                    className="px-2 py-3 text-sm font-black underline"
+                  >
+                    Go to premium
+                  </Link>
+                </div>
+              </div>
+
+              <div className="absolute bottom-0 right-0 hidden h-full w-[46%] opacity-90 md:block">
+                <div className="absolute bottom-0 right-8 flex items-end gap-[-10px]">
+                  {trending.slice(0, 4).map((comic) => (
+                    <img
+                      key={comic.id}
+                      src={coverSrc(comic.coverImage)}
+                      alt={comic.title}
+                      className="-ml-5 h-40 w-28 rounded-t-xl object-cover shadow-2xl"
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="mt-10">
+            <div className="mb-5 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xl font-black text-yellow-400">
+                <span>◴</span>
+                <span>{q ? "Search Result" : "Continue Watching"}</span>
+              </div>
+
+              {q && (
+                <Link href="/" className="text-sm font-black text-zinc-400">
+                  Clear search
+                </Link>
+              )}
+            </div>
+
+            {continueList.length === 0 ? (
+              <div className="rounded-lg bg-[#171717] p-10 text-center text-zinc-500">
+                Manga олдсонгүй
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                {continueList.map((comic) => (
+                  <Link
+                    key={comic.id}
+                    href={`/comic/${comic.slug}`}
+                    className="group overflow-hidden rounded-lg bg-[#151515] p-3 transition hover:-translate-y-1 hover:bg-[#202020]"
+                  >
+                    <div className="relative aspect-[4/3] overflow-hidden rounded-md bg-zinc-900">
+                      <img
+                        src={coverSrc(comic.coverImage)}
+                        alt={comic.title}
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
+                      />
+
+                      <span className="absolute left-3 top-3 rounded bg-white px-2 py-1 text-[10px] font-black text-black">
+                        SUB
+                      </span>
+                    </div>
+
+                    <h3 className="mt-3 line-clamp-1 text-sm font-black">
+                      {comic.title}
+                    </h3>
+
                     <p className="mt-1 text-xs font-bold text-zinc-500">
-                      {comic.views} views • {comic.chapters.length} chapters
+                      {comic.chapters.length} chapters • {comic.views} views
                     </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+        </section>
+      </div>
     </main>
   );
 }
