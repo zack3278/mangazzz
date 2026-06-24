@@ -32,6 +32,30 @@ type UploadResult = {
   key: string;
 };
 
+const GENRES = [
+  "Action",
+  "Adventure",
+  "Fantasy",
+  "Drama",
+  "Romance",
+  "Comedy",
+  "School",
+  "Sports",
+  "Martial Arts",
+  "Magic",
+  "Reincarnation",
+  "Regression",
+  "Dungeon",
+  "Leveling",
+  "Murim",
+  "Supernatural",
+  "Horror",
+  "Thriller",
+  "Mystery",
+  "Slice of Life",
+  "Бусад",
+];
+
 function makeSlug(text: string) {
   return text
     .toLowerCase()
@@ -138,6 +162,26 @@ export default function EditorPage() {
     }
   }
 
+  function handleGenre1(value: string) {
+    setGenre1(value);
+
+    if (genre2 === value) {
+      setGenre2("");
+    }
+
+    if (genre3 === value) {
+      setGenre3("");
+    }
+  }
+
+  function handleGenre2(value: string) {
+    setGenre2(value);
+
+    if (genre3 === value) {
+      setGenre3("");
+    }
+  }
+
   async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
 
@@ -197,7 +241,9 @@ export default function EditorPage() {
       (comic) => String(comic.id) === chapterComicId
     );
 
-    const folder = `chapters/${selectedComic?.slug || "comic"}/chapter-${chapterNumber}`;
+    const folder = `chapters/${
+      selectedComic?.slug || "comic"
+    }/chapter-${chapterNumber}`;
 
     setUploadingChapterImages(true);
 
@@ -223,7 +269,7 @@ export default function EditorPage() {
 
     if (!title.trim()) return alert("Manga нэр оруулна уу");
     if (!slug.trim()) return alert("Slug оруулна уу");
-    if (!genre1.trim()) return alert("Genre 1 оруулна уу");
+    if (!genre1.trim()) return alert("Genre 1 сонгоно уу");
     if (!description.trim()) return alert("Тайлбар оруулна уу");
     if (!coverImage.trim()) return alert("Cover зураг upload хийнэ үү");
 
@@ -364,7 +410,7 @@ export default function EditorPage() {
 
               <p className="mt-2 text-zinc-400">
                 Cover зураг card дээр, Hero banner зураг home-ийн том banner
-                дээр гарна.
+                дээр гарна. Genre 1 заавал, Genre 2/3 сонголтоор.
               </p>
             </div>
 
@@ -423,26 +469,48 @@ export default function EditorPage() {
                 />
 
                 <div className="grid gap-3 md:grid-cols-3">
-                  <input
+                  <select
                     value={genre1}
-                    onChange={(e) => setGenre1(e.target.value)}
-                    placeholder="Genre 1"
+                    onChange={(e) => handleGenre1(e.target.value)}
                     className="soft-input"
-                  />
+                  >
+                    <option value="">Genre 1 сонгох</option>
+                    {GENRES.map((genre) => (
+                      <option key={genre} value={genre}>
+                        {genre}
+                      </option>
+                    ))}
+                  </select>
 
-                  <input
+                  <select
                     value={genre2}
-                    onChange={(e) => setGenre2(e.target.value)}
-                    placeholder="Genre 2"
+                    onChange={(e) => handleGenre2(e.target.value)}
                     className="soft-input"
-                  />
+                  >
+                    <option value="">Genre 2 сонгох</option>
+                    {GENRES.filter((genre) => genre !== genre1).map(
+                      (genre) => (
+                        <option key={genre} value={genre}>
+                          {genre}
+                        </option>
+                      )
+                    )}
+                  </select>
 
-                  <input
+                  <select
                     value={genre3}
                     onChange={(e) => setGenre3(e.target.value)}
-                    placeholder="Genre 3"
                     className="soft-input"
-                  />
+                  >
+                    <option value="">Genre 3 сонгох</option>
+                    {GENRES.filter(
+                      (genre) => genre !== genre1 && genre !== genre2
+                    ).map((genre) => (
+                      <option key={genre} value={genre}>
+                        {genre}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <select
@@ -581,9 +649,23 @@ export default function EditorPage() {
                         {selectedComic.title}
                       </p>
 
-                      <p className="mt-2 text-sm font-bold text-zinc-500">
-                        {selectedComic.genre || "No genre"}
-                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {selectedComic.genre && (
+                          <span className="rounded-md bg-yellow-400/15 px-2 py-1 text-[10px] font-black text-yellow-300">
+                            {selectedComic.genre}
+                          </span>
+                        )}
+                        {selectedComic.genre2 && (
+                          <span className="rounded-md bg-yellow-400/15 px-2 py-1 text-[10px] font-black text-yellow-300">
+                            {selectedComic.genre2}
+                          </span>
+                        )}
+                        {selectedComic.genre3 && (
+                          <span className="rounded-md bg-yellow-400/15 px-2 py-1 text-[10px] font-black text-yellow-300">
+                            {selectedComic.genre3}
+                          </span>
+                        )}
+                      </div>
 
                       <p className="mt-3 text-sm font-bold text-zinc-400">
                         Chapters: {selectedComic.chapters?.length || 0}
@@ -745,9 +827,23 @@ export default function EditorPage() {
                         </span>
                       </div>
 
-                      <p className="mt-1 line-clamp-1 text-xs font-bold text-zinc-500">
-                        {comic.genre || "No genre"}
-                      </p>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {comic.genre && (
+                          <span className="rounded-md bg-yellow-400/15 px-2 py-1 text-[10px] font-black text-yellow-300">
+                            {comic.genre}
+                          </span>
+                        )}
+                        {comic.genre2 && (
+                          <span className="rounded-md bg-yellow-400/15 px-2 py-1 text-[10px] font-black text-yellow-300">
+                            {comic.genre2}
+                          </span>
+                        )}
+                        {comic.genre3 && (
+                          <span className="rounded-md bg-yellow-400/15 px-2 py-1 text-[10px] font-black text-yellow-300">
+                            {comic.genre3}
+                          </span>
+                        )}
+                      </div>
 
                       <p className="mt-2 text-xs font-bold text-zinc-400">
                         Chapters: {comic.chapters?.length || 0}

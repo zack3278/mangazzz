@@ -55,10 +55,6 @@ export default function Navbar() {
             ZET
           </div>
         </div>
-
-        <span className="rounded-md bg-emerald-500 px-1.5 py-0.5 text-[10px] font-black text-black">
-          TV
-        </span>
       </Link>
 
       <form action="/" className="hidden flex-1 md:block">
@@ -78,7 +74,7 @@ export default function Navbar() {
         <Link href="/" className="text-yellow-400">
           Home
         </Link>
-        <Link href="/" className="text-white hover:text-yellow-400">
+        <Link href="/?genre=" className="text-white hover:text-yellow-400">
           Manga List
         </Link>
         <Link href="/premium" className="text-white hover:text-yellow-400">

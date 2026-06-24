@@ -7,6 +7,7 @@ import HomeHeroSlider from "@/components/HomeHeroSlider";
 type Props = {
   searchParams: Promise<{
     q?: string;
+    genre?: string;
   }>;
 };
 
@@ -43,19 +44,49 @@ function StatusBadge({ status }: { status?: string | null }) {
 export default async function HomePage({ searchParams }: Props) {
   const params = await searchParams;
   const q = params.q?.trim() || "";
+  const selectedGenre = params.genre?.trim() || "";
+
+  const genreSource = await prisma.comic.findMany({
+    select: {
+      genre: true,
+      genre2: true,
+      genre3: true,
+    },
+  });
+
+  const genres = Array.from(
+    new Set(
+      genreSource
+        .flatMap((comic) => [comic.genre, comic.genre2, comic.genre3])
+        .filter((genre): genre is string => Boolean(genre && genre.trim()))
+    )
+  ).sort();
 
   const comics = await prisma.comic.findMany({
-    where: q
-      ? {
-          OR: [
-            { title: { contains: q, mode: "insensitive" } },
-            { author: { contains: q, mode: "insensitive" } },
-            { genre: { contains: q, mode: "insensitive" } },
-            { genre2: { contains: q, mode: "insensitive" } },
-            { genre3: { contains: q, mode: "insensitive" } },
-          ],
-        }
-      : {},
+    where: {
+      AND: [
+        q
+          ? {
+              OR: [
+                { title: { contains: q, mode: "insensitive" } },
+                { author: { contains: q, mode: "insensitive" } },
+                { genre: { contains: q, mode: "insensitive" } },
+                { genre2: { contains: q, mode: "insensitive" } },
+                { genre3: { contains: q, mode: "insensitive" } },
+              ],
+            }
+          : {},
+        selectedGenre
+          ? {
+              OR: [
+                { genre: selectedGenre },
+                { genre2: selectedGenre },
+                { genre3: selectedGenre },
+              ],
+            }
+          : {},
+      ],
+    },
     orderBy: {
       createdAt: "desc",
     },
@@ -85,7 +116,6 @@ export default async function HomePage({ searchParams }: Props) {
     chaptersCount: comic.chapters.length,
   }));
 
-  const hero = comics[0] || trending[0];
   const continueList = comics.slice(0, 12);
 
   return (
@@ -151,31 +181,22 @@ export default async function HomePage({ searchParams }: Props) {
             </aside>
           </div>
 
-          <section className="mt-10 overflow-hidden rounded-xl bg-gradient-to-r from-yellow-300 via-yellow-400 to-orange-500 text-black">
-            <div className="relative min-h-[190px] px-8 py-8 md:px-11">
-              <div className="relative z-10 max-w-[560px]">
+          <Link
+            href="/premium"
+            className="mt-10 block overflow-hidden rounded-xl bg-gradient-to-r from-yellow-300 via-yellow-400 to-orange-500 text-black transition hover:brightness-105"
+          >
+            <div className="relative min-h-[170px] px-8 py-8 md:px-11">
+              <div className="relative z-10 max-w-[620px]">
                 <h2 className="text-3xl font-black md:text-4xl">
-                  READ MANGA ONLINE
+                  PREMIUM ЭРХ АВАХ
                 </h2>
 
                 <p className="mt-3 text-sm font-black">
-                  Highest Quality | No signups | No Ads
+                  Бүх manga/chapter унших • QPay төлбөр • Шууд идэвхжинэ
                 </p>
 
-                <div className="mt-6 flex flex-wrap gap-4">
-                  <Link
-                    href={hero ? `/comic/${hero.slug}` : "/"}
-                    className="rounded-md border-2 border-black px-6 py-3 text-sm font-black text-black transition hover:bg-black hover:text-white"
-                  >
-                    Read Now
-                  </Link>
-
-                  <Link
-                    href="/premium"
-                    className="px-2 py-3 text-sm font-black underline"
-                  >
-                    Go to premium
-                  </Link>
+                <div className="mt-6 inline-flex rounded-md border-2 border-black px-6 py-3 text-sm font-black">
+                  Premium page рүү очих →
                 </div>
               </div>
 
@@ -192,18 +213,53 @@ export default async function HomePage({ searchParams }: Props) {
                 </div>
               </div>
             </div>
+          </Link>
+
+          <section className="mt-8">
+            <div className="mb-5 flex flex-wrap items-center gap-2">
+              <Link
+                href="/"
+                className={`rounded-full px-4 py-2 text-xs font-black transition ${
+                  !selectedGenre
+                    ? "bg-yellow-400 text-black"
+                    : "bg-[#171717] text-zinc-300 hover:bg-[#222]"
+                }`}
+              >
+                Бүгд
+              </Link>
+
+              {genres.map((genre) => (
+                <Link
+                  key={genre}
+                  href={`/?genre=${encodeURIComponent(genre)}`}
+                  className={`rounded-full px-4 py-2 text-xs font-black transition ${
+                    selectedGenre === genre
+                      ? "bg-yellow-400 text-black"
+                      : "bg-[#171717] text-zinc-300 hover:bg-[#222]"
+                  }`}
+                >
+                  {genre}
+                </Link>
+              ))}
+            </div>
           </section>
 
-          <section className="mt-10">
+          <section className="mt-8">
             <div className="mb-5 flex items-center justify-between">
               <div className="flex items-center gap-2 text-xl font-black text-yellow-400">
                 <span>◴</span>
-                <span>{q ? "Search Result" : "Continue Watching"}</span>
+                <span>
+                  {q
+                    ? "Search Result"
+                    : selectedGenre
+                    ? `${selectedGenre} manga`
+                    : "Continue Watching"}
+                </span>
               </div>
 
-              {q && (
+              {(q || selectedGenre) && (
                 <Link href="/" className="text-sm font-black text-zinc-400">
-                  Clear search
+                  Clear
                 </Link>
               )}
             </div>
