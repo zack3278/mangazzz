@@ -1,25 +1,100 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+type SendMailInput = {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+};
 
-export async function sendMail(to: string, subject: string, html: string) {
-  const from = process.env.RESEND_FROM || "Mangazet <onboarding@resend.dev>";
+function getResendClient() {
+  const apiKey = process.env.RESEND_API_KEY;
 
-  if (!process.env.RESEND_API_KEY) {
+  if (!apiKey) {
     throw new Error("RESEND_API_KEY тохируулаагүй байна");
   }
 
-  const { data, error } = await resend.emails.send({
+  return new Resend(apiKey);
+}
+
+/**
+ * 2 янзаар дуудаж болно:
+ *
+ * 1) sendMail({ to, subject, html, text })
+ * 2) sendMail(to, subject, html)
+ */
+export async function sendMail(
+  inputOrTo: SendMailInput | string,
+  subjectArg?: string,
+  htmlArg?: string
+) {
+  const resend = getResendClient();
+
+  const from =
+    process.env.MAIL_FROM ||
+    process.env.RESEND_FROM ||
+    "Mangazet <onboarding@resend.dev>";
+
+  let to: string;
+  let subject: string;
+  let html: string;
+  let text: string | undefined;
+
+  if (typeof inputOrTo === "string") {
+    to = inputOrTo;
+    subject = subjectArg || "Mangazet";
+    html = htmlArg || "";
+    text = undefined;
+  } else {
+    to = inputOrTo.to;
+    subject = inputOrTo.subject;
+    html = inputOrTo.html;
+    text = inputOrTo.text;
+  }
+
+  const result = await resend.emails.send({
     from,
     to,
     subject,
     html,
+    text,
   });
 
-  if (error) {
-    console.error("RESEND MAIL ERROR:", error);
-    throw new Error(error.message || "Email илгээхэд алдаа гарлаа");
-  }
+  return result;
+}
 
-  return data;
+export async function sendOtpEmail({
+  email,
+  code,
+  type,
+}: {
+  email: string;
+  code: string;
+  type: "REGISTER" | "RESET_PASSWORD";
+}) {
+  const title =
+    type === "RESET_PASSWORD"
+      ? "Mangazet нууц үг сэргээх код"
+      : "Mangazet баталгаажуулах код";
+
+  const description =
+    type === "RESET_PASSWORD"
+      ? "Нууц үгээ сэргээхийн тулд доорх кодыг ашиглана уу."
+      : "Бүртгэлээ баталгаажуулахын тулд доорх кодыг ашиглана уу.";
+
+  return sendMail({
+    to: email,
+    subject: title,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.6">
+        <h2>${title}</h2>
+        <p>${description}</p>
+        <div style="font-size:28px;font-weight:bold;letter-spacing:6px;margin:20px 0">
+          ${code}
+        </div>
+        <p>Энэ код богино хугацаанд хүчинтэй.</p>
+      </div>
+    `,
+    text: `${title}\n\n${description}\n\nКод: ${code}`,
+  });
 }
