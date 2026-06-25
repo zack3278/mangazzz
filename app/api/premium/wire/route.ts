@@ -1,139 +1,164 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
-import { getPremiumPlan } from "@/lib/premium";
-import {
-  createWirePaymentIntent,
-  confirmWirePaymentIntent,
-} from "@/lib/wire";
 
-type AppLink = {
-  name: string;
-  description?: string;
-  logo?: string;
-  link?: string;
+type PremiumPlan = {
+  months: number;
+  amount: number;
 };
 
-function getNextActionValue(nextAction: any) {
-  return {
-    qrText:
-      nextAction?.qr_text ||
-      nextAction?.qrText ||
-      nextAction?.qpay?.qr_text ||
-      nextAction?.qpay?.qrText ||
-      nextAction?.qr ||
-      null,
+const PLANS: PremiumPlan[] = [
+  { months: 1, amount: 5000 },
+  { months: 2, amount: 9000 },
+  { months: 3, amount: 13000 },
+  { months: 6, amount: 22000 },
+  { months: 12, amount: 35000 },
+];
 
-    qrImage:
-      nextAction?.qr_image ||
-      nextAction?.qrImage ||
-      nextAction?.qpay?.qr_image ||
-      nextAction?.qpay?.qrImage ||
-      null,
-
-    deeplink:
-      nextAction?.deeplink ||
-      nextAction?.deepLink ||
-      nextAction?.payment_url ||
-      nextAction?.paymentUrl ||
-      null,
-
-    apps:
-      nextAction?.apps ||
-      nextAction?.app_links ||
-      nextAction?.qpay?.apps ||
-      [],
-  };
+function getPaymentUrl(data: any) {
+  return (
+    data?.checkoutUrl ||
+    data?.paymentUrl ||
+    data?.payment_url ||
+    data?.invoiceUrl ||
+    data?.invoice_url ||
+    data?.redirectUrl ||
+    data?.redirect_url ||
+    data?.url ||
+    data?.data?.checkoutUrl ||
+    data?.data?.paymentUrl ||
+    data?.data?.payment_url ||
+    data?.data?.invoiceUrl ||
+    data?.data?.invoice_url ||
+    data?.data?.redirectUrl ||
+    data?.data?.redirect_url ||
+    data?.data?.url ||
+    null
+  );
 }
 
 export async function POST(req: Request) {
   try {
-    const user = await getCurrentUser();
-
-    if (!user) {
-      return NextResponse.json(
-        { message: "Эхлээд нэвтэрнэ үү" },
-        { status: 401 }
-      );
-    }
-
     const body = await req.json();
-    const months = Number(body.months);
 
-    const plan = getPremiumPlan(months);
+    const months = Number(body.months);
+    const amount = Number(body.amount);
+
+    const plan = PLANS.find(
+      (item) => item.months === months && item.amount === amount
+    );
 
     if (!plan) {
       return NextResponse.json(
-        { message: "Premium багц буруу байна" },
+        { message: "Premium plan буруу байна" },
         { status: 400 }
       );
     }
 
-    const order = await prisma.premiumOrder.create({
-      data: {
-        userId: user.id,
-        months: plan.months,
-        amount: plan.amount,
-        status: "PENDING",
-      },
-    });
+    const WIRE_API_KEY = process.env.WIRE_API_KEY;
+    const WIRE_SECRET_KEY = process.env.WIRE_SECRET_KEY;
+    const WIRE_OPERATOR = process.env.WIRE_OPERATOR;
+    const WIRE_PAYMENT_CREATE_URL = process.env.WIRE_PAYMENT_CREATE_URL;
+    const WIRE_API_URL = process.env.WIRE_API_URL;
+    const WIRE_BASE_URL = process.env.WIRE_BASE_URL;
 
-    const transactionRemark = `MANGAZET PREMIUM ORDER-${order.id}`;
+    const SITE_URL =
+      process.env.NEXT_PUBLIC_SITE_URL || "https://mangazet.site";
 
-    const paymentIntent = await createWirePaymentIntent({
+    const createUrl =
+      WIRE_PAYMENT_CREATE_URL ||
+      (WIRE_API_URL ? `${WIRE_API_URL}/payment/create` : "") ||
+      (WIRE_BASE_URL ? `${WIRE_BASE_URL}/payment/create` : "");
+
+    if (!WIRE_API_KEY || !WIRE_SECRET_KEY || !WIRE_OPERATOR || !createUrl) {
+      return NextResponse.json(
+        {
+          message: "Wire.mn ENV дутуу байна",
+          missing: {
+            WIRE_API_KEY: !WIRE_API_KEY,
+            WIRE_SECRET_KEY: !WIRE_SECRET_KEY,
+            WIRE_OPERATOR: !WIRE_OPERATOR,
+            WIRE_PAYMENT_CREATE_URL_OR_BASE_URL: !createUrl,
+          },
+        },
+        { status: 500 }
+      );
+    }
+
+    const orderId = `MANGAZET-${Date.now()}-${plan.months}`;
+
+    const payload = {
       amount: plan.amount,
-      orderId: order.id,
-      userId: user.id,
-      months: plan.months,
-      remark: transactionRemark,
+      totalAmount: plan.amount,
+      currency: "MNT",
+      description: `Mangazet Premium ${plan.months} сар`,
+      orderId,
+      invoiceId: orderId,
+      operator: WIRE_OPERATOR,
+      callbackUrl: `${SITE_URL}/api/premium/wire/webhook`,
+      successUrl: `${SITE_URL}/premium/success`,
+      cancelUrl: `${SITE_URL}/premium`,
+      returnUrl: `${SITE_URL}/premium/success`,
+      metadata: {
+        months: plan.months,
+        site: "Mangazet",
+      },
+    };
+
+    const wireRes = await fetch(createUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+
+        // Wire.mn docs аль header нэрийг ашиглаж байгаагаас шалтгаалаад
+        // доорх хэд хэдэн хувилбарыг зэрэг явуулж байна.
+        Authorization: `Bearer ${WIRE_API_KEY}`,
+        "x-api-key": WIRE_API_KEY,
+        "api-key": WIRE_API_KEY,
+        "secret-key": WIRE_SECRET_KEY,
+        "x-secret-key": WIRE_SECRET_KEY,
+        operator: WIRE_OPERATOR,
+      },
+      body: JSON.stringify(payload),
+      cache: "no-store",
     });
 
-    const confirmed = await confirmWirePaymentIntent(paymentIntent.id);
-    const nextAction = confirmed.next_action || paymentIntent.next_action;
-    const actionValues = getNextActionValue(nextAction);
+    const text = await wireRes.text();
 
-    await prisma.premiumOrder.update({
-      where: {
-        id: order.id,
-      },
-      data: {
-        invoiceId: paymentIntent.id,
-        wirePaymentIntentId: paymentIntent.id,
-        wireClientSecret: paymentIntent.client_secret || null,
-        wireStatus: confirmed.status || paymentIntent.status,
-        wireNextAction: nextAction ? JSON.stringify(nextAction) : null,
-        qrText: actionValues.qrText,
-      },
-    });
+    let data: any;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { raw: text };
+    }
+
+    if (!wireRes.ok) {
+      return NextResponse.json(
+        {
+          message: "Wire.mn API error",
+          status: wireRes.status,
+          createUrl,
+          data,
+        },
+        { status: wireRes.status }
+      );
+    }
+
+    const paymentUrl = getPaymentUrl(data);
 
     return NextResponse.json({
-      ok: true,
-      orderId: order.id,
-      amount: plan.amount,
-      months: plan.months,
-      transactionRemark,
-
-      paymentIntentId: paymentIntent.id,
-      clientSecret: paymentIntent.client_secret || null,
-      status: confirmed.status || paymentIntent.status,
-
-      qrText: actionValues.qrText,
-      qrImage: actionValues.qrImage,
-      deeplink: actionValues.deeplink,
-      apps: actionValues.apps as AppLink[],
-
-      nextAction,
-      raw: confirmed,
+      message: "Wire payment үүслээ",
+      orderId,
+      paymentUrl,
+      checkoutUrl: paymentUrl,
+      data,
     });
-  } catch (error) {
-    console.error("POST /api/premium/wire error:", error);
+  } catch (error: any) {
+    console.error("WIRE FETCH ERROR:", error);
 
     return NextResponse.json(
       {
-        message:
-          error instanceof Error
-            ? error.message
-            : "Wire төлбөр үүсгэхэд алдаа гарлаа",
+        message: "Wire.mn API холболт амжилтгүй боллоо",
+        error: error?.message || String(error),
+        cause: error?.cause || null,
       },
       { status: 500 }
     );
