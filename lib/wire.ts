@@ -1,18 +1,45 @@
-type WirePaymentIntent = {
+export type WirePaymentIntentStatus =
+  | "new"
+  | "requires_payment_method"
+  | "requires_action"
+  | "requires_capture"
+  | "processing"
+  | "succeeded"
+  | "canceled";
+
+export type WirePaymentIntent = {
   id: string;
-  object: string;
+  object: "payment_intent";
   amount: number;
   currency: string;
-  status: string;
-  client_secret?: string;
-  automatic_operator?: boolean;
-  allowed_operators?: string[];
-  selected_operator?: string;
-  next_action?: any;
-  metadata?: any;
-  livemode?: boolean;
-  created?: number;
-  expires_at?: number;
+  status: WirePaymentIntentStatus;
+  client_secret: string;
+  automatic_operator: boolean;
+  allowed_operators: string[];
+  selected_operator: string | null;
+  next_action: any | null;
+  metadata: Record<string, any>;
+  livemode: boolean;
+  created: number;
+  expires_at: number | null;
+};
+
+export type WireChargeStatus = "pending" | "succeeded" | "failed";
+
+export type WireCharge = {
+  id: string;
+  object: "charge";
+  payment_intent: string;
+  operator: string;
+  operator_charge_id: string | null;
+  status: WireChargeStatus;
+  amount: number;
+  fee: number;
+  amount_refunded: number;
+  failure_code: string | null;
+  failure_message: string | null;
+  livemode: boolean;
+  created: number;
 };
 
 type WireCreatePaymentInput = {
@@ -49,15 +76,6 @@ async function parseWireResponse(res: Response) {
 export async function createWirePaymentIntent(input: WireCreatePaymentInput) {
   const secretKey = getWireSecretKey();
 
-  /**
-   * Wire docs дээр create body нь:
-   * amount, currency, automatic_operator, allowed_operators, metadata гэж байна.
-   * Тиймээс description/remark-г шууд root дээр явуулахгүй.
-   *
-   * Гүйлгээний утгыг metadata дотор хадгалж байна.
-   * Хэрвээ Khan Bank дээр remark хоосон хэвээр байвал Wire/QPay connector талдаа
-   * "invoice description / remark template" тохируулах шаардлагатай.
-   */
   const res = await fetch(`${WIRE_BASE_URL}/v1/payment_intents`, {
     method: "POST",
     headers: {
@@ -76,6 +94,9 @@ export async function createWirePaymentIntent(input: WireCreatePaymentInput) {
         userId: input.userId,
         months: input.months,
         amount: input.amount,
+
+        // Khan Bank/QPay дээр гүйлгээний утга хэрэгтэй бол Wire connector талдаа
+        // энэ metadata.remark-г invoice remark руу map хийлгэх шаардлагатай.
         remark: input.remark,
         description: input.remark,
         transactionRemark: input.remark,
@@ -87,6 +108,7 @@ export async function createWirePaymentIntent(input: WireCreatePaymentInput) {
 
   if (!res.ok) {
     console.error("Wire create payment intent failed:", data);
+
     throw new Error(
       typeof data === "object" && data?.error?.message
         ? data.error.message
@@ -121,6 +143,7 @@ export async function confirmWirePaymentIntent(paymentIntentId: string) {
 
   if (!res.ok) {
     console.error("Wire confirm payment intent failed:", data);
+
     throw new Error(
       typeof data === "object" && data?.error?.message
         ? data.error.message
@@ -149,6 +172,7 @@ export async function retrieveWirePaymentIntent(paymentIntentId: string) {
 
   if (!res.ok) {
     console.error("Wire retrieve payment intent failed:", data);
+
     throw new Error(
       typeof data === "object" && data?.error?.message
         ? data.error.message
@@ -159,14 +183,44 @@ export async function retrieveWirePaymentIntent(paymentIntentId: string) {
   return data as WirePaymentIntent;
 }
 
-export function isWirePaymentPaid(status?: string | null) {
-  if (!status) return false;
+export async function listWireChargesByPaymentIntent(paymentIntentId: string) {
+  const secretKey = getWireSecretKey();
 
-  return [
-    "paid",
-    "succeeded",
-    "success",
-    "completed",
-    "confirmed",
-  ].includes(status.toLowerCase());
+  const url = new URL(`${WIRE_BASE_URL}/v1/charges`);
+  url.searchParams.set("payment_intent", paymentIntentId);
+
+  const res = await fetch(url.toString(), {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+    },
+    cache: "no-store",
+  });
+
+  const data = await parseWireResponse(res);
+
+  if (!res.ok) {
+    console.error("Wire list charges failed:", data);
+
+    throw new Error(
+      typeof data === "object" && data?.error?.message
+        ? data.error.message
+        : "Wire charge шалгахад алдаа гарлаа"
+    );
+  }
+
+  return data as {
+    object: "list";
+    url: string;
+    has_more: boolean;
+    data: WireCharge[];
+  };
+}
+
+export function isWirePaymentPaid(status?: string | null) {
+  return status === "succeeded";
+}
+
+export function isWireChargePaid(status?: string | null) {
+  return status === "succeeded";
 }

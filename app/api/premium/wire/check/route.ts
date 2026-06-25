@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth";
 import { getPremiumExpireDate } from "@/lib/premium";
 import {
   isWirePaymentPaid,
+  isWireChargePaid,
+  listWireChargesByPaymentIntent,
   retrieveWirePaymentIntent,
 } from "@/lib/wire";
 
@@ -60,12 +62,55 @@ export async function POST(req: Request) {
 
     const paymentIntent = await retrieveWirePaymentIntent(paymentIntentId);
 
-    if (!isWirePaymentPaid(paymentIntent.status)) {
+    /**
+     * Wire PaymentIntent status:
+     * new | requires_payment_method | requires_action | requires_capture
+     * processing | succeeded | canceled
+     *
+     * succeeded бол төлөгдсөн.
+     */
+    let paid = isWirePaymentPaid(paymentIntent.status);
+
+    /**
+     * Зарим үед PaymentIntent processing хэвээр байж,
+     * Charge succeeded болсон байх боломжтой тул charges-ийг давхар шалгана.
+     */
+    let succeededCharge = null;
+
+    try {
+      const charges = await listWireChargesByPaymentIntent(paymentIntentId);
+
+      succeededCharge =
+        charges.data.find((charge) => isWireChargePaid(charge.status)) || null;
+
+      if (succeededCharge) {
+        paid = true;
+      }
+    } catch (chargeError) {
+      console.error("Charge check skipped:", chargeError);
+    }
+
+    await prisma.premiumOrder.update({
+      where: { id: order.id },
+      data: {
+        wireStatus: paymentIntent.status,
+        wireNextAction: paymentIntent.next_action
+          ? JSON.stringify(paymentIntent.next_action)
+          : null,
+      },
+    });
+
+    if (!paid) {
       return NextResponse.json({
         ok: true,
         paid: false,
         status: paymentIntent.status,
-        message: "Төлбөр хараахан төлөгдөөгүй байна",
+        message:
+          paymentIntent.status === "processing"
+            ? "Төлбөр боловсруулагдаж байна. Түр хүлээгээд дахин шалгана уу."
+            : paymentIntent.status === "canceled"
+              ? "Төлбөр цуцлагдсан байна."
+              : "Төлбөр хараахан төлөгдөөгүй байна.",
       });
     }
 
@@ -79,6 +124,8 @@ export async function POST(req: Request) {
         where: { id: order.id },
         data: {
           status: "PAID",
+          wireStatus: "succeeded",
+          paidAt: new Date(),
         },
       }),
 
@@ -94,7 +141,8 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       paid: true,
-      status: paymentIntent.status,
+      status: "succeeded",
+      chargeId: succeededCharge?.id || null,
       message: "Төлбөр амжилттай. Premium эрх идэвхжлээ.",
       premiumExpiresAt,
     });
