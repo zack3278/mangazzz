@@ -1,166 +1,48 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-import { getPremiumPlan, isValidPremiumMonths } from "@/lib/premium";
-import { wireRequest, WirePaymentIntent } from "@/lib/wire";
+import { getPremiumPlan } from "@/lib/premium";
+import {
+  createWirePaymentIntent,
+  confirmWirePaymentIntent,
+} from "@/lib/wire";
 
 type AppLink = {
   name: string;
-  url: string;
+  description?: string;
   logo?: string;
+  link?: string;
 };
 
-function isHttpUrl(value: string) {
-  return /^https?:\/\//i.test(value);
-}
-
-function looksLikeQrText(value: string) {
-  const v = value.trim();
-
-  return (
-    v.startsWith("000201") ||
-    v.includes("qPay_QRcode=") ||
-    v.includes("QPAY") ||
-    v.includes("bankReference=") ||
-    v.includes("invoice=")
-  );
-}
-
-function extractWirePaymentData(payload: any) {
-  let paymentUrl: string | null = null;
-  let qrText: string | null = null;
-  const appLinks: AppLink[] = [];
-
-  function pushAppLink(name: string, url: string, logo?: string) {
-    if (!name || !url) return;
-
-    const exists = appLinks.some((item) => item.name === name && item.url === url);
-    if (exists) return;
-
-    appLinks.push({
-      name,
-      url,
-      logo,
-    });
-  }
-
-  function walk(obj: any) {
-    if (!obj) return;
-
-    if (typeof obj === "string") {
-      if (!qrText && looksLikeQrText(obj)) {
-        qrText = obj;
-      }
-
-      if (
-        !paymentUrl &&
-        isHttpUrl(obj) &&
-        (obj.includes("pay.wire.mn") ||
-          obj.includes("qpay") ||
-          obj.includes("payment") ||
-          obj.includes("checkout") ||
-          obj.includes("invoice"))
-      ) {
-        paymentUrl = obj;
-      }
-
-      return;
-    }
-
-    if (Array.isArray(obj)) {
-      for (const item of obj) {
-        walk(item);
-      }
-      return;
-    }
-
-    if (typeof obj === "object") {
-      const possibleQrText =
-        obj.qr_text ||
-        obj.qrText ||
-        obj.qr_data ||
-        obj.qrData ||
-        obj.qr_code ||
-        obj.qrCode ||
-        obj.qrcode ||
-        obj.qr ||
-        obj.qpay_qr_text ||
-        obj.qpayQrText ||
-        obj.invoice_qr_text ||
-        obj.invoiceQrText;
-
-      if (typeof possibleQrText === "string" && !qrText) {
-        qrText = possibleQrText;
-      }
-
-      const possiblePaymentUrl =
-        obj.payment_url ||
-        obj.paymentUrl ||
-        obj.checkout_url ||
-        obj.checkoutUrl ||
-        obj.invoice_url ||
-        obj.invoiceUrl ||
-        obj.redirect_url ||
-        obj.redirectUrl ||
-        obj.link ||
-        obj.url;
-
-      if (
-        typeof possiblePaymentUrl === "string" &&
-        !paymentUrl &&
-        isHttpUrl(possiblePaymentUrl)
-      ) {
-        paymentUrl = possiblePaymentUrl;
-      }
-
-      const appName =
-        obj.name ||
-        obj.app_name ||
-        obj.appName ||
-        obj.bank_name ||
-        obj.bankName ||
-        obj.description;
-
-      const appUrl =
-        obj.deeplink ||
-        obj.deep_link ||
-        obj.url ||
-        obj.link ||
-        obj.payment_url ||
-        obj.paymentUrl;
-
-      const appLogo =
-        obj.logo ||
-        obj.logo_url ||
-        obj.logoUrl ||
-        obj.icon ||
-        obj.icon_url ||
-        obj.iconUrl;
-
-      if (
-        typeof appName === "string" &&
-        typeof appUrl === "string" &&
-        (appUrl.includes("://") || isHttpUrl(appUrl))
-      ) {
-        pushAppLink(
-          appName,
-          appUrl,
-          typeof appLogo === "string" ? appLogo : undefined
-        );
-      }
-
-      for (const value of Object.values(obj)) {
-        walk(value);
-      }
-    }
-  }
-
-  walk(payload);
-
+function getNextActionValue(nextAction: any) {
   return {
-    paymentUrl,
-    qrText,
-    appLinks,
+    qrText:
+      nextAction?.qr_text ||
+      nextAction?.qrText ||
+      nextAction?.qpay?.qr_text ||
+      nextAction?.qpay?.qrText ||
+      nextAction?.qr ||
+      null,
+
+    qrImage:
+      nextAction?.qr_image ||
+      nextAction?.qrImage ||
+      nextAction?.qpay?.qr_image ||
+      nextAction?.qpay?.qrImage ||
+      null,
+
+    deeplink:
+      nextAction?.deeplink ||
+      nextAction?.deepLink ||
+      nextAction?.payment_url ||
+      nextAction?.paymentUrl ||
+      null,
+
+    apps:
+      nextAction?.apps ||
+      nextAction?.app_links ||
+      nextAction?.qpay?.apps ||
+      [],
   };
 }
 
@@ -170,35 +52,19 @@ export async function POST(req: Request) {
 
     if (!user) {
       return NextResponse.json(
-        { message: "Эхлээд login хийнэ үү" },
+        { message: "Эхлээд нэвтэрнэ үү" },
         { status: 401 }
-      );
-    }
-
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-
-    if (!siteUrl) {
-      return NextResponse.json(
-        { message: "NEXT_PUBLIC_SITE_URL env тохируулаагүй байна" },
-        { status: 500 }
       );
     }
 
     const body = await req.json();
     const months = Number(body.months);
 
-    if (!isValidPremiumMonths(months)) {
-      return NextResponse.json(
-        { message: "Premium plan буруу байна" },
-        { status: 400 }
-      );
-    }
-
     const plan = getPremiumPlan(months);
 
     if (!plan) {
       return NextResponse.json(
-        { message: "Premium plan олдсонгүй" },
+        { message: "Premium багц буруу байна" },
         { status: 400 }
       );
     }
@@ -212,67 +78,55 @@ export async function POST(req: Request) {
       },
     });
 
-    const idempotencyKey = `premium-${order.id}-${crypto.randomUUID()}`;
+    const transactionRemark = `MANGAZET PREMIUM ORDER-${order.id}`;
 
-    const paymentIntent = await wireRequest<WirePaymentIntent>(
-      "/v1/payment_intents",
-      {
-        method: "POST",
-        idempotencyKey,
-        body: {
-          amount: plan.amount,
-          currency: "MNT",
-          automatic_operator: false,
-          allowed_operators: ["qpay"],
-          metadata: {
-            type: "premium",
-            orderId: String(order.id),
-            userId: String(user.id),
-            months: String(plan.months),
-          },
-        },
-      }
-    );
+    const paymentIntent = await createWirePaymentIntent({
+      amount: plan.amount,
+      orderId: order.id,
+      userId: user.id,
+      months: plan.months,
+      remark: transactionRemark,
+    });
 
-    const confirmed = await wireRequest<WirePaymentIntent>(
-      `/v1/payment_intents/${paymentIntent.id}/confirm`,
-      {
-        method: "POST",
-        idempotencyKey: `${idempotencyKey}-confirm`,
-        body: {
-          operator: "qpay",
-          return_url: `${siteUrl}/premium/success?orderId=${order.id}`,
-        },
-      }
-    );
-
-    const paymentData = extractWirePaymentData(confirmed);
+    const confirmed = await confirmWirePaymentIntent(paymentIntent.id);
+    const nextAction = confirmed.next_action || paymentIntent.next_action;
+    const actionValues = getNextActionValue(nextAction);
 
     await prisma.premiumOrder.update({
-      where: { id: order.id },
+      where: {
+        id: order.id,
+      },
       data: {
-        wirePaymentIntentId: confirmed.id,
-        wireClientSecret: confirmed.client_secret || null,
-        wireStatus: confirmed.status,
-        wireNextAction: confirmed.next_action
-          ? JSON.stringify(confirmed.next_action)
-          : null,
-        qrText: paymentData.qrText || null,
+        invoiceId: paymentIntent.id,
+        wirePaymentIntentId: paymentIntent.id,
+        wireClientSecret: paymentIntent.client_secret || null,
+        wireStatus: confirmed.status || paymentIntent.status,
+        wireNextAction: nextAction ? JSON.stringify(nextAction) : null,
+        qrText: actionValues.qrText,
       },
     });
 
     return NextResponse.json({
-      message: "Wire төлбөр үүслээ",
+      ok: true,
       orderId: order.id,
-      paymentIntentId: confirmed.id,
-      status: confirmed.status,
-      paymentUrl: paymentData.paymentUrl,
-      qrText: paymentData.qrText,
-      appLinks: paymentData.appLinks,
-      rawPaymentIntent: confirmed,
+      amount: plan.amount,
+      months: plan.months,
+      transactionRemark,
+
+      paymentIntentId: paymentIntent.id,
+      clientSecret: paymentIntent.client_secret || null,
+      status: confirmed.status || paymentIntent.status,
+
+      qrText: actionValues.qrText,
+      qrImage: actionValues.qrImage,
+      deeplink: actionValues.deeplink,
+      apps: actionValues.apps as AppLink[],
+
+      nextAction,
+      raw: confirmed,
     });
   } catch (error) {
-    console.error("CREATE WIRE PAYMENT ERROR:", error);
+    console.error("POST /api/premium/wire error:", error);
 
     return NextResponse.json(
       {

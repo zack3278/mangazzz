@@ -73,6 +73,45 @@ async function parseWireResponse(res: Response) {
   }
 }
 
+/**
+ * Хуучин route-ууд wireRequest гэж import хийж байгаа тул
+ * build унагахгүй compatibility function.
+ */
+export async function wireRequest<T = any>(
+  path: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const secretKey = getWireSecretKey();
+
+  const url = path.startsWith("http")
+    ? path
+    : `${WIRE_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+    cache: "no-store",
+  });
+
+  const data = await parseWireResponse(res);
+
+  if (!res.ok) {
+    console.error("Wire request failed:", data);
+
+    throw new Error(
+      typeof data === "object" && data?.error?.message
+        ? data.error.message
+        : "Wire request алдаа гарлаа"
+    );
+  }
+
+  return data as T;
+}
+
 export async function createWirePaymentIntent(input: WireCreatePaymentInput) {
   const secretKey = getWireSecretKey();
 
@@ -94,9 +133,6 @@ export async function createWirePaymentIntent(input: WireCreatePaymentInput) {
         userId: input.userId,
         months: input.months,
         amount: input.amount,
-
-        // Khan Bank/QPay дээр гүйлгээний утга хэрэгтэй бол Wire connector талдаа
-        // энэ metadata.remark-г invoice remark руу map хийлгэх шаардлагатай.
         remark: input.remark,
         description: input.remark,
         transactionRemark: input.remark,
@@ -155,66 +191,27 @@ export async function confirmWirePaymentIntent(paymentIntentId: string) {
 }
 
 export async function retrieveWirePaymentIntent(paymentIntentId: string) {
-  const secretKey = getWireSecretKey();
-
-  const res = await fetch(
-    `${WIRE_BASE_URL}/v1/payment_intents/${paymentIntentId}`,
+  return wireRequest<WirePaymentIntent>(
+    `/v1/payment_intents/${paymentIntentId}`,
     {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${secretKey}`,
-      },
-      cache: "no-store",
     }
   );
-
-  const data = await parseWireResponse(res);
-
-  if (!res.ok) {
-    console.error("Wire retrieve payment intent failed:", data);
-
-    throw new Error(
-      typeof data === "object" && data?.error?.message
-        ? data.error.message
-        : "Wire payment шалгахад алдаа гарлаа"
-    );
-  }
-
-  return data as WirePaymentIntent;
 }
 
 export async function listWireChargesByPaymentIntent(paymentIntentId: string) {
-  const secretKey = getWireSecretKey();
+  const url = `/v1/charges?payment_intent=${encodeURIComponent(
+    paymentIntentId
+  )}`;
 
-  const url = new URL(`${WIRE_BASE_URL}/v1/charges`);
-  url.searchParams.set("payment_intent", paymentIntentId);
-
-  const res = await fetch(url.toString(), {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${secretKey}`,
-    },
-    cache: "no-store",
-  });
-
-  const data = await parseWireResponse(res);
-
-  if (!res.ok) {
-    console.error("Wire list charges failed:", data);
-
-    throw new Error(
-      typeof data === "object" && data?.error?.message
-        ? data.error.message
-        : "Wire charge шалгахад алдаа гарлаа"
-    );
-  }
-
-  return data as {
+  return wireRequest<{
     object: "list";
     url: string;
     has_more: boolean;
     data: WireCharge[];
-  };
+  }>(url, {
+    method: "GET",
+  });
 }
 
 export function isWirePaymentPaid(status?: string | null) {

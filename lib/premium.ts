@@ -1,3 +1,5 @@
+import { prisma } from "@/lib/prisma";
+
 export type PremiumPlan = {
   months: number;
   amount: number;
@@ -84,6 +86,74 @@ export function getPremiumStatus(
   return {
     active,
     isPremium: active,
+    premiumExpiresAt,
+  };
+}
+
+/**
+ * Webhook болон check route-уудаас premium эрх идэвхжүүлэхэд хэрэглэнэ.
+ */
+export async function activatePremiumByOrderId(orderId: number) {
+  const order = await prisma.premiumOrder.findUnique({
+    where: {
+      id: orderId,
+    },
+    include: {
+      user: true,
+    },
+  });
+
+  if (!order) {
+    throw new Error("Premium order олдсонгүй");
+  }
+
+  if (order.status === "PAID") {
+    return {
+      ok: true,
+      alreadyPaid: true,
+      order,
+      premiumExpiresAt: order.user.premiumExpiresAt,
+    };
+  }
+
+  const premiumExpiresAt = getPremiumExpireDate(
+    order.user.premiumExpiresAt,
+    order.months
+  );
+
+  const result = await prisma.$transaction(async (tx) => {
+    const updatedOrder = await tx.premiumOrder.update({
+      where: {
+        id: order.id,
+      },
+      data: {
+        status: "PAID",
+        wireStatus: "succeeded",
+        paidAt: new Date(),
+      },
+    });
+
+    const updatedUser = await tx.user.update({
+      where: {
+        id: order.userId,
+      },
+      data: {
+        isPremium: true,
+        premiumExpiresAt,
+      },
+    });
+
+    return {
+      updatedOrder,
+      updatedUser,
+    };
+  });
+
+  return {
+    ok: true,
+    alreadyPaid: false,
+    order: result.updatedOrder,
+    user: result.updatedUser,
     premiumExpiresAt,
   };
 }
