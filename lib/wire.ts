@@ -54,10 +54,10 @@ const WIRE_BASE_URL =
   process.env.WIRE_BASE_URL || "https://api.wirepayment.mn";
 
 function getWireSecretKey() {
-  const key = process.env.WIRE_SECRET_KEY;
+  const key = process.env.WIRE_SECRET_KEY || process.env.WIRE_API_KEY;
 
   if (!key) {
-    throw new Error("WIRE_SECRET_KEY тохируулаагүй байна");
+    throw new Error("WIRE_SECRET_KEY эсвэл WIRE_API_KEY тохируулаагүй байна");
   }
 
   return key;
@@ -73,10 +73,27 @@ async function parseWireResponse(res: Response) {
   }
 }
 
-/**
- * Хуучин route-ууд wireRequest гэж import хийж байгаа тул
- * build унагахгүй compatibility function.
- */
+async function safeFetch(url: string, options: RequestInit) {
+  try {
+    return await fetch(url, options);
+  } catch (error) {
+    console.error("Wire fetch failed:", {
+      url,
+      message: error instanceof Error ? error.message : String(error),
+      cause:
+        error instanceof Error && "cause" in error
+          ? (error as any).cause
+          : null,
+    });
+
+    throw new Error(
+      `Wire.mn API холболт амжилтгүй боллоо: ${
+        error instanceof Error ? error.message : "fetch failed"
+      }`
+    );
+  }
+}
+
 export async function wireRequest<T = any>(
   path: string,
   options: RequestInit = {}
@@ -87,7 +104,7 @@ export async function wireRequest<T = any>(
     ? path
     : `${WIRE_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 
-  const res = await fetch(url, {
+  const res = await safeFetch(url, {
     ...options,
     headers: {
       Authorization: `Bearer ${secretKey}`,
@@ -105,7 +122,7 @@ export async function wireRequest<T = any>(
     throw new Error(
       typeof data === "object" && data?.error?.message
         ? data.error.message
-        : "Wire request алдаа гарлаа"
+        : `Wire request алдаа гарлаа. Status: ${res.status}`
     );
   }
 
@@ -115,7 +132,9 @@ export async function wireRequest<T = any>(
 export async function createWirePaymentIntent(input: WireCreatePaymentInput) {
   const secretKey = getWireSecretKey();
 
-  const res = await fetch(`${WIRE_BASE_URL}/v1/payment_intents`, {
+  const url = `${WIRE_BASE_URL}/v1/payment_intents`;
+
+  const res = await safeFetch(url, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${secretKey}`,
@@ -138,6 +157,7 @@ export async function createWirePaymentIntent(input: WireCreatePaymentInput) {
         transactionRemark: input.remark,
       },
     }),
+    cache: "no-store",
   });
 
   const data = await parseWireResponse(res);
@@ -148,7 +168,7 @@ export async function createWirePaymentIntent(input: WireCreatePaymentInput) {
     throw new Error(
       typeof data === "object" && data?.error?.message
         ? data.error.message
-        : "Wire payment үүсгэхэд алдаа гарлаа"
+        : `Wire payment үүсгэхэд алдаа гарлаа. Status: ${res.status}`
     );
   }
 
@@ -159,21 +179,21 @@ export async function confirmWirePaymentIntent(paymentIntentId: string) {
   const secretKey = getWireSecretKey();
   const operator = process.env.WIRE_OPERATOR || "qpay";
 
-  const res = await fetch(
-    `${WIRE_BASE_URL}/v1/payment_intents/${paymentIntentId}/confirm`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${secretKey}`,
-        "Content-Type": "application/json",
-        "Idempotency-Key": `mangazet-confirm-${paymentIntentId}`,
-      },
-      body: JSON.stringify({
-        operator,
-        return_url: `${process.env.NEXT_PUBLIC_APP_URL || ""}/premium`,
-      }),
-    }
-  );
+  const url = `${WIRE_BASE_URL}/v1/payment_intents/${paymentIntentId}/confirm`;
+
+  const res = await safeFetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      "Content-Type": "application/json",
+      "Idempotency-Key": `mangazet-confirm-${paymentIntentId}`,
+    },
+    body: JSON.stringify({
+      operator,
+      return_url: `${process.env.NEXT_PUBLIC_APP_URL || ""}/premium`,
+    }),
+    cache: "no-store",
+  });
 
   const data = await parseWireResponse(res);
 
@@ -183,7 +203,7 @@ export async function confirmWirePaymentIntent(paymentIntentId: string) {
     throw new Error(
       typeof data === "object" && data?.error?.message
         ? data.error.message
-        : "Wire payment confirm хийхэд алдаа гарлаа"
+        : `Wire payment confirm хийхэд алдаа гарлаа. Status: ${res.status}`
     );
   }
 
