@@ -35,6 +35,38 @@ function getPaymentUrl(data: any) {
   );
 }
 
+function getQrText(data: any) {
+  return (
+    data?.qrText ||
+    data?.qr_text ||
+    data?.qpayQrText ||
+    data?.qpay_qr_text ||
+    data?.qr ||
+    data?.data?.qrText ||
+    data?.data?.qr_text ||
+    data?.data?.qpayQrText ||
+    data?.data?.qpay_qr_text ||
+    data?.data?.qr ||
+    null
+  );
+}
+
+function getInvoiceId(data: any) {
+  return (
+    data?.invoiceId ||
+    data?.invoice_id ||
+    data?.paymentId ||
+    data?.payment_id ||
+    data?.id ||
+    data?.data?.invoiceId ||
+    data?.data?.invoice_id ||
+    data?.data?.paymentId ||
+    data?.data?.payment_id ||
+    data?.data?.id ||
+    null
+  );
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -48,7 +80,9 @@ export async function POST(req: Request) {
 
     if (!plan) {
       return NextResponse.json(
-        { message: "Premium plan буруу байна" },
+        {
+          message: "Premium plan буруу байна",
+        },
         { status: 400 }
       );
     }
@@ -56,6 +90,7 @@ export async function POST(req: Request) {
     const WIRE_API_KEY = process.env.WIRE_API_KEY;
     const WIRE_SECRET_KEY = process.env.WIRE_SECRET_KEY;
     const WIRE_OPERATOR = process.env.WIRE_OPERATOR;
+
     const WIRE_PAYMENT_CREATE_URL = process.env.WIRE_PAYMENT_CREATE_URL;
     const WIRE_API_URL = process.env.WIRE_API_URL;
     const WIRE_BASE_URL = process.env.WIRE_BASE_URL;
@@ -83,6 +118,17 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!createUrl.startsWith("http://") && !createUrl.startsWith("https://")) {
+      return NextResponse.json(
+        {
+          message: "WIRE_PAYMENT_CREATE_URL буруу байна. Бүтэн https:// URL байх ёстой.",
+          createUrl,
+          example: "https://api.wire.mn/...",
+        },
+        { status: 500 }
+      );
+    }
+
     const orderId = `MANGAZET-${Date.now()}-${plan.months}`;
 
     const payload = {
@@ -93,12 +139,16 @@ export async function POST(req: Request) {
       orderId,
       invoiceId: orderId,
       operator: WIRE_OPERATOR,
+
       callbackUrl: `${SITE_URL}/api/premium/wire/webhook`,
+      webhookUrl: `${SITE_URL}/api/premium/wire/webhook`,
       successUrl: `${SITE_URL}/premium/success`,
       cancelUrl: `${SITE_URL}/premium`,
       returnUrl: `${SITE_URL}/premium/success`,
+
       metadata: {
         months: plan.months,
+        amount: plan.amount,
         site: "Mangazet",
       },
     };
@@ -108,14 +158,15 @@ export async function POST(req: Request) {
       headers: {
         "Content-Type": "application/json",
 
-        // Wire.mn docs аль header нэрийг ашиглаж байгаагаас шалтгаалаад
-        // доорх хэд хэдэн хувилбарыг зэрэг явуулж байна.
         Authorization: `Bearer ${WIRE_API_KEY}`,
         "x-api-key": WIRE_API_KEY,
         "api-key": WIRE_API_KEY,
+
         "secret-key": WIRE_SECRET_KEY,
         "x-secret-key": WIRE_SECRET_KEY,
+
         operator: WIRE_OPERATOR,
+        "x-operator": WIRE_OPERATOR,
       },
       body: JSON.stringify(payload),
       cache: "no-store",
@@ -124,6 +175,7 @@ export async function POST(req: Request) {
     const text = await wireRes.text();
 
     let data: any;
+
     try {
       data = JSON.parse(text);
     } catch {
@@ -143,12 +195,16 @@ export async function POST(req: Request) {
     }
 
     const paymentUrl = getPaymentUrl(data);
+    const qrText = getQrText(data);
+    const invoiceId = getInvoiceId(data);
 
     return NextResponse.json({
       message: "Wire payment үүслээ",
       orderId,
+      invoiceId,
       paymentUrl,
       checkoutUrl: paymentUrl,
+      qrText,
       data,
     });
   } catch (error: any) {
@@ -158,7 +214,14 @@ export async function POST(req: Request) {
       {
         message: "Wire.mn API холболт амжилтгүй боллоо",
         error: error?.message || String(error),
-        cause: error?.cause || null,
+        cause: error?.cause
+          ? {
+              code: error.cause?.code,
+              errno: error.cause?.errno,
+              syscall: error.cause?.syscall,
+              hostname: error.cause?.hostname,
+            }
+          : null,
       },
       { status: 500 }
     );
