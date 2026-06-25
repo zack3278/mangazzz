@@ -13,9 +13,18 @@ const PLANS: PremiumPlan[] = [
   { months: 12, amount: 35000 },
 ];
 
+function makeIdempotencyKey() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+
+  return `mangazet-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 function getPaymentUrl(data: any) {
   return (
     data?.checkoutUrl ||
+    data?.checkout_url ||
     data?.paymentUrl ||
     data?.payment_url ||
     data?.invoiceUrl ||
@@ -23,7 +32,14 @@ function getPaymentUrl(data: any) {
     data?.redirectUrl ||
     data?.redirect_url ||
     data?.url ||
+    data?.next_action?.url ||
+    data?.next_action?.payment_url ||
+    data?.next_action?.redirect_url ||
+    data?.next_action?.redirect_to_url ||
+    data?.next_action?.deeplink ||
+    data?.next_action?.deep_link ||
     data?.data?.checkoutUrl ||
+    data?.data?.checkout_url ||
     data?.data?.paymentUrl ||
     data?.data?.payment_url ||
     data?.data?.invoiceUrl ||
@@ -31,6 +47,12 @@ function getPaymentUrl(data: any) {
     data?.data?.redirectUrl ||
     data?.data?.redirect_url ||
     data?.data?.url ||
+    data?.data?.next_action?.url ||
+    data?.data?.next_action?.payment_url ||
+    data?.data?.next_action?.redirect_url ||
+    data?.data?.next_action?.redirect_to_url ||
+    data?.data?.next_action?.deeplink ||
+    data?.data?.next_action?.deep_link ||
     null
   );
 }
@@ -42,27 +64,21 @@ function getQrText(data: any) {
     data?.qpayQrText ||
     data?.qpay_qr_text ||
     data?.qr ||
+    data?.next_action?.qrText ||
+    data?.next_action?.qr_text ||
+    data?.next_action?.qpayQrText ||
+    data?.next_action?.qpay_qr_text ||
+    data?.next_action?.qr ||
     data?.data?.qrText ||
     data?.data?.qr_text ||
     data?.data?.qpayQrText ||
     data?.data?.qpay_qr_text ||
     data?.data?.qr ||
-    null
-  );
-}
-
-function getInvoiceId(data: any) {
-  return (
-    data?.invoiceId ||
-    data?.invoice_id ||
-    data?.paymentId ||
-    data?.payment_id ||
-    data?.id ||
-    data?.data?.invoiceId ||
-    data?.data?.invoice_id ||
-    data?.data?.paymentId ||
-    data?.data?.payment_id ||
-    data?.data?.id ||
+    data?.data?.next_action?.qrText ||
+    data?.data?.next_action?.qr_text ||
+    data?.data?.next_action?.qpayQrText ||
+    data?.data?.next_action?.qpay_qr_text ||
+    data?.data?.next_action?.qr ||
     null
   );
 }
@@ -80,50 +96,38 @@ export async function POST(req: Request) {
 
     if (!plan) {
       return NextResponse.json(
-        {
-          message: "Premium plan буруу байна",
-        },
+        { message: "Premium plan буруу байна" },
         { status: 400 }
       );
     }
 
     const WIRE_API_KEY = process.env.WIRE_API_KEY;
-    const WIRE_SECRET_KEY = process.env.WIRE_SECRET_KEY;
     const WIRE_OPERATOR = process.env.WIRE_OPERATOR;
-
-    const WIRE_PAYMENT_CREATE_URL = process.env.WIRE_PAYMENT_CREATE_URL;
-    const WIRE_API_URL = process.env.WIRE_API_URL;
-    const WIRE_BASE_URL = process.env.WIRE_BASE_URL;
-
     const SITE_URL =
       process.env.NEXT_PUBLIC_SITE_URL || "https://mangazet.site";
 
     const createUrl =
-      WIRE_PAYMENT_CREATE_URL ||
-      (WIRE_API_URL ? `${WIRE_API_URL}/payment/create` : "") ||
-      (WIRE_BASE_URL ? `${WIRE_BASE_URL}/payment/create` : "");
+      process.env.WIRE_PAYMENT_CREATE_URL ||
+      "https://api.wirepayment.mn/v1/payment_intents";
 
-    if (!WIRE_API_KEY || !WIRE_SECRET_KEY || !WIRE_OPERATOR || !createUrl) {
+    if (!WIRE_API_KEY) {
       return NextResponse.json(
         {
-          message: "Wire.mn ENV дутуу байна",
+          message: "WIRE_API_KEY env дутуу байна",
           missing: {
-            WIRE_API_KEY: !WIRE_API_KEY,
-            WIRE_SECRET_KEY: !WIRE_SECRET_KEY,
-            WIRE_OPERATOR: !WIRE_OPERATOR,
-            WIRE_PAYMENT_CREATE_URL_OR_BASE_URL: !createUrl,
+            WIRE_API_KEY: true,
           },
         },
         { status: 500 }
       );
     }
 
-    if (!createUrl.startsWith("http://") && !createUrl.startsWith("https://")) {
+    if (!createUrl.startsWith("https://")) {
       return NextResponse.json(
         {
-          message: "WIRE_PAYMENT_CREATE_URL буруу байна. Бүтэн https:// URL байх ёстой.",
+          message: "WIRE_PAYMENT_CREATE_URL буруу байна",
           createUrl,
-          example: "https://api.wire.mn/...",
+          correct: "https://api.wirepayment.mn/v1/payment_intents",
         },
         { status: 500 }
       );
@@ -131,81 +135,121 @@ export async function POST(req: Request) {
 
     const orderId = `MANGAZET-${Date.now()}-${plan.months}`;
 
-    const payload = {
+    const createPayload = {
       amount: plan.amount,
-      totalAmount: plan.amount,
       currency: "MNT",
-      description: `Mangazet Premium ${plan.months} сар`,
-      orderId,
-      invoiceId: orderId,
-      operator: WIRE_OPERATOR,
-
-      callbackUrl: `${SITE_URL}/api/premium/wire/webhook`,
-      webhookUrl: `${SITE_URL}/api/premium/wire/webhook`,
-      successUrl: `${SITE_URL}/premium/success`,
-      cancelUrl: `${SITE_URL}/premium`,
-      returnUrl: `${SITE_URL}/premium/success`,
-
+      automatic_operator: true,
+      allowed_operators: [],
       metadata: {
+        orderId,
         months: plan.months,
         amount: plan.amount,
         site: "Mangazet",
+        returnUrl: `${SITE_URL}/premium/success`,
       },
     };
 
-    const wireRes = await fetch(createUrl, {
+    const createRes = await fetch(createUrl, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-
         Authorization: `Bearer ${WIRE_API_KEY}`,
-        "x-api-key": WIRE_API_KEY,
-        "api-key": WIRE_API_KEY,
-
-        "secret-key": WIRE_SECRET_KEY,
-        "x-secret-key": WIRE_SECRET_KEY,
-
-        operator: WIRE_OPERATOR,
-        "x-operator": WIRE_OPERATOR,
+        "Idempotency-Key": makeIdempotencyKey(),
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(createPayload),
       cache: "no-store",
     });
 
-    const text = await wireRes.text();
+    const createText = await createRes.text();
 
-    let data: any;
+    let createData: any;
 
     try {
-      data = JSON.parse(text);
+      createData = JSON.parse(createText);
     } catch {
-      data = { raw: text };
+      createData = { raw: createText };
     }
 
-    if (!wireRes.ok) {
+    if (!createRes.ok) {
       return NextResponse.json(
         {
-          message: "Wire.mn API error",
-          status: wireRes.status,
+          message: "Wire.mn PaymentIntent үүсгэхэд алдаа гарлаа",
+          status: createRes.status,
           createUrl,
-          data,
+          data: createData,
         },
-        { status: wireRes.status }
+        { status: createRes.status }
       );
     }
 
-    const paymentUrl = getPaymentUrl(data);
-    const qrText = getQrText(data);
-    const invoiceId = getInvoiceId(data);
+    const paymentIntentId = createData?.id || createData?.data?.id;
+
+    if (!paymentIntentId) {
+      return NextResponse.json(
+        {
+          message: "Wire.mn PaymentIntent ID олдсонгүй",
+          createUrl,
+          data: createData,
+        },
+        { status: 500 }
+      );
+    }
+
+    const confirmUrl = `https://api.wirepayment.mn/v1/payment_intents/${paymentIntentId}/confirm`;
+
+    const confirmPayload: any = {
+      return_url: `${SITE_URL}/premium/success`,
+    };
+
+    if (WIRE_OPERATOR) {
+      confirmPayload.operator = WIRE_OPERATOR;
+    }
+
+    const confirmRes = await fetch(confirmUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${WIRE_API_KEY}`,
+        "Idempotency-Key": makeIdempotencyKey(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(confirmPayload),
+      cache: "no-store",
+    });
+
+    const confirmText = await confirmRes.text();
+
+    let confirmData: any;
+
+    try {
+      confirmData = JSON.parse(confirmText);
+    } catch {
+      confirmData = { raw: confirmText };
+    }
+
+    if (!confirmRes.ok) {
+      return NextResponse.json(
+        {
+          message: "Wire.mn PaymentIntent confirm хийхэд алдаа гарлаа",
+          status: confirmRes.status,
+          createData,
+          confirmData,
+        },
+        { status: confirmRes.status }
+      );
+    }
+
+    const paymentUrl = getPaymentUrl(confirmData) || getPaymentUrl(createData);
+    const qrText = getQrText(confirmData) || getQrText(createData);
 
     return NextResponse.json({
       message: "Wire payment үүслээ",
       orderId,
-      invoiceId,
+      paymentIntentId,
       paymentUrl,
       checkoutUrl: paymentUrl,
       qrText,
-      data,
+      createData,
+      confirmData,
     });
   } catch (error: any) {
     console.error("WIRE FETCH ERROR:", error);
