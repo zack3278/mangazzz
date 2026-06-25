@@ -196,7 +196,7 @@ export default async function ProfilePage() {
             <div>
               <h2 className="text-xl font-black">Сүүлд уншсан chapter</h2>
               <p className="mt-1 text-sm text-zinc-500">
-                Хамгийн сүүлд уншсан chapter-ууд энд харагдана.
+                Сүүлд уншсан chapter
               </p>
             </div>
 
