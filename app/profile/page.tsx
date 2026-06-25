@@ -1,508 +1,299 @@
-"use client";
-
-/* eslint-disable @next/next/no-img-element */
+import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import Navbar from "@/components/Navbar";
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
 
-type Comic = {
-  id: number;
-  title: string;
-  slug: string;
-  coverImage: string;
-  status: string;
-  chapters: { id: number }[];
-};
-
-type User = {
-  id: number;
-  name: string;
-  email: string;
-  isPremium: boolean;
-  premiumExpiresAt?: string | null;
-  profileImage?: string | null;
-  avatarPreset: string;
-  xp: number;
-  level: number;
-  nextLevelXp: number;
-  currentLevelStartXp: number;
-  progressPercent: number;
-  nextReward: string;
-  favoriteMangas: Comic[];
-};
-
-type UploadResult = {
-  message: string;
-  url: string;
-  key: string;
-};
-
-function formatDate(date?: string | null) {
+function formatDate(date?: Date | string | null) {
   if (!date) return "—";
 
-  return new Date(date).toLocaleDateString("mn-MN", {
+  return new Intl.DateTimeFormat("mn-MN", {
     year: "numeric",
     month: "long",
     day: "numeric",
-  });
+  }).format(new Date(date));
 }
 
-function imageSrc(src?: string | null) {
-  if (!src) return "/placeholder-cover.jpg";
+function getInitial(name?: string | null, email?: string | null) {
+  const value = name || email || "U";
+  return value.charAt(0).toUpperCase();
+}
 
-  if (
-    src.startsWith("http://") ||
-    src.startsWith("https://") ||
-    src.startsWith("/")
-  ) {
-    return src;
+function getComicCover(comic: any) {
+  return (
+    comic?.coverImage ||
+    comic?.coverUrl ||
+    comic?.image ||
+    comic?.thumbnail ||
+    "/placeholder-cover.png"
+  );
+}
+
+function getComicHref(comic: any) {
+  const slug = comic?.slug || comic?.id;
+  return `/comic/${slug}`;
+}
+
+function getChapterHref(comic: any, chapter: any) {
+  const slug = comic?.slug || comic?.id;
+  return `/comic/${slug}/chapters/${chapter?.id}`;
+}
+
+export default async function ProfilePage() {
+  const tokenUser = await getCurrentUser();
+
+  if (!tokenUser) {
+    redirect("/login");
   }
 
-  return `/${src}`;
-}
+  const user = await prisma.user.findUnique({
+    where: {
+      id: tokenUser.id,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      isPremium: true,
+      premiumExpiresAt: true,
+      profileImage: true,
 
-function DefaultAvatar({ preset, size = "large" }: { preset: string; size?: "large" | "small" }) {
-  const isGirl = preset === "girl";
-  const box = size === "large" ? "h-32 w-32 text-5xl" : "h-16 w-16 text-2xl";
+      favoriteMangas: {
+        orderBy: {
+          createdAt: "desc",
+        },
+        include: {
+          comic: {
+            include: {
+              chapters: true,
+            },
+          },
+        },
+      },
+
+      readingHistories: {
+        take: 8,
+        orderBy: {
+          updatedAt: "desc",
+        },
+        include: {
+          comic: true,
+          chapter: true,
+        },
+      },
+    },
+  });
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const favoriteMangas = user.favoriteMangas.map((item) => item.comic);
+  const readingHistories = user.readingHistories || [];
 
   return (
-    <div
-      className={`${box} relative flex shrink-0 items-center justify-center overflow-hidden rounded-[2rem] bg-gradient-to-br ${
-        isGirl
-          ? "from-pink-300 via-fuchsia-400 to-purple-700"
-          : "from-yellow-300 via-orange-400 to-red-600"
-      } text-black shadow-[0_20px_80px_rgba(250,204,21,0.18)]`}
-    >
-      <div className="absolute left-3 top-3 rounded-md bg-black px-2 py-1 text-[10px] font-black text-yellow-300">
-        MZ
+    <main className="min-h-screen bg-[#08080a] px-4 py-10 text-white">
+      <div className="mx-auto max-w-5xl space-y-6">
+        <section className="rounded-[30px] border border-white/10 bg-[#101013] p-5 shadow-2xl md:p-7">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-3xl border border-yellow-400/40 bg-gradient-to-br from-yellow-400/20 to-zinc-950 md:h-24 md:w-24">
+                {user.profileImage ? (
+                  <Image
+                    src={user.profileImage}
+                    alt="Profile"
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <span className="text-4xl font-black text-yellow-300">
+                    {getInitial(user.name, user.email)}
+                  </span>
+                )}
+              </div>
+
+              <div className="min-w-0">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-yellow-400 px-3 py-1 text-[10px] font-black text-black">
+                    {user.isPremium ? "PREMIUM" : "FREE"}
+                  </span>
+                </div>
+
+                <h1 className="truncate text-2xl font-black md:text-3xl">
+                  {user.name || "Mangazet user"}
+                </h1>
+
+                <p className="mt-1 truncate text-sm text-zinc-400">
+                  {user.email}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/profile/edit"
+                className="rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-black transition hover:bg-yellow-300"
+              >
+                Profile засах
+              </Link>
+
+              <Link
+                href="/comic"
+                className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-black transition hover:bg-white/10"
+              >
+                Manga үзэх
+              </Link>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+              <p className="text-xs font-bold text-zinc-500">Premium</p>
+              <p className="mt-2 text-lg font-black">
+                {user.isPremium ? "ACTIVE" : "INACTIVE"}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+              <p className="text-xs font-bold text-zinc-500">Дуусах хугацаа</p>
+              <p className="mt-2 text-lg font-black">
+                {user.isPremium ? formatDate(user.premiumExpiresAt) : "—"}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+              <p className="text-xs font-bold text-zinc-500">Дуртай manga</p>
+              <p className="mt-2 text-lg font-black">
+                {favoriteMangas.length}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-[30px] border border-white/10 bg-[#101013] p-5 md:p-7">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-black">Дуртай manga</h2>
+              <p className="mt-1 text-sm text-zinc-500">
+                Heart дарсан manga энд харагдана.
+              </p>
+            </div>
+
+            <span className="rounded-full bg-yellow-400 px-3 py-1 text-xs font-black text-black">
+              {favoriteMangas.length}
+            </span>
+          </div>
+
+          {favoriteMangas.length === 0 ? (
+            <EmptyBox text="Дуртай manga байхгүй байна." />
+          ) : (
+            <MangaGrid comics={favoriteMangas} />
+          )}
+        </section>
+
+        <section className="rounded-[30px] border border-white/10 bg-[#101013] p-5 md:p-7">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-black">Сүүлд уншсан chapter</h2>
+              <p className="mt-1 text-sm text-zinc-500">
+                Хамгийн сүүлд уншсан chapter-ууд энд харагдана.
+              </p>
+            </div>
+
+            <span className="rounded-full bg-yellow-400 px-3 py-1 text-xs font-black text-black">
+              {readingHistories.length}
+            </span>
+          </div>
+
+          {readingHistories.length === 0 ? (
+            <EmptyBox text="Сүүлд уншсан chapter байхгүй байна." />
+          ) : (
+            <div className="space-y-3">
+              {readingHistories.map((item: any) => {
+                const comic = item.comic;
+                const chapter = item.chapter;
+
+                const title = comic?.title || "Untitled";
+                const cover = getComicCover(comic);
+
+                return (
+                  <Link
+                    key={item.id}
+                    href={getChapterHref(comic, chapter)}
+                    className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-3 transition hover:border-yellow-400/50 hover:bg-yellow-400/5"
+                  >
+                    <div className="relative h-20 w-14 shrink-0 overflow-hidden rounded-xl bg-zinc-900">
+                      <Image
+                        src={cover}
+                        alt={title}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+
+                    <div className="min-w-0">
+                      <h3 className="truncate text-sm font-black">{title}</h3>
+
+                      <p className="mt-1 text-xs text-zinc-400">
+                        Chapter {chapter?.chapterNumber || ""}
+                        {chapter?.title ? ` - ${chapter.title}` : ""}
+                      </p>
+
+                      <p className="mt-1 text-xs text-zinc-600">
+                        {formatDate(item.updatedAt)}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </section>
       </div>
-      <span>{isGirl ? "👧" : "👦"}</span>
+    </main>
+  );
+}
+
+function MangaGrid({ comics }: { comics: any[] }) {
+  return (
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+      {comics.map((comic) => {
+        const title = comic.title || "Untitled";
+        const cover = getComicCover(comic);
+
+        return (
+          <Link
+            key={comic.id}
+            href={getComicHref(comic)}
+            className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition hover:border-yellow-400/50 hover:bg-yellow-400/5"
+          >
+            <div className="relative aspect-[3/4] bg-zinc-900">
+              <Image
+                src={cover}
+                alt={title}
+                fill
+                className="object-cover transition duration-300 group-hover:scale-105"
+              />
+            </div>
+
+            <div className="p-3">
+              <h3 className="line-clamp-2 text-sm font-black">{title}</h3>
+
+              <p className="mt-1 text-xs text-zinc-500">
+                {comic.chapters?.length || 0} chapter
+              </p>
+            </div>
+          </Link>
+        );
+      })}
     </div>
   );
 }
 
-function AvatarView({ user }: { user: User }) {
-  if (user.profileImage) {
-    return (
-      <img
-        src={imageSrc(user.profileImage)}
-        alt={user.name}
-        className="h-32 w-32 rounded-[2rem] object-cover shadow-[0_20px_80px_rgba(250,204,21,0.16)]"
-      />
-    );
-  }
-
-  return <DefaultAvatar preset={user.avatarPreset || "boy"} />;
-}
-
-export default function ProfilePage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-
-  async function loadProfile() {
-    try {
-      const res = await fetch("/api/profile", {
-        cache: "no-store",
-        credentials: "include",
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.user) {
-        window.location.href = "/login";
-        return;
-      }
-
-      setUser(data.user);
-    } catch {
-      window.location.href = "/login";
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
-  async function updateProfile(body: { profileImage?: string | null; avatarPreset?: string }) {
-    const res = await fetch("/api/profile", {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(body),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.message || "Profile шинэчлэхэд алдаа гарлаа");
-      return;
-    }
-
-    await loadProfile();
-  }
-
-  async function uploadProfileImage(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-
-    if (!file) return;
-
-    setUploading(true);
-
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folder", "profile-images");
-
-      const res = await fetch("/api/upload/r2", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = (await res.json()) as UploadResult;
-
-      if (!res.ok) {
-        alert(data.message || "Зураг upload хийхэд алдаа гарлаа");
-        return;
-      }
-
-      await updateProfile({
-        profileImage: data.url,
-      });
-    } catch {
-      alert("Зураг upload хийхэд алдаа гарлаа");
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  async function toggleFavorite(comicId: number) {
-    const res = await fetch("/api/favorites", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({
-        comicId,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.message || "Favorite өөрчлөхөд алдаа гарлаа");
-      return;
-    }
-
-    await loadProfile();
-  }
-
-  async function logout() {
-    await fetch("/api/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    });
-
-    window.location.href = "/login";
-  }
-
-  if (loading) {
-    return (
-      <main className="site-shell flex min-h-screen items-center justify-center text-white">
-        <div className="rounded-3xl border border-white/10 bg-[#111] p-8 text-lg font-black">
-          Profile уншиж байна...
-        </div>
-      </main>
-    );
-  }
-
-  if (!user) return null;
-
-  const xpCurrent = user.xp - user.currentLevelStartXp;
-  const xpNeed = user.nextLevelXp - user.currentLevelStartXp;
-
+function EmptyBox({ text }: { text: string }) {
   return (
-    <main className="site-shell min-h-screen text-white">
-      <Navbar />
-
-      <section className="container-soft py-10">
-        <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#080808] shadow-2xl">
-          <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-yellow-400/20 blur-3xl" />
-          <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl" />
-
-          <div className="relative grid gap-8 p-6 md:grid-cols-[1fr_380px] md:p-10">
-            <div>
-              <div className="flex flex-col gap-6 md:flex-row md:items-center">
-                <AvatarView user={user} />
-
-                <div>
-                  <span
-                    className={`rounded-md px-3 py-1 text-xs font-black text-black ${
-                      user.isPremium ? "bg-yellow-400" : "bg-zinc-300"
-                    }`}
-                  >
-                    {user.isPremium ? "PREMIUM MEMBER" : "FREE MEMBER"}
-                  </span>
-
-                  <h1 className="mt-4 text-4xl font-black md:text-6xl">
-                    {user.name}
-                  </h1>
-
-                  <p className="mt-2 break-all text-sm font-bold text-zinc-400">
-                    {user.email}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-8 grid gap-4 sm:grid-cols-3">
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-                  <p className="text-xs font-bold text-zinc-500">Premium</p>
-                  <h2 className="mt-2 text-2xl font-black">
-                    {user.isPremium ? "ACTIVE" : "LOCKED"}
-                  </h2>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-                  <p className="text-xs font-bold text-zinc-500">Expires</p>
-                  <h2 className="mt-2 text-lg font-black leading-7">
-                    {formatDate(user.premiumExpiresAt)}
-                  </h2>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-                  <p className="text-xs font-bold text-zinc-500">Favorite</p>
-                  <h2 className="mt-2 text-2xl font-black">
-                    {user.favoriteMangas.length}
-                  </h2>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-[1.7rem] border border-white/10 bg-[#111] p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-300">
-                    Level
-                  </p>
-                  <h2 className="mt-2 text-5xl font-black">{user.level}</h2>
-                </div>
-
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-yellow-400 text-3xl">
-                  🏆
-                </div>
-              </div>
-
-              <div className="mt-6">
-                <div className="mb-2 flex justify-between text-xs font-black text-zinc-400">
-                  <span>
-                    XP {xpCurrent} / {xpNeed}
-                  </span>
-                  <span>{user.progressPercent}%</span>
-                </div>
-
-                <div className="h-4 overflow-hidden rounded-full bg-black">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-yellow-300 to-orange-500"
-                    style={{ width: `${user.progressPercent}%` }}
-                  />
-                </div>
-              </div>
-
-              <div className="mt-6 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4">
-                <p className="text-xs font-black text-yellow-300">
-                  Дараагийн reward
-                </p>
-                <p className="mt-2 text-sm font-bold leading-6 text-zinc-200">
-                  {user.nextReward}
-                </p>
-              </div>
-
-              {user.isPremium ? (
-                <Link href="/" className="primary-btn mt-6 w-full">
-                  Manga унших
-                </Link>
-              ) : (
-                <Link href="/premium" className="primary-btn mt-6 w-full">
-                  Premium авах
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <section className="mt-6 grid gap-6 lg:grid-cols-[360px_1fr]">
-          <div className="rounded-[2rem] border border-white/10 bg-[#111] p-6">
-            <h2 className="text-2xl font-black">Profile зураг</h2>
-
-            <p className="mt-2 text-sm font-medium leading-6 text-zinc-400">
-            </p>
-
-            <label className="mt-5 block rounded-2xl border border-dashed border-white/15 bg-black/25 p-5">
-              <span className="block text-sm font-black text-zinc-300">
-                Зураг upload хийх
-              </span>
-
-              <input
-                type="file"
-                accept="image/*"
-                onChange={uploadProfileImage}
-                className="mt-3 w-full text-sm text-zinc-400 file:mr-4 file:rounded-xl file:border-0 file:bg-yellow-400 file:px-4 file:py-2 file:font-black file:text-black"
-              />
-
-              {uploading && (
-                <p className="mt-3 text-sm font-bold text-zinc-400">
-                  Upload хийж байна...
-                </p>
-              )}
-            </label>
-
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => updateProfile({ avatarPreset: "boy" })}
-                className={`rounded-2xl border p-4 transition ${
-                  user.avatarPreset === "boy" && !user.profileImage
-                    ? "border-yellow-400 bg-yellow-400/10"
-                    : "border-white/10 bg-black/25 hover:bg-white/5"
-                }`}
-              >
-                <DefaultAvatar preset="boy" size="small" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => updateProfile({ avatarPreset: "girl" })}
-                className={`rounded-2xl border p-4 transition ${
-                  user.avatarPreset === "girl" && !user.profileImage
-                    ? "border-yellow-400 bg-yellow-400/10"
-                    : "border-white/10 bg-black/25 hover:bg-white/5"
-                }`}
-              >
-                <DefaultAvatar preset="girl" size="small" />
-              </button>
-            </div>
-          </div>
-
-          <div className="rounded-[2rem] border border-white/10 bg-[#111] p-6">
-            <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-2xl font-black">Дуртай manga</h2>
-              <span className="rounded-full bg-yellow-400 px-3 py-1 text-xs font-black text-black">
-                {user.favoriteMangas.length}
-              </span>
-            </div>
-
-            {user.favoriteMangas.length === 0 ? (
-              <div className="rounded-2xl border border-white/10 bg-black/25 p-10 text-center">
-                <p className="text-4xl">♡</p>
-                <h3 className="mt-3 text-xl font-black">
-                  Дуртай manga байхгүй байна
-                </h3>
-                <p className="mt-2 text-sm font-bold text-zinc-500">
-                  Manga detail дээр heart дарж favorite болгоорой.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-                {user.favoriteMangas.map((comic) => (
-                  <div
-                    key={comic.id}
-                    className="overflow-hidden rounded-2xl border border-white/10 bg-black/25 p-3"
-                  >
-                    <Link href={`/comic/${comic.slug}`}>
-                      <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-black">
-                        <img
-                          src={imageSrc(comic.coverImage)}
-                          alt={comic.title}
-                          className="h-full w-full object-cover"
-                        />
-
-                        <span
-                          className={`absolute left-2 top-2 rounded-md px-2 py-1 text-[10px] font-black text-black ${
-                            comic.status === "COMPLETED"
-                              ? "bg-emerald-500"
-                              : "bg-yellow-400"
-                          }`}
-                        >
-                          {comic.status === "COMPLETED"
-                            ? "COMPLETED"
-                            : "ONGOING"}
-                        </span>
-                      </div>
-
-                      <h3 className="mt-3 line-clamp-2 text-sm font-black">
-                        {comic.title}
-                      </h3>
-
-                      <p className="mt-1 text-xs font-bold text-zinc-500">
-                        {comic.chapters.length} chapters
-                      </p>
-                    </Link>
-
-                    <button
-                      type="button"
-                      onClick={() => toggleFavorite(comic.id)}
-                      className="mt-3 w-full rounded-xl bg-red-500/15 px-3 py-2 text-xs font-black text-red-300 transition hover:bg-red-500/25"
-                    >
-                      Favorite-оос хасах
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-
-        <div className="mt-6 grid gap-4 md:grid-cols-4">
-          <Link
-            href="/"
-            className="rounded-2xl border border-white/10 bg-[#111] p-5 transition hover:bg-[#181818]"
-          >
-            <p className="text-2xl"></p>
-            <h2 className="mt-3 font-black">Нүүр хуудас</h2>
-            <p className="mt-1 text-xs font-bold text-zinc-500">
-            </p>
-          </Link>
-
-          <Link
-            href="/premium"
-            className="rounded-2xl border border-white/10 bg-[#111] p-5 transition hover:bg-[#181818]"
-          >
-            <p className="text-2xl"></p>
-            <h3 className="mt-3 font-black">Premium</h3>
-            <p className="mt-1 text-xs font-bold text-zinc-500">
-            </p>
-          </Link>
-
-          <Link
-            href="/editor"
-            className="rounded-2xl border border-white/10 bg-[#111] p-5 transition hover:bg-[#181818]"
-          >
-            <p className="text-2xl"></p>
-            <h3 className="mt-3 font-black">Editor</h3>
-            <p className="mt-1 text-xs font-bold text-zinc-500">
-            </p>
-          </Link>
-
-          <Link
-            href="/admin"
-            className="rounded-2xl border border-white/10 bg-[#111] p-5 transition hover:bg-[#181818]"
-          >
-            <p className="text-2xl"></p>
-            <h3 className="mt-3 font-black">Admin</h3>
-            <p className="mt-1 text-xs font-bold text-zinc-500">
-            </p>
-          </Link>
-        </div>
-
-        <button onClick={logout} className="danger-btn mt-6 px-6 py-3 text-sm">
-          Гарах
-        </button>
-      </section>
-    </main>
+    <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-10 text-center">
+      <p className="text-sm font-bold text-zinc-400">{text}</p>
+    </div>
   );
 }

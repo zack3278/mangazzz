@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-import { levelFromXp, nextLevelXp, rewardByLevel } from "@/lib/gamification";
 
 export async function GET() {
   try {
@@ -26,8 +25,7 @@ export async function GET() {
         premiumExpiresAt: true,
         profileImage: true,
         avatarPreset: true,
-        xp: true,
-        level: true,
+
         favoriteMangas: {
           orderBy: {
             createdAt: "desc",
@@ -40,6 +38,17 @@ export async function GET() {
             },
           },
         },
+
+        readingHistories: {
+          take: 8,
+          orderBy: {
+            updatedAt: "desc",
+          },
+          include: {
+            comic: true,
+            chapter: true,
+          },
+        },
       },
     });
 
@@ -50,24 +59,9 @@ export async function GET() {
       );
     }
 
-    const calculatedLevel = levelFromXp(user.xp);
-    const nextXp = nextLevelXp(calculatedLevel);
-    const currentLevelStart = nextLevelXp(calculatedLevel - 1);
-    const progressTotal = nextXp - currentLevelStart;
-    const progressNow = user.xp - currentLevelStart;
-    const progressPercent = Math.min(
-      100,
-      Math.max(0, Math.round((progressNow / progressTotal) * 100))
-    );
-
     return NextResponse.json({
       user: {
         ...user,
-        level: calculatedLevel,
-        nextLevelXp: nextXp,
-        currentLevelStartXp: currentLevelStart,
-        progressPercent,
-        nextReward: rewardByLevel(calculatedLevel + 1),
         favoriteMangas: user.favoriteMangas.map((item) => item.comic),
       },
     });
@@ -93,25 +87,33 @@ export async function PATCH(req: Request) {
     }
 
     const body = await req.json();
-    const profileImage =
-      typeof body.profileImage === "string" ? body.profileImage.trim() : null;
-    const avatarPreset =
-      typeof body.avatarPreset === "string" ? body.avatarPreset.trim() : null;
 
-    const allowedPresets = ["boy", "girl"];
+    const name =
+      typeof body.name === "string" ? body.name.trim() : undefined;
+
+    const profileImage =
+      typeof body.profileImage === "string"
+        ? body.profileImage.trim()
+        : undefined;
 
     const data: {
+      name?: string;
       profileImage?: string | null;
-      avatarPreset?: string;
     } = {};
 
-    if (profileImage !== null) {
-      data.profileImage = profileImage || null;
+    if (name !== undefined) {
+      if (name.length < 2) {
+        return NextResponse.json(
+          { message: "Нэр хамгийн багадаа 2 тэмдэгт байна" },
+          { status: 400 }
+        );
+      }
+
+      data.name = name;
     }
 
-    if (avatarPreset && allowedPresets.includes(avatarPreset)) {
-      data.avatarPreset = avatarPreset;
-      data.profileImage = null;
+    if (profileImage !== undefined) {
+      data.profileImage = profileImage || null;
     }
 
     const user = await prisma.user.update({
@@ -127,8 +129,6 @@ export async function PATCH(req: Request) {
         premiumExpiresAt: true,
         profileImage: true,
         avatarPreset: true,
-        xp: true,
-        level: true,
       },
     });
 
