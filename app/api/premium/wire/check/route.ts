@@ -1,34 +1,32 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
-import { wireRequest, WirePaymentIntent } from "@/lib/wire";
-import { activatePremiumByOrderId } from "@/lib/premium";
-
-function isPaidStatus(status?: string | null) {
-  if (!status) return false;
-
-  return ["paid", "succeeded", "success", "completed"].includes(
-    status.toLowerCase()
-  );
-}
+import { auth } from "@/lib/auth";
+import { getPremiumExpireDate } from "@/lib/premium";
+import {
+  isWirePaymentPaid,
+  retrieveWirePaymentIntent,
+} from "@/lib/wire";
 
 export async function POST(req: Request) {
   try {
-    const user = await getCurrentUser();
+    const session = await auth();
+    const userId = Number(session?.user?.id);
 
-    if (!user) {
+    if (!userId) {
       return NextResponse.json(
-        { message: "Эхлээд login хийнэ үү" },
+        { message: "Эхлээд нэвтэрнэ үү" },
         { status: 401 }
       );
     }
 
     const body = await req.json();
-    const orderId = Number(body.orderId);
 
-    if (!Number.isInteger(orderId)) {
+    const orderId = Number(body.orderId);
+    const paymentIntentId = String(body.paymentIntentId || "");
+
+    if (!orderId || !paymentIntentId) {
       return NextResponse.json(
-        { message: "Order ID буруу байна" },
+        { message: "Төлбөрийн мэдээлэл дутуу байна" },
         { status: 400 }
       );
     }
@@ -36,52 +34,79 @@ export async function POST(req: Request) {
     const order = await prisma.premiumOrder.findFirst({
       where: {
         id: orderId,
-        userId: user.id,
+        userId,
+        wirePaymentIntentId: paymentIntentId,
+      },
+      include: {
+        user: true,
       },
     });
 
-    if (!order || !order.wirePaymentIntentId) {
+    if (!order) {
       return NextResponse.json(
-        { message: "Төлбөрийн хүсэлт олдсонгүй" },
+        { message: "Төлбөрийн захиалга олдсонгүй" },
         { status: 404 }
       );
     }
 
-    const paymentIntent = await wireRequest<WirePaymentIntent>(
-      `/v1/payment_intents/${order.wirePaymentIntentId}`
-    );
-
-    await prisma.premiumOrder.update({
-      where: { id: order.id },
-      data: {
-        wireStatus: paymentIntent.status,
-      },
-    });
-
-    if (isPaidStatus(paymentIntent.status)) {
-      await activatePremiumByOrderId(order.id);
-
+    if (order.status === "PAID") {
       return NextResponse.json({
+        ok: true,
         paid: true,
-        status: paymentIntent.status,
-        message: "Төлбөр амжилттай. Premium эрх автоматаар идэвхжлээ.",
+        message: "Premium эрх аль хэдийн идэвхжсэн байна",
+        premiumExpiresAt: order.user.premiumExpiresAt,
       });
     }
 
+    const paymentIntent = await retrieveWirePaymentIntent(paymentIntentId);
+
+    if (!isWirePaymentPaid(paymentIntent.status)) {
+      return NextResponse.json({
+        ok: true,
+        paid: false,
+        status: paymentIntent.status,
+        message: "Төлбөр хараахан төлөгдөөгүй байна",
+      });
+    }
+
+    const premiumExpiresAt = getPremiumExpireDate(
+      order.user.premiumExpiresAt,
+      order.months
+    );
+
+    await prisma.$transaction([
+      prisma.premiumOrder.update({
+        where: { id: order.id },
+        data: {
+          status: "PAID",
+        },
+      }),
+
+      prisma.user.update({
+        where: { id: userId },
+        data: {
+          isPremium: true,
+          premiumExpiresAt,
+        },
+      }),
+    ]);
+
     return NextResponse.json({
-      paid: false,
+      ok: true,
+      paid: true,
       status: paymentIntent.status,
-      message: `Төлбөр хараахан баталгаажаагүй байна. Status: ${paymentIntent.status}`,
+      message: "Төлбөр амжилттай. Premium эрх идэвхжлээ.",
+      premiumExpiresAt,
     });
   } catch (error) {
-    console.error("CHECK WIRE PAYMENT ERROR:", error);
+    console.error("Check Wire payment error:", error);
 
     return NextResponse.json(
       {
         message:
           error instanceof Error
             ? error.message
-            : "Төлбөр шалгахад алдаа гарлаа",
+            : "Төлбөр шалгахад серверийн алдаа гарлаа",
       },
       { status: 500 }
     );

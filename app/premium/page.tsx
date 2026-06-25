@@ -1,86 +1,51 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import QRCode from "qrcode";
-import Navbar from "@/components/Navbar";
+import { useState } from "react";
 
 const plans = [
-  { months: 1, name: "1 сар", price: "5,000₮", description: "Premium эрх" },
-  { months: 2, name: "2 сар", price: "9,000₮", description: "2 сарын premium эрх" },
-  { months: 3, name: "3 сар", price: "13,000₮", description: "Илүү хэмнэлттэй багц" },
-  { months: 6, name: "6 сар", price: "22,000₮", description: "Хагас жилийн premium эрх" },
-  { months: 12, name: "12 сар", price: "35,000₮", description: "Хамгийн ашигтай багц" },
+  {
+    months: 1,
+    label: "1 сар",
+    amount: 5000,
+  },
+  {
+    months: 2,
+    label: "2 сар",
+    amount: 9000,
+  },
+  {
+    months: 3,
+    label: "3 сар",
+    amount: 13000,
+  },
+  {
+    months: 6,
+    label: "6 сар",
+    amount: 22000,
+  },
+  {
+    months: 12,
+    label: "12 сар",
+    amount: 35000,
+  },
 ];
 
-type AppLink = {
-  name: string;
-  url: string;
-  logo?: string;
-};
-
-type PaymentData = {
-  orderId: number;
-  paymentIntentId?: string;
-  paymentUrl?: string | null;
-  qrText?: string | null;
-  appLinks?: AppLink[];
-};
-
 export default function PremiumPage() {
-  const [loadingPlan, setLoadingPlan] = useState<number | null>(null);
-  const [checkingOrderId, setCheckingOrderId] = useState<number | null>(null);
+  const [loading, setLoading] = useState<number | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [payment, setPayment] = useState<any>(null);
   const [message, setMessage] = useState("");
-  const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
-  const [debug, setDebug] = useState<unknown>(null);
-  const [qrDataUrl, setQrDataUrl] = useState("");
 
-  useEffect(() => {
-    let active = true;
-
-    async function generateQr() {
-      try {
-        setQrDataUrl("");
-
-        const value = paymentData?.qrText || paymentData?.paymentUrl || "";
-
-        if (!value) return;
-
-        const url = await QRCode.toDataURL(value, {
-          width: 380,
-          margin: 1,
-          color: {
-            dark: "#000000",
-            light: "#ffffff",
-          },
-        });
-
-        if (active) {
-          setQrDataUrl(url);
-        }
-      } catch (error) {
-        console.error("QR generate error:", error);
-      }
-    }
-
-    generateQr();
-
-    return () => {
-      active = false;
-    };
-  }, [paymentData?.qrText, paymentData?.paymentUrl]);
-
-  async function createWirePayment(months: number) {
+  async function createPayment(months: number) {
     try {
+      setLoading(months);
       setMessage("");
-      setDebug(null);
-      setPaymentData(null);
-      setQrDataUrl("");
-      setLoadingPlan(months);
 
-      const res = await fetch("/api/premium/wire", {
+      const res = await fetch("/api/premium/wire/create", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ months }),
       });
 
@@ -88,210 +53,174 @@ export default function PremiumPage() {
 
       if (!res.ok) {
         setMessage(data.message || "Төлбөр үүсгэхэд алдаа гарлаа");
-        setDebug(data);
         return;
       }
 
-      setPaymentData({
-        orderId: data.orderId,
-        paymentIntentId: data.paymentIntentId,
-        paymentUrl: data.paymentUrl,
-        qrText: data.qrText,
-        appLinks: data.appLinks || [],
-      });
-
-      setDebug(data);
-      setMessage(
-        "Төлбөр үүслээ. QR кодоор төлөөд дараа нь “Төлбөр шалгах” дарна уу."
-      );
+      setPayment(data);
+      setMessage("Төлбөр үүслээ. QR уншуулаад төлнө үү.");
     } catch (error) {
       console.error(error);
-      setMessage("Wire төлбөр үүсгэхэд алдаа гарлаа");
+      setMessage("Сервертэй холбогдоход алдаа гарлаа");
     } finally {
-      setLoadingPlan(null);
+      setLoading(null);
     }
   }
 
-  async function checkPayment(orderId: number) {
+  async function checkPayment() {
+    if (!payment?.orderId || !payment?.paymentIntentId) {
+      setMessage("Шалгах төлбөр алга байна");
+      return;
+    }
+
     try {
-      setCheckingOrderId(orderId);
+      setChecking(true);
       setMessage("");
 
       const res = await fetch("/api/premium/wire/check", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ orderId }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          orderId: payment.orderId,
+          paymentIntentId: payment.paymentIntentId,
+        }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
         setMessage(data.message || "Төлбөр шалгахад алдаа гарлаа");
-        setDebug(data);
         return;
       }
 
-      setMessage(data.message);
-      setDebug(data);
+      setMessage(data.message || "Төлбөр шалгагдлаа");
 
       if (data.paid) {
         setTimeout(() => {
           window.location.href = "/profile";
-        }, 1200);
+        }, 1000);
       }
     } catch (error) {
       console.error(error);
-      setMessage("Төлбөр шалгахад алдаа гарлаа");
+      setMessage("Сервертэй холбогдоход алдаа гарлаа");
     } finally {
-      setCheckingOrderId(null);
+      setChecking(false);
     }
   }
 
   return (
-    <main className="site-shell min-h-screen text-white">
-      <Navbar />
-
-      <section className="container-soft py-10">
-        <div className="glass-panel rounded-[2rem] p-6 md:p-10">
-          <span className="badge badge-gold">MANGAZET PREMIUM</span>
-
-          <h1 className="mt-4 text-4xl font-black md:text-6xl">
-            Premium эрх авах
-          </h1>
-
-          <p className="mt-4 max-w-2xl text-base font-medium leading-8 text-zinc-300">
+    <main className="min-h-screen bg-[#070711] px-4 py-10 text-white">
+      <div className="mx-auto max-w-5xl">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold">Mangazet Premium</h1>
+          <p className="mt-2 text-white/60">
+            Premium эрх аваад бүх chapter-ийг уншаарай.
           </p>
         </div>
 
-        {message ? (
-          <div className="mt-6 rounded-3xl border border-white/10 bg-white/7 p-5 text-sm font-bold text-zinc-100">
+        {message && (
+          <div className="mb-6 rounded-xl border border-white/10 bg-white/5 p-4 text-center text-sm">
             {message}
           </div>
-        ) : null}
+        )}
 
-        {paymentData ? (
-          <section className="mt-6 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-            <div className="glass-panel rounded-[2rem] p-6 text-center">
-              <span className="badge badge-green">QPay төлбөр</span>
-
-              <h2 className="mt-4 text-2xl font-black">QR уншуулж төлнө үү</h2>
-
-              <p className="mt-2 text-sm font-bold text-zinc-500">
-                Order ID: {paymentData.orderId}
-              </p>
-
-              <div className="mx-auto mt-6 flex w-fit justify-center rounded-[2rem] bg-white p-5 shadow-[0_25px_80px_rgba(255,255,255,0.12)]">
-                {qrDataUrl ? (
-                  <img
-                    src={qrDataUrl}
-                    alt="QPay QR"
-                    className="h-[300px] w-[300px] md:h-[380px] md:w-[380px]"
-                  />
-                ) : (
-                  <div className="flex h-[300px] w-[300px] items-center justify-center text-center text-sm font-black text-black">
-                    QR үүсгэж байна...
-                  </div>
-                )}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => checkPayment(paymentData.orderId)}
-                disabled={checkingOrderId === paymentData.orderId}
-                className="primary-btn mt-6 w-full bg-gradient-to-r from-emerald-400 to-lime-300 text-black"
-              >
-                {checkingOrderId === paymentData.orderId
-                  ? "Шалгаж байна..."
-                  : "ТӨЛБӨР ШАЛГАХ"}
-              </button>
-            </div>
-
-            <div className="glass-card rounded-[2rem] p-6">
-              <h2 className="text-2xl font-black">QPay app link</h2>
-
-              <p className="mt-2 text-sm font-medium leading-6 text-zinc-400">
-              </p>
-
-              {paymentData.paymentUrl ? (
-                <a
-                  href={paymentData.paymentUrl}
-                  target="_blank"
-                  className="primary-btn mt-5 w-full"
-                  rel="noreferrer"
-                >
-                  QPay-р төлөх
-                </a>
-              ) : null}
-
-              {paymentData.appLinks && paymentData.appLinks.length > 0 ? (
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  {paymentData.appLinks.map((app, index) => (
-                    <a
-                      key={`${app.name}-${index}`}
-                      href={app.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="secondary-btn justify-start"
-                    >
-                      {app.logo ? (
-                        <img
-                          src={app.logo}
-                          alt={app.name}
-                          className="h-7 w-7 rounded-lg"
-                        />
-                      ) : null}
-                      {app.name}
-                    </a>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          </section>
-        ) : null}
-
-        <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-5">
           {plans.map((plan) => (
             <div
               key={plan.months}
-              className="glass-card rounded-[2rem] p-5 transition hover:-translate-y-1 hover:border-red-400/40"
+              className="rounded-2xl border border-white/10 bg-white/5 p-5"
             >
-              <span className="badge">{plan.months} month</span>
-
-              <h2 className="mt-4 text-3xl font-black">{plan.name}</h2>
-
-              <p className="mt-2 min-h-10 text-sm font-medium leading-6 text-zinc-400">
-                {plan.description}
-              </p>
-
-              <p className="mt-6 text-3xl font-black text-amber-200">
-                {plan.price}
+              <h2 className="text-xl font-bold">{plan.label}</h2>
+              <p className="mt-2 text-2xl font-black">
+                {plan.amount.toLocaleString()}₮
               </p>
 
               <button
-                type="button"
-                onClick={() => createWirePayment(plan.months)}
-                disabled={loadingPlan === plan.months}
-                className="primary-btn mt-6 w-full"
+                onClick={() => createPayment(plan.months)}
+                disabled={loading !== null}
+                className="mt-5 w-full rounded-xl bg-violet-600 px-4 py-3 font-semibold hover:bg-violet-500 disabled:opacity-60"
               >
-                {loadingPlan === plan.months ? "Үүсгэж байна..." : "Төлөх"}
+                {loading === plan.months ? "Үүсгэж байна..." : "Premium авах"}
               </button>
             </div>
           ))}
-        </section>
+        </div>
 
-        {debug ? (
-          <details className="mt-8 glass-card rounded-3xl p-5">
-            <summary className="cursor-pointer text-sm font-black text-zinc-300">
-              Wire debug response
-            </summary>
+        {payment && (
+          <div className="mx-auto mt-10 max-w-xl rounded-2xl border border-white/10 bg-white/5 p-6">
+            <h2 className="text-xl font-bold">Төлбөрийн мэдээлэл</h2>
 
-            <pre className="mt-4 max-h-80 overflow-auto rounded-2xl bg-black/60 p-4 text-xs text-zinc-300">
-              {JSON.stringify(debug, null, 2)}
-            </pre>
-          </details>
-        ) : null}
-      </section>
+            <div className="mt-4 space-y-2 text-sm text-white/70">
+              <p>
+                Захиалга:{" "}
+                <span className="text-white">#{payment.orderId}</span>
+              </p>
+              <p>
+                Дүн:{" "}
+                <span className="text-white">
+                  {payment.amount?.toLocaleString()}₮
+                </span>
+              </p>
+              <p>
+                Гүйлгээний утга:{" "}
+                <span className="text-white">
+                  {payment.transactionRemark}
+                </span>
+              </p>
+              <p>
+                PaymentIntent:{" "}
+                <span className="break-all text-white">
+                  {payment.paymentIntentId}
+                </span>
+              </p>
+            </div>
+
+            {payment.qrImage && (
+              <div className="mt-5 flex justify-center">
+                <img
+                  src={payment.qrImage}
+                  alt="QPay QR"
+                  className="h-64 w-64 rounded-xl bg-white p-3"
+                />
+              </div>
+            )}
+
+            {!payment.qrImage && payment.qrText && (
+              <div className="mt-5 rounded-xl bg-black/30 p-4">
+                <p className="text-xs text-white/50">QR text:</p>
+                <p className="mt-2 break-all text-sm">{payment.qrText}</p>
+              </div>
+            )}
+
+            {payment.deeplink && (
+              <a
+                href={payment.deeplink}
+                className="mt-5 block rounded-xl bg-emerald-600 px-4 py-3 text-center font-semibold hover:bg-emerald-500"
+              >
+                Банкны апп-аар төлөх
+              </a>
+            )}
+
+            <button
+              onClick={checkPayment}
+              disabled={checking}
+              className="mt-4 w-full rounded-xl bg-white px-4 py-3 font-semibold text-black hover:bg-white/90 disabled:opacity-60"
+            >
+              {checking ? "Шалгаж байна..." : "Төлбөр шалгах"}
+            </button>
+
+            <details className="mt-5">
+              <summary className="cursor-pointer text-sm text-white/50">
+                Debug raw response харах
+              </summary>
+              <pre className="mt-3 max-h-80 overflow-auto rounded-xl bg-black/40 p-4 text-xs text-white/70">
+                {JSON.stringify(payment.raw || payment, null, 2)}
+              </pre>
+            </details>
+          </div>
+        )}
+      </div>
     </main>
   );
 }

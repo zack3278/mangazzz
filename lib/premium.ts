@@ -1,27 +1,43 @@
-import { prisma } from "@/lib/prisma";
-
-export type PremiumMonths = 1 | 2 | 3 | 6 | 12;
-
 export type PremiumPlan = {
-  months: PremiumMonths;
-  name: string;
+  months: number;
   amount: number;
+  label: string;
 };
 
-export const PREMIUM_PLANS: PremiumPlan[] = [
-  { months: 1, name: "1 сар", amount: 5000 },
-  { months: 2, name: "2 сар", amount: 9000 },
-  { months: 3, name: "3 сар", amount: 13000 },
-  { months: 6, name: "6 сар", amount: 22000 },
-  { months: 12, name: "12 сар", amount: 35000 },
-];
-
-export function isValidPremiumMonths(months: number): months is PremiumMonths {
-  return [1, 2, 3, 6, 12].includes(months);
-}
+export const PREMIUM_PLANS: Record<number, PremiumPlan> = {
+  1: {
+    months: 1,
+    amount: 5000,
+    label: "1 сар",
+  },
+  2: {
+    months: 2,
+    amount: 9000,
+    label: "2 сар",
+  },
+  3: {
+    months: 3,
+    amount: 13000,
+    label: "3 сар",
+  },
+  6: {
+    months: 6,
+    amount: 22000,
+    label: "6 сар",
+  },
+  12: {
+    months: 12,
+    amount: 35000,
+    label: "12 сар",
+  },
+};
 
 export function getPremiumPlan(months: number) {
-  return PREMIUM_PLANS.find((plan) => plan.months === months) || null;
+  return PREMIUM_PLANS[months] || null;
+}
+
+export function isValidPremiumMonths(months: number) {
+  return Boolean(PREMIUM_PLANS[months]);
 }
 
 export function addMonths(date: Date, months: number) {
@@ -30,66 +46,44 @@ export function addMonths(date: Date, months: number) {
   return result;
 }
 
-export function isPremiumActive(user: {
-  isPremium?: boolean | null;
-  premiumExpiresAt?: Date | string | null;
-}) {
-  if (!user.isPremium || !user.premiumExpiresAt) return false;
-
-  const expiresAt = new Date(user.premiumExpiresAt);
-  return expiresAt.getTime() > Date.now();
-}
-
-export async function activatePremiumByOrderId(orderId: number) {
-  const order = await prisma.premiumOrder.findUnique({
-    where: {
-      id: orderId,
-    },
-    include: {
-      user: true,
-    },
-  });
-
-  if (!order) {
-    throw new Error("Premium order олдсонгүй");
-  }
-
-  if (order.status === "PAID") {
-    return order;
-  }
-
+export function getPremiumExpireDate(
+  currentExpireDate: Date | null | undefined,
+  months: number
+) {
   const now = new Date();
 
   const startDate =
-    order.user.premiumExpiresAt &&
-    new Date(order.user.premiumExpiresAt).getTime() > now.getTime()
-      ? new Date(order.user.premiumExpiresAt)
-      : now;
+    currentExpireDate && currentExpireDate > now ? currentExpireDate : now;
 
-  const premiumExpiresAt = addMonths(startDate, order.months);
+  return addMonths(startDate, months);
+}
 
-  const [, updatedOrder] = await prisma.$transaction([
-    prisma.user.update({
-      where: {
-        id: order.userId,
-      },
-      data: {
-        isPremium: true,
-        premiumExpiresAt,
-      },
-    }),
+export function isPremiumActive(
+  isPremium: boolean | null | undefined,
+  premiumExpiresAt: Date | string | null | undefined
+) {
+  if (!isPremium) return false;
+  if (!premiumExpiresAt) return false;
 
-    prisma.premiumOrder.update({
-      where: {
-        id: order.id,
-      },
-      data: {
-        status: "PAID",
-        paidAt: now,
-        wireStatus: "succeeded",
-      },
-    }),
-  ]);
+  const expireDate =
+    premiumExpiresAt instanceof Date
+      ? premiumExpiresAt
+      : new Date(premiumExpiresAt);
 
-  return updatedOrder;
+  if (Number.isNaN(expireDate.getTime())) return false;
+
+  return expireDate > new Date();
+}
+
+export function getPremiumStatus(
+  isPremium: boolean | null | undefined,
+  premiumExpiresAt: Date | string | null | undefined
+) {
+  const active = isPremiumActive(isPremium, premiumExpiresAt);
+
+  return {
+    active,
+    isPremium: active,
+    premiumExpiresAt,
+  };
 }

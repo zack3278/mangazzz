@@ -1,48 +1,50 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { isPremiumActive } from "@/lib/premium";
 
 export async function GET() {
-  const tokenUser = await getCurrentUser();
+  try {
+    const user = await getCurrentUser();
 
-  if (!tokenUser) {
-    return NextResponse.json({ user: null }, { status: 401 });
-  }
+    if (!user) {
+      return NextResponse.json(
+        {
+          user: null,
+          authenticated: false,
+        },
+        { status: 401 }
+      );
+    }
 
-  const user = await prisma.user.findUnique({
-    where: { id: tokenUser.id },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      isPremium: true,
-      premiumExpiresAt: true,
-    },
-  });
+    const premiumActive = isPremiumActive(
+      user.isPremium,
+      user.premiumExpiresAt
+    );
 
-  if (!user) {
-    return NextResponse.json({ user: null }, { status: 401 });
-  }
-
-  const active = isPremiumActive(user);
-
-  if (user.isPremium && !active) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        isPremium: false,
-        premiumExpiresAt: null,
+    return NextResponse.json({
+      authenticated: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isPremium: premiumActive,
+        premiumExpiresAt: user.premiumExpiresAt,
+        profileImage: user.profileImage,
+        avatarPreset: user.avatarPreset,
+        xp: user.xp,
+        level: user.level,
+        createdAt: user.createdAt,
       },
     });
-  }
+  } catch (error) {
+    console.error("GET /api/auth/me error:", error);
 
-  return NextResponse.json({
-    user: {
-      ...user,
-      isPremium: active,
-      premiumExpiresAt: active ? user.premiumExpiresAt : null,
-    },
-  });
+    return NextResponse.json(
+      {
+        message: "Хэрэглэгчийн мэдээлэл авахад алдаа гарлаа",
+      },
+      { status: 500 }
+    );
+  }
 }

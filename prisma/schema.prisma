@@ -8,16 +8,23 @@ datasource db {
 }
 
 model User {
-  id               Int      @id @default(autoincrement())
+  id               Int       @id @default(autoincrement())
   name             String
-  email            String   @unique
+  email            String    @unique
   password         String
-  role             Role     @default(USER)
-  isPremium        Boolean  @default(false)
+  role             Role      @default(USER)
+
+  isPremium        Boolean   @default(false)
   premiumExpiresAt DateTime?
+
   profileImage     String?
-  avatarPreset     String   @default("boy")
-  createdAt        DateTime @default(now())
+  avatarPreset     String    @default("boy")
+
+  xp               Int       @default(0)
+  level            Int       @default(1)
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @default(now()) @updatedAt
 
   premiumOrders    PremiumOrder[]
   favoriteMangas   FavoriteManga[]
@@ -41,9 +48,14 @@ model PremiumOrder {
   wireNextAction      String?
 
   createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
   paidAt    DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([wireStatus])
 }
 
 model Comic {
@@ -54,13 +66,16 @@ model Comic {
   coverImage  String
   bannerImage String?
   author      String?
+
   genre       String   @default("Бусад")
   genre2      String?
   genre3      String?
+
   status      String   @default("ONGOING")
   views       Int      @default(0)
+
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime @default(now()) @updatedAt
 
   chapters         Chapter[]
   favoriteBy       FavoriteManga[]
@@ -77,6 +92,8 @@ model FavoriteManga {
   comic Comic @relation(fields: [comicId], references: [id], onDelete: Cascade)
 
   @@unique([userId, comicId])
+  @@index([userId])
+  @@index([comicId])
 }
 
 model Chapter {
@@ -84,13 +101,16 @@ model Chapter {
   title     String
   number    Int
   comicId   Int
+
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   comic            Comic            @relation(fields: [comicId], references: [id], onDelete: Cascade)
   images           ChapterImage[]
   readingHistories ReadingHistory[]
 
   @@unique([comicId, number])
+  @@index([comicId])
 }
 
 model ChapterImage {
@@ -100,6 +120,8 @@ model ChapterImage {
   chapterId Int
 
   chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@index([chapterId])
 }
 
 model ReadingHistory {
@@ -107,8 +129,9 @@ model ReadingHistory {
   userId    Int
   comicId   Int
   chapterId Int
+
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   comic   Comic   @relation(fields: [comicId], references: [id], onDelete: Cascade)
@@ -131,6 +154,7 @@ model OtpCode {
 
   @@index([email])
   @@index([code])
+  @@index([type])
 }
 
 enum Role {
