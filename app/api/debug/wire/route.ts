@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const baseUrl = process.env.WIRE_BASE_URL || "https://api.wirepayment.mn";
+  const baseUrl = process.env.WIRE_BASE_URL || "https://api.wire.mn/v1";
   const key = process.env.WIRE_SECRET_KEY || process.env.WIRE_API_KEY;
 
   try {

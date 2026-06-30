@@ -21,10 +21,17 @@ export async function POST(req: Request) {
       );
     }
 
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+
+    if (!body) {
+      return NextResponse.json(
+        { message: "Буруу хүсэлт байна" },
+        { status: 400 }
+      );
+    }
 
     const orderId = Number(body.orderId);
-    const paymentIntentId = String(body.paymentIntentId || "");
+    const paymentIntentId = String(body.paymentIntentId || "").trim();
 
     if (!orderId || !paymentIntentId) {
       return NextResponse.json(
@@ -62,20 +69,8 @@ export async function POST(req: Request) {
 
     const paymentIntent = await retrieveWirePaymentIntent(paymentIntentId);
 
-    /**
-     * Wire PaymentIntent status:
-     * new | requires_payment_method | requires_action | requires_capture
-     * processing | succeeded | canceled
-     *
-     * succeeded бол төлөгдсөн.
-     */
     let paid = isWirePaymentPaid(paymentIntent.status);
-
-    /**
-     * Зарим үед PaymentIntent processing хэвээр байж,
-     * Charge succeeded болсон байх боломжтой тул charges-ийг давхар шалгана.
-     */
-    let succeededCharge = null;
+    let succeededCharge: { id?: string; status?: string } | null = null;
 
     try {
       const charges = await listWireChargesByPaymentIntent(paymentIntentId);
@@ -87,7 +82,7 @@ export async function POST(req: Request) {
         paid = true;
       }
     } catch (chargeError) {
-      console.error("Charge check skipped:", chargeError);
+      console.error("Wire charge check skipped:", chargeError);
     }
 
     await prisma.premiumOrder.update({

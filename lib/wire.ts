@@ -9,55 +9,95 @@ export type WirePaymentIntentStatus =
 
 export type WirePaymentIntent = {
   id: string;
-  object: "payment_intent";
-  amount: number;
-  currency: string;
-  status: WirePaymentIntentStatus;
-  client_secret: string;
-  automatic_operator: boolean;
-  allowed_operators: string[];
-  selected_operator: string | null;
-  next_action: any | null;
-  metadata: Record<string, any>;
-  livemode: boolean;
-  created: number;
-  expires_at: number | null;
+  object?: "payment_intent" | string;
+  amount?: number;
+  currency?: string;
+  status: WirePaymentIntentStatus | string;
+  client_secret?: string;
+  automatic_operator?: boolean;
+  allowed_operators?: string[];
+  selected_operator?: string | null;
+  next_action?: any | null;
+  metadata?: Record<string, unknown>;
+  livemode?: boolean;
+  created?: number;
+  expires_at?: number | null;
 };
 
 export type WireChargeStatus = "pending" | "succeeded" | "failed";
 
 export type WireCharge = {
   id: string;
-  object: "charge";
-  payment_intent: string;
-  operator: string;
-  operator_charge_id: string | null;
-  status: WireChargeStatus;
-  amount: number;
-  fee: number;
-  amount_refunded: number;
-  failure_code: string | null;
-  failure_message: string | null;
-  livemode: boolean;
-  created: number;
+  object?: "charge" | string;
+  payment_intent?: string;
+  operator?: string;
+  operator_charge_id?: string | null;
+  status: WireChargeStatus | string;
+  amount?: number;
+  fee?: number;
+  amount_refunded?: number;
+  failure_code?: string | null;
+  failure_message?: string | null;
+  livemode?: boolean;
+  created?: number;
+};
+
+export type WireList<T> = {
+  object?: "list" | string;
+  url?: string;
+  has_more?: boolean;
+  data: T[];
 };
 
 type WireCreatePaymentInput = {
   amount: number;
-  orderId: number;
-  userId: number;
-  months: number;
-  remark: string;
+  orderId?: number | string;
+  userId?: number | string;
+  months?: number;
+  remark?: string;
+  metadata?: Record<string, unknown>;
+  automatic_operator?: boolean;
+  allowed_operators?: string[];
 };
 
-const WIRE_BASE_URL =
-  process.env.WIRE_BASE_URL || "https://api.wirepayment.mn";
+const DEFAULT_WIRE_API_URL = "https://api.wire.mn/v1";
+
+function normalizeWireApiUrl(value?: string) {
+  const raw = value?.trim();
+
+  if (!raw) {
+    return DEFAULT_WIRE_API_URL;
+  }
+
+  // Хуучин/буруу hostname. Энэ нь ENOTFOUND үүсгээд байсан.
+  if (raw.includes("wirepayment.mn")) {
+    console.warn(
+      `Буруу Wire URL илэрлээ: ${raw}. ${DEFAULT_WIRE_API_URL} ашиглаж байна.`
+    );
+
+    return DEFAULT_WIRE_API_URL;
+  }
+
+  const clean = raw.replace(/\/+$/, "");
+
+  if (clean === "https://api.wire.mn") {
+    return `${clean}/v1`;
+  }
+
+  return clean;
+}
+
+export function getWireApiUrl() {
+  return normalizeWireApiUrl(
+    process.env.WIRE_API_URL || process.env.WIRE_BASE_URL
+  );
+}
 
 function getWireSecretKey() {
-  const key = process.env.WIRE_SECRET_KEY || process.env.WIRE_API_KEY;
+  const key = process.env.WIRE_API_KEY || process.env.WIRE_SECRET_KEY;
 
   if (!key) {
-    throw new Error("WIRE_SECRET_KEY эсвэл WIRE_API_KEY тохируулаагүй байна");
+    throw new Error("WIRE_API_KEY эсвэл WIRE_SECRET_KEY env дутуу байна");
   }
 
   return key;
@@ -94,23 +134,34 @@ async function safeFetch(url: string, options: RequestInit) {
   }
 }
 
-export async function wireRequest<T = any>(
+export async function wireRequest<T>(
   path: string,
-  options: RequestInit = {}
+  options: RequestInit & { idempotencyKey?: string } = {}
 ): Promise<T> {
   const secretKey = getWireSecretKey();
+  const baseUrl = getWireApiUrl();
 
   const url = path.startsWith("http")
     ? path
-    : `${WIRE_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+    : `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+
+  const headers = new Headers(options.headers);
+  headers.set("Authorization", `Bearer ${secretKey}`);
+  headers.set("Accept", "application/json");
+
+  if (options.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  if (options.idempotencyKey) {
+    headers.set("Idempotency-Key", options.idempotencyKey);
+  }
+
+  const { idempotencyKey, ...fetchOptions } = options;
 
   const res = await safeFetch(url, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${secretKey}`,
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
+    ...fetchOptions,
+    headers,
     cache: "no-store",
   });
 
@@ -119,100 +170,96 @@ export async function wireRequest<T = any>(
   if (!res.ok) {
     console.error("Wire request failed:", data);
 
-    throw new Error(
-      typeof data === "object" && data?.error?.message
-        ? data.error.message
-        : `Wire request алдаа гарлаа. Status: ${res.status}`
-    );
+    let message = `Wire request алдаа гарлаа. Status: ${res.status}`;
+
+    if (typeof data === "object" && data !== null) {
+      const anyData = data as any;
+
+      message =
+        anyData?.error?.message ||
+        anyData?.message ||
+        anyData?.failure_message ||
+        message;
+    }
+
+    const err = new Error(message) as Error & {
+      status?: number;
+      data?: unknown;
+    };
+
+    err.status = res.status;
+    err.data = data;
+
+    throw err;
   }
 
   return data as T;
 }
 
 export async function createWirePaymentIntent(input: WireCreatePaymentInput) {
-  const secretKey = getWireSecretKey();
+  const metadata: Record<string, unknown> = {
+    ...(input.orderId !== undefined ? { orderId: String(input.orderId) } : {}),
+    ...(input.userId !== undefined ? { userId: String(input.userId) } : {}),
+    ...(input.months !== undefined ? { months: String(input.months) } : {}),
+    ...(input.remark ? { remark: input.remark } : {}),
+    ...(input.metadata || {}),
+  };
 
-  const url = `${WIRE_BASE_URL}/v1/payment_intents`;
+  const payload: Record<string, unknown> = {
+    amount: input.amount,
+    currency: "MNT",
+    automatic_operator: input.automatic_operator ?? true,
+    metadata,
+  };
 
-  const res = await safeFetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${secretKey}`,
-      "Content-Type": "application/json",
-      "Idempotency-Key": `mangazet-order-${input.orderId}`,
-    },
-    body: JSON.stringify({
-      amount: input.amount,
-      currency: "MNT",
-      automatic_operator: false,
-      allowed_operators: [],
-
-      metadata: {
-        orderId: input.orderId,
-        userId: input.userId,
-        months: input.months,
-        amount: input.amount,
-        remark: input.remark,
-        description: input.remark,
-        transactionRemark: input.remark,
-      },
-    }),
-    cache: "no-store",
-  });
-
-  const data = await parseWireResponse(res);
-
-  if (!res.ok) {
-    console.error("Wire create payment intent failed:", data);
-
-    throw new Error(
-      typeof data === "object" && data?.error?.message
-        ? data.error.message
-        : `Wire payment үүсгэхэд алдаа гарлаа. Status: ${res.status}`
-    );
+  if (input.allowed_operators && input.allowed_operators.length > 0) {
+    payload.allowed_operators = input.allowed_operators;
   }
 
-  return data as WirePaymentIntent;
+  return wireRequest<WirePaymentIntent>("/payment_intents", {
+    method: "POST",
+    idempotencyKey: `mangazet-create-${input.orderId || Date.now()}`,
+    body: JSON.stringify(payload),
+  });
 }
 
 export async function confirmWirePaymentIntent(paymentIntentId: string) {
-  const secretKey = getWireSecretKey();
-  const operator = process.env.WIRE_OPERATOR || "qpay";
-
-  const url = `${WIRE_BASE_URL}/v1/payment_intents/${paymentIntentId}/confirm`;
-
-  const res = await safeFetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${secretKey}`,
-      "Content-Type": "application/json",
-      "Idempotency-Key": `mangazet-confirm-${paymentIntentId}`,
-    },
-    body: JSON.stringify({
-      operator,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL || ""}/premium`,
-    }),
-    cache: "no-store",
-  });
-
-  const data = await parseWireResponse(res);
-
-  if (!res.ok) {
-    console.error("Wire confirm payment intent failed:", data);
-
-    throw new Error(
-      typeof data === "object" && data?.error?.message
-        ? data.error.message
-        : `Wire payment confirm хийхэд алдаа гарлаа. Status: ${res.status}`
-    );
+  if (!paymentIntentId) {
+    throw new Error("Wire paymentIntentId дутуу байна");
   }
 
-  return data as WirePaymentIntent;
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "https://mangazet.site";
+
+  const operator = process.env.WIRE_OPERATOR?.trim();
+
+  const payload: Record<string, unknown> = {
+    return_url: `${siteUrl}/premium/success`,
+  };
+
+  if (operator) {
+    payload.operator = operator;
+  }
+
+  return wireRequest<WirePaymentIntent>(
+    `/payment_intents/${encodeURIComponent(paymentIntentId)}/confirm`,
+    {
+      method: "POST",
+      idempotencyKey: `mangazet-confirm-${paymentIntentId}`,
+      body: JSON.stringify(payload),
+    }
+  );
 }
 
 export async function retrieveWirePaymentIntent(paymentIntentId: string) {
+  if (!paymentIntentId) {
+    throw new Error("Wire paymentIntentId дутуу байна");
+  }
+
   return wireRequest<WirePaymentIntent>(
-    `/v1/payment_intents/${paymentIntentId}`,
+    `/payment_intents/${encodeURIComponent(paymentIntentId)}`,
     {
       method: "GET",
     }
@@ -220,18 +267,16 @@ export async function retrieveWirePaymentIntent(paymentIntentId: string) {
 }
 
 export async function listWireChargesByPaymentIntent(paymentIntentId: string) {
-  const url = `/v1/charges?payment_intent=${encodeURIComponent(
-    paymentIntentId
-  )}`;
+  if (!paymentIntentId) {
+    throw new Error("Wire paymentIntentId дутуу байна");
+  }
 
-  return wireRequest<{
-    object: "list";
-    url: string;
-    has_more: boolean;
-    data: WireCharge[];
-  }>(url, {
-    method: "GET",
-  });
+  return wireRequest<WireList<WireCharge>>(
+    `/charges?payment_intent=${encodeURIComponent(paymentIntentId)}`,
+    {
+      method: "GET",
+    }
+  );
 }
 
 export function isWirePaymentPaid(status?: string | null) {
@@ -240,4 +285,90 @@ export function isWirePaymentPaid(status?: string | null) {
 
 export function isWireChargePaid(status?: string | null) {
   return status === "succeeded";
+}
+
+function findFirstString(...values: unknown[]) {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) {
+      return value;
+    }
+  }
+
+  return null;
+}
+
+export function getWirePaymentUrl(data: any) {
+  return findFirstString(
+    data?.checkoutUrl,
+    data?.checkout_url,
+    data?.paymentUrl,
+    data?.payment_url,
+    data?.invoiceUrl,
+    data?.invoice_url,
+    data?.redirectUrl,
+    data?.redirect_url,
+    data?.url,
+
+    data?.next_action?.checkoutUrl,
+    data?.next_action?.checkout_url,
+    data?.next_action?.paymentUrl,
+    data?.next_action?.payment_url,
+    data?.next_action?.invoiceUrl,
+    data?.next_action?.invoice_url,
+    data?.next_action?.redirectUrl,
+    data?.next_action?.redirect_url,
+    data?.next_action?.redirect_to_url,
+    data?.next_action?.deeplink,
+    data?.next_action?.deep_link,
+    data?.next_action?.url,
+
+    data?.data?.checkoutUrl,
+    data?.data?.checkout_url,
+    data?.data?.paymentUrl,
+    data?.data?.payment_url,
+    data?.data?.invoiceUrl,
+    data?.data?.invoice_url,
+    data?.data?.redirectUrl,
+    data?.data?.redirect_url,
+    data?.data?.url,
+
+    data?.data?.next_action?.checkoutUrl,
+    data?.data?.next_action?.checkout_url,
+    data?.data?.next_action?.paymentUrl,
+    data?.data?.next_action?.payment_url,
+    data?.data?.next_action?.redirectUrl,
+    data?.data?.next_action?.redirect_url,
+    data?.data?.next_action?.redirect_to_url,
+    data?.data?.next_action?.deeplink,
+    data?.data?.next_action?.deep_link,
+    data?.data?.next_action?.url
+  );
+}
+
+export function getWireQrText(data: any) {
+  return findFirstString(
+    data?.qrText,
+    data?.qr_text,
+    data?.qpayQrText,
+    data?.qpay_qr_text,
+    data?.qr,
+
+    data?.next_action?.qrText,
+    data?.next_action?.qr_text,
+    data?.next_action?.qpayQrText,
+    data?.next_action?.qpay_qr_text,
+    data?.next_action?.qr,
+
+    data?.data?.qrText,
+    data?.data?.qr_text,
+    data?.data?.qpayQrText,
+    data?.data?.qpay_qr_text,
+    data?.data?.qr,
+
+    data?.data?.next_action?.qrText,
+    data?.data?.next_action?.qr_text,
+    data?.data?.next_action?.qpayQrText,
+    data?.data?.next_action?.qpay_qr_text,
+    data?.data?.next_action?.qr
+  );
 }
