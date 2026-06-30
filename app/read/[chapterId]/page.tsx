@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { notFound } from "next/navigation";
@@ -10,18 +11,18 @@ type Props = {
   }>;
 };
 
-function imageSrc(src: string) {
-  const clean = src.trim();
+function imageSrc(src?: string | null) {
+  if (!src) return "/placeholder-cover.jpg";
 
   if (
-    clean.startsWith("http://") ||
-    clean.startsWith("https://") ||
-    clean.startsWith("/")
+    src.startsWith("http://") ||
+    src.startsWith("https://") ||
+    src.startsWith("/")
   ) {
-    return clean;
+    return src;
   }
 
-  return `/${clean}`;
+  return `/${src}`;
 }
 
 export default async function ReadChapterPage({ params }: Props) {
@@ -31,19 +32,26 @@ export default async function ReadChapterPage({ params }: Props) {
 
   if (!tokenUser) {
     return (
-      <main className="site-shell flex min-h-screen items-center justify-center px-4 text-white">
-        <div className="max-w-lg rounded-[2rem] border border-white/10 bg-[#111] p-8 text-center">
+      <main className="flex min-h-screen items-center justify-center bg-[#08080a] px-4 text-white">
+        <div className="max-w-md rounded-3xl border border-white/10 bg-[#111115] p-8 text-center">
           <h1 className="text-3xl font-black">Login шаардлагатай</h1>
 
-          <p className="mt-3 text-zinc-400">
+          <p className="mt-3 text-sm font-semibold leading-7 text-zinc-400">
             Manga уншихын тулд эхлээд account-аараа нэвтрэх хэрэгтэй.
           </p>
 
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link href="/login" className="primary-btn">
+          <div className="mt-6 flex justify-center gap-3">
+            <Link
+              href="/login"
+              className="rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-black"
+            >
               Login хийх
             </Link>
-            <Link href="/" className="secondary-btn">
+
+            <Link
+              href="/"
+              className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-black"
+            >
               Нүүр рүү буцах
             </Link>
           </div>
@@ -59,49 +67,52 @@ export default async function ReadChapterPage({ params }: Props) {
     select: {
       id: true,
       isPremium: true,
-      premiumExpiresAt: true,
       role: true,
     },
   });
 
-  const premiumExpired =
-    dbUser?.isPremium &&
-    dbUser.premiumExpiresAt !== null &&
-    new Date(dbUser.premiumExpiresAt).getTime() <= Date.now();
+  if (!dbUser) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#08080a] px-4 text-white">
+        <div className="max-w-md rounded-3xl border border-white/10 bg-[#111115] p-8 text-center">
+          <h1 className="text-3xl font-black">User олдсонгүй</h1>
 
-  if (dbUser && premiumExpired) {
-    await prisma.user.update({
-      where: {
-        id: dbUser.id,
-      },
-      data: {
-        isPremium: false,
-        premiumExpiresAt: null,
-      },
-    });
+          <Link
+            href="/login"
+            className="mt-6 inline-flex rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-black"
+          >
+            Login хийх
+          </Link>
+        </div>
+      </main>
+    );
   }
 
-  if (!dbUser || (!dbUser.isPremium && dbUser.role !== "ADMIN")) {
+  const hasAccess =
+    dbUser.isPremium || dbUser.role === "ADMIN" || dbUser.role === "EDITOR";
+
+  if (!hasAccess) {
     return (
-      <main className="site-shell flex min-h-screen items-center justify-center px-4 text-white">
-        <div className="max-w-lg rounded-[2rem] border border-white/10 bg-[#111] p-8 text-center">
-          <span className="rounded-md bg-yellow-400 px-3 py-1 text-xs font-black text-black">
-            Premium required
-          </span>
+      <main className="flex min-h-screen items-center justify-center bg-[#08080a] px-4 text-white">
+        <div className="max-w-md rounded-3xl border border-white/10 bg-[#111115] p-8 text-center">
+          <h1 className="text-3xl font-black">Premium эрх шаардлагатай</h1>
 
-          <h1 className="mt-4 text-3xl font-black">
-            Premium эрх шаардлагатай
-          </h1>
-
-          <p className="mt-3 text-zinc-400">
+          <p className="mt-3 text-sm font-semibold leading-7 text-zinc-400">
             Энэ manga/chapter-ийг зөвхөн premium эрхтэй хэрэглэгч уншина.
           </p>
 
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link href="/premium" className="primary-btn">
+          <div className="mt-6 flex justify-center gap-3">
+            <Link
+              href="/premium"
+              className="rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-black"
+            >
               Premium авах
             </Link>
-            <Link href="/" className="secondary-btn">
+
+            <Link
+              href="/"
+              className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-black"
+            >
               Нүүр рүү буцах
             </Link>
           </div>
@@ -132,7 +143,9 @@ export default async function ReadChapterPage({ params }: Props) {
     },
   });
 
-  if (!chapter) notFound();
+  if (!chapter) {
+    notFound();
+  }
 
   await prisma.comic.update({
     where: {
@@ -145,126 +158,160 @@ export default async function ReadChapterPage({ params }: Props) {
     },
   });
 
+  await prisma.readingHistory.upsert({
+    where: {
+      userId_chapterId: {
+        userId: dbUser.id,
+        chapterId: chapter.id,
+      },
+    },
+    update: {
+      comicId: chapter.comicId,
+      updatedAt: new Date(),
+    },
+    create: {
+      userId: dbUser.id,
+      comicId: chapter.comicId,
+      chapterId: chapter.id,
+    },
+  });
+
   const chapters = chapter.comic.chapters;
   const currentIndex = chapters.findIndex((item) => item.id === chapter.id);
+
   const prevChapter = currentIndex > 0 ? chapters[currentIndex - 1] : null;
   const nextChapter =
     currentIndex < chapters.length - 1 ? chapters[currentIndex + 1] : null;
 
   return (
-    <main className="min-h-screen bg-black text-white">
-      <header className="border-b border-white/10 bg-[#070707]">
-        <div className="mx-auto flex max-w-[980px] flex-col gap-4 px-4 py-5 md:flex-row md:items-center md:justify-between">
-          <div>
-            <Link
-              href={`/comic/${chapter.comic.slug}`}
-              className="text-sm font-black text-yellow-300 hover:text-yellow-200"
-            >
-              ← Буцах
-            </Link>
+    <main className="min-h-screen bg-[#08080a] text-white">
+      <div className="mx-auto w-full max-w-[980px] px-4 py-5">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-white/10 bg-[#111115] p-4">
+          <Link
+            href={`/comic/${chapter.comic.slug}`}
+            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-black hover:bg-yellow-400 hover:text-black"
+          >
+            ← Буцах
+          </Link>
 
-            <h1 className="mt-2 line-clamp-2 text-xl font-black md:text-2xl">
-              {chapter.comic.title}
-            </h1>
-
-            <p className="mt-1 text-sm font-bold text-zinc-500">
+          <div className="text-center">
+            <h1 className="text-xl font-black">{chapter.comic.title}</h1>
+            <p className="mt-1 text-sm font-semibold text-zinc-500">
               Chapter {chapter.number}: {chapter.title}
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href="/"
-              className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-black text-white transition hover:bg-white/10"
-            >
-              Home
-            </Link>
-
-            <Link
-              href={`/comic/${chapter.comic.slug}`}
-              className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-black text-white transition hover:bg-white/10"
-            >
-              Chapter list
-            </Link>
-          </div>
+          <Link
+            href="/"
+            className="rounded-2xl bg-yellow-400 px-4 py-3 text-sm font-black text-black hover:bg-yellow-300"
+          >
+            Home
+          </Link>
         </div>
-      </header>
 
-      <nav className="mx-auto flex max-w-[980px] flex-wrap items-center justify-center gap-3 px-4 py-5">
-        {prevChapter ? (
+        <div className="mb-5 flex flex-wrap items-center justify-center gap-3 rounded-3xl border border-white/10 bg-[#111115] p-4">
+          {prevChapter ? (
+            <Link
+              href={`/read/${prevChapter.id}`}
+              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-black hover:bg-yellow-400 hover:text-black"
+            >
+              ← Өмнөх
+            </Link>
+          ) : (
+            <span className="cursor-not-allowed rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-black text-zinc-600">
+              ← Өмнөх
+            </span>
+          )}
+
           <Link
-            href={`/read/${prevChapter.id}`}
-            className="rounded-xl border border-white/10 bg-[#111] px-5 py-3 text-sm font-black text-white transition hover:bg-[#181818]"
+            href={`/comic/${chapter.comic.slug}`}
+            className="rounded-2xl bg-white/10 px-4 py-3 text-sm font-black hover:bg-white/15"
           >
-            ← Өмнөх
+            Chapter list
           </Link>
-        ) : (
-          <span className="rounded-xl border border-white/10 bg-[#111] px-5 py-3 text-sm font-black text-zinc-600">
-            ← Өмнөх
+
+          {nextChapter ? (
+            <Link
+              href={`/read/${nextChapter.id}`}
+              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-black hover:bg-yellow-400 hover:text-black"
+            >
+              Дараах →
+            </Link>
+          ) : (
+            <span className="cursor-not-allowed rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-black text-zinc-600">
+              Дараах →
+            </span>
+          )}
+        </div>
+
+        <div className="mb-5 flex flex-wrap justify-center gap-2 text-xs font-black">
+          <span className="rounded-full bg-yellow-400 px-3 py-1 text-black">
+            {chapter.images.length} pages
           </span>
-        )}
 
-        <span className="rounded-xl border border-yellow-400/20 bg-yellow-400/10 px-5 py-3 text-sm font-black text-yellow-300">
-          {currentIndex + 1} / {chapters.length}
-        </span>
-
-        {nextChapter ? (
-          <Link
-            href={`/read/${nextChapter.id}`}
-            className="rounded-xl bg-yellow-400 px-5 py-3 text-sm font-black text-black transition hover:bg-yellow-300"
-          >
-            Дараах →
-          </Link>
-        ) : (
-          <span className="rounded-xl border border-white/10 bg-[#111] px-5 py-3 text-sm font-black text-zinc-600">
-            Дараах →
+          <span className="rounded-full bg-white/10 px-3 py-1 text-zinc-300">
+            {currentIndex + 1} / {chapters.length} chapter
           </span>
-        )}
-      </nav>
 
-      <section className="mx-auto max-w-[980px] pb-8">
+          <span className="rounded-full bg-white/10 px-3 py-1 text-zinc-300">
+            Premium
+          </span>
+        </div>
+
         {chapter.images.length === 0 ? (
-          <div className="mx-4 rounded-3xl border border-white/10 bg-white/5 p-10 text-center font-bold text-zinc-400">
-            Энэ chapter зураггүй байна.
+          <div className="rounded-3xl border border-white/10 bg-[#111115] p-10 text-center">
+            <p className="text-sm font-bold text-zinc-400">
+              Энэ chapter зураггүй байна.
+            </p>
           </div>
         ) : (
-          chapter.images.map((image) => (
-            <img
-              key={image.id}
-              src={imageSrc(image.imageUrl)}
-              alt={`Page ${image.order}`}
-              className="mx-auto block w-full max-w-[900px] bg-black"
-            />
-          ))
+          <div className="space-y-4">
+            {chapter.images.map((image) => (
+              <img
+                key={image.id}
+                src={imageSrc(image.imageUrl)}
+                alt={`Page ${image.order}`}
+                className="mx-auto w-full rounded-xl"
+              />
+            ))}
+          </div>
         )}
-      </section>
 
-      <nav className="mx-auto flex max-w-[980px] flex-wrap items-center justify-center gap-3 px-4 pb-10">
-        {prevChapter ? (
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3 rounded-3xl border border-white/10 bg-[#111115] p-4">
+          {prevChapter ? (
+            <Link
+              href={`/read/${prevChapter.id}`}
+              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-black hover:bg-yellow-400 hover:text-black"
+            >
+              ← Өмнөх
+            </Link>
+          ) : (
+            <span className="cursor-not-allowed rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-black text-zinc-600">
+              ← Өмнөх
+            </span>
+          )}
+
           <Link
-            href={`/read/${prevChapter.id}`}
-            className="rounded-xl border border-white/10 bg-[#111] px-5 py-3 text-sm font-black text-white transition hover:bg-[#181818]"
+            href={`/comic/${chapter.comic.slug}`}
+            className="rounded-2xl bg-white/10 px-4 py-3 text-sm font-black hover:bg-white/15"
           >
-            ← Өмнөх chapter
+            Chapter list
           </Link>
-        ) : null}
 
-        <Link
-          href={`/comic/${chapter.comic.slug}`}
-          className="rounded-xl border border-white/10 bg-[#111] px-5 py-3 text-sm font-black text-white transition hover:bg-[#181818]"
-        >
-          Chapter list
-        </Link>
-
-        {nextChapter ? (
-          <Link
-            href={`/read/${nextChapter.id}`}
-            className="rounded-xl bg-yellow-400 px-5 py-3 text-sm font-black text-black transition hover:bg-yellow-300"
-          >
-            Дараах chapter →
-          </Link>
-        ) : null}
-      </nav>
+          {nextChapter ? (
+            <Link
+              href={`/read/${nextChapter.id}`}
+              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-black hover:bg-yellow-400 hover:text-black"
+            >
+              Дараах →
+            </Link>
+          ) : (
+            <span className="cursor-not-allowed rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-black text-zinc-600">
+              Дараах →
+            </span>
+          )}
+        </div>
+      </div>
     </main>
   );
 }

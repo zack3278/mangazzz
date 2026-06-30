@@ -17,16 +17,19 @@ function getAvatarUrl(user: NavUser | null) {
   if (!user) return "";
 
   if (user.profileImage) {
-    return user.profileImage;
+    if (
+      user.profileImage.startsWith("http://") ||
+      user.profileImage.startsWith("https://") ||
+      user.profileImage.startsWith("/")
+    ) {
+      return user.profileImage;
+    }
+
+    return `/${user.profileImage}`;
   }
 
-  if (user.avatarPreset === "girl") {
-    return "/avatars/girl.png";
-  }
-
-  if (user.avatarPreset === "boy") {
-    return "/avatars/boy.png";
-  }
+  if (user.avatarPreset === "girl") return "/avatars/girl.png";
+  if (user.avatarPreset === "boy") return "/avatars/boy.png";
 
   return "";
 }
@@ -80,7 +83,7 @@ export default function Navbar() {
 
   return (
     <header className="relative z-50">
-      <nav className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-4 rounded-[28px] border border-white/10 bg-black/20 px-4 py-3 backdrop-blur-md">
+      <nav className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-4 rounded-[28px] border border-white/10 bg-black/35 px-4 py-3 backdrop-blur-md">
         <Link href="/" className="flex items-center gap-2">
           <div className="leading-none">
             <p className="text-[10px] font-black uppercase tracking-[0.35em] text-yellow-300">
@@ -96,17 +99,21 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden flex-1 items-center justify-center gap-6 lg:flex">
-          <div className="w-full max-w-[430px]">
+          <form action="/manga" method="GET" className="w-full max-w-[430px]">
             <div className="flex items-center rounded-xl border border-white/10 bg-[#15151a] px-4 py-3">
               <span className="mr-2 text-sm">🔍</span>
               <input
+                name="q"
                 placeholder="search Manga"
                 className="w-full bg-transparent text-sm font-semibold text-white outline-none placeholder:text-zinc-500"
               />
             </div>
-          </div>
+          </form>
 
-          <Link href="/" className="text-sm font-black text-white hover:text-yellow-300">
+          <Link
+            href="/"
+            className="text-sm font-black text-white hover:text-yellow-300"
+          >
             Нүүр
           </Link>
 
@@ -194,12 +201,17 @@ export default function Navbar() {
 
       {mobileOpen && (
         <div className="mt-3 rounded-[24px] border border-white/10 bg-[#111115] p-4 shadow-2xl lg:hidden">
-          <div className="mb-4 rounded-xl border border-white/10 bg-black/30 px-4 py-3">
+          <form
+            action="/manga"
+            method="GET"
+            className="mb-4 rounded-xl border border-white/10 bg-black/30 px-4 py-3"
+          >
             <input
+              name="q"
               placeholder="search Manga"
               className="w-full bg-transparent text-sm font-semibold text-white outline-none placeholder:text-zinc-500"
             />
-          </div>
+          </form>
 
           <div className="flex flex-col gap-2">
             <Link

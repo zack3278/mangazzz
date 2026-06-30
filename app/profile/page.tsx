@@ -6,14 +6,28 @@ import Navbar from "@/components/Navbar";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 
-function formatDate(date?: Date | string | null) {
+function formatDateShort(date?: Date | string | null) {
   if (!date) return "—";
 
-  return new Intl.DateTimeFormat("mn-MN", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(new Date(date));
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1;
+  const day = d.getDate();
+
+  return `${year}-${month}-${day}`;
+}
+
+function getRemainingDays(date?: Date | string | null) {
+  if (!date) return 0;
+
+  const now = new Date();
+  const end = new Date(date);
+
+  const diff = end.getTime() - now.getTime();
+
+  if (diff <= 0) return 0;
+
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
 function getInitial(name?: string | null, email?: string | null) {
@@ -38,7 +52,17 @@ function getComicHref(comic: any) {
 
 function getChapterHref(comic: any, chapter: any) {
   const slug = comic?.slug || comic?.id;
-  return `/comic/${slug}/chapters/${chapter?.id}`;
+  return `/read/${chapter?.id}`;
+}
+
+function getPremiumStatus(user: {
+  isPremium?: boolean;
+  premiumExpiresAt?: Date | string | null;
+}) {
+  if (!user.isPremium || !user.premiumExpiresAt) return "FREE";
+
+  const remaining = getRemainingDays(user.premiumExpiresAt);
+  return remaining > 0 ? "ACTIVE" : "EXPIRED";
 }
 
 export default async function ProfilePage() {
@@ -90,11 +114,16 @@ export default async function ProfilePage() {
 
   const favoriteMangas = user.favoriteMangas.map((item) => item.comic);
   const readingHistories = user.readingHistories || [];
+  const premiumStatus = getPremiumStatus(user);
+  const remainingDays =
+    user.isPremium && user.premiumExpiresAt
+      ? getRemainingDays(user.premiumExpiresAt)
+      : 0;
 
   return (
     <main className="min-h-screen bg-[#08080a] text-white">
       <div className="pointer-events-none fixed inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(250,204,21,0.1),transparent_35%),linear-gradient(to_bottom,#08080a,#050505)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(250,204,21,0.10),transparent_35%),linear-gradient(to_bottom,#08080a,#050505)]" />
       </div>
 
       <div className="relative mx-auto w-full max-w-[1180px] px-4 py-4">
@@ -102,7 +131,7 @@ export default async function ProfilePage() {
 
         <div className="mt-6 space-y-6">
           <section className="rounded-[30px] border border-white/10 bg-[#101013] p-5 shadow-2xl md:p-7">
-            <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
               <div className="flex items-center gap-4">
                 <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-3xl border border-yellow-400/40 bg-gradient-to-br from-yellow-400/20 to-zinc-950 md:h-24 md:w-24">
                   {user.profileImage ? (
@@ -121,8 +150,20 @@ export default async function ProfilePage() {
 
                 <div className="min-w-0">
                   <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-yellow-400 px-3 py-1 text-[10px] font-black text-black">
-                      {user.isPremium ? "PREMIUM" : "FREE"}
+                    <span
+                      className={`rounded-full px-3 py-1 text-[10px] font-black ${
+                        premiumStatus === "ACTIVE"
+                          ? "bg-yellow-400 text-black"
+                          : premiumStatus === "EXPIRED"
+                          ? "bg-red-500/20 text-red-300"
+                          : "bg-white/10 text-zinc-300"
+                      }`}
+                    >
+                      {premiumStatus === "ACTIVE"
+                        ? "PREMIUM"
+                        : premiumStatus === "EXPIRED"
+                        ? "EXPIRED"
+                        : "FREE"}
                     </span>
                   </div>
 
@@ -152,7 +193,7 @@ export default async function ProfilePage() {
                 </Link>
 
                 <Link
-                  href="/comic"
+                  href="/manga"
                   className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-black transition hover:bg-white/10"
                 >
                   Manga үзэх
@@ -160,29 +201,45 @@ export default async function ProfilePage() {
               </div>
             </div>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <p className="text-xs font-bold text-zinc-500">Premium</p>
-                <p className="mt-2 text-lg font-black">
-                  {user.isPremium ? "ACTIVE" : "INACTIVE"}
-                </p>
-              </div>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <InfoCard
+                label="Premium төлөв"
+                value={premiumStatus}
+                subText={
+                  premiumStatus === "ACTIVE"
+                    ? "VIP эрх идэвхтэй"
+                    : premiumStatus === "EXPIRED"
+                    ? "Эрхийн хугацаа дууссан"
+                    : "Premium эрхгүй"
+                }
+                highlight={premiumStatus === "ACTIVE"}
+              />
 
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <p className="text-xs font-bold text-zinc-500">
-                  Дуусах хугацаа
-                </p>
-                <p className="mt-2 text-lg font-black">
-                  {user.isPremium ? formatDate(user.premiumExpiresAt) : "—"}
-                </p>
-              </div>
+              <InfoCard
+                label="Дуусах хугацаа"
+                value={
+                  user.isPremium && user.premiumExpiresAt
+                    ? formatDateShort(user.premiumExpiresAt)
+                    : "—"
+                }
+                subText="YYYY-M-D формат"
+              />
 
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <p className="text-xs font-bold text-zinc-500">Дуртай manga</p>
-                <p className="mt-2 text-lg font-black">
-                  {favoriteMangas.length}
-                </p>
-              </div>
+              <InfoCard
+                label="Үлдсэн хоног"
+                value={user.isPremium ? `${remainingDays} хоног` : "0 хоног"}
+                subText={
+                  premiumStatus === "ACTIVE"
+                    ? "VIP дуусах хүртэл"
+                    : "Идэвхтэй эрхгүй"
+                }
+              />
+
+              <InfoCard
+                label="Дуртай manga"
+                value={`${favoriteMangas.length}`}
+                subText="Heart дарсан manga"
+              />
             </div>
           </section>
 
@@ -212,7 +269,6 @@ export default async function ProfilePage() {
               <div>
                 <h2 className="text-xl font-black">Сүүлд уншсан chapter</h2>
                 <p className="mt-1 text-sm text-zinc-500">
-                  Сүүлд уншсан chapter
                 </p>
               </div>
 
@@ -252,12 +308,12 @@ export default async function ProfilePage() {
                         </h3>
 
                         <p className="mt-1 text-xs text-zinc-400">
-                          Chapter {chapter?.chapterNumber || ""}
+                          Chapter {chapter?.number || chapter?.chapterNumber || ""}
                           {chapter?.title ? ` - ${chapter.title}` : ""}
                         </p>
 
                         <p className="mt-1 text-xs text-zinc-600">
-                          {formatDate(item.updatedAt)}
+                          {formatDateShort(item.updatedAt)}
                         </p>
                       </div>
                     </Link>
@@ -269,6 +325,40 @@ export default async function ProfilePage() {
         </div>
       </div>
     </main>
+  );
+}
+
+function InfoCard({
+  label,
+  value,
+  subText,
+  highlight = false,
+}: {
+  label: string;
+  value: string;
+  subText?: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-[24px] border p-5 transition ${
+        highlight
+          ? "border-yellow-400/30 bg-yellow-400/8"
+          : "border-white/10 bg-white/[0.03]"
+      }`}
+    >
+      <p className="text-xs font-bold text-zinc-500">{label}</p>
+      <p
+        className={`mt-3 text-2xl font-black ${
+          highlight ? "text-yellow-300" : "text-white"
+        }`}
+      >
+        {value}
+      </p>
+      {subText && (
+        <p className="mt-2 text-xs font-semibold text-zinc-500">{subText}</p>
+      )}
+    </div>
   );
 }
 

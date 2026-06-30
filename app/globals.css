@@ -221,3 +221,19 @@ button:disabled {
     width: 100%;
   }
 }
+html,
+body {
+  font-family: var(--font-mangazet), Arial, Helvetica, sans-serif !important;
+}
+
+* {
+  font-family: var(--font-mangazet), Arial, Helvetica, sans-serif !important;
+}
+
+button,
+input,
+textarea,
+select,
+option {
+  font-family: var(--font-mangazet), Arial, Helvetica, sans-serif !important;
+}
