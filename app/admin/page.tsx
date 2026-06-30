@@ -341,14 +341,14 @@ export default function AdminPage() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <Link href="/" className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-400 text-xl font-black text-black">
-                M
+                v1
               </div>
 
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.26em] text-yellow-300">
                   Mangazet
                 </p>
-                <h1 className="text-2xl font-black">Admin Dashboard</h1>
+                <h1 className="text-2xl font-black">Админ</h1>
               </div>
             </Link>
 
@@ -364,7 +364,7 @@ export default function AdminPage() {
                 href="/editor"
                 className="rounded-2xl bg-yellow-400 px-5 py-3 text-center text-sm font-black text-black transition hover:bg-yellow-300"
               >
-                Editor studio
+                Эдитор
               </Link>
 
               <button
@@ -382,138 +382,6 @@ export default function AdminPage() {
             {message}
           </div>
         )}
-
-        <section className="mt-5 rounded-[28px] border border-white/10 bg-[#14130f] p-5 shadow-2xl shadow-black/35">
-          <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.28em] text-yellow-300">
-                Control center
-              </p>
-
-              <h2 className="mt-3 text-4xl font-black leading-tight">
-                Сайтын удирдлага
-              </h2>
-
-              <p className="mt-3 max-w-xl text-sm font-semibold leading-7 text-zinc-400">
-                Хэрэглэгч, premium эрх, editor role, series list гэсэн хэсгүүдээ
-                ангиллаар нь цэгцтэй удирдана.
-              </p>
-
-              <div className="mt-6 flex flex-wrap gap-3">
-                <button
-                  onClick={loadAll}
-                  className="rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-black transition hover:bg-yellow-300"
-                >
-                  Refresh data
-                </button>
-
-                <Link
-                  href="/premium"
-                  className="rounded-2xl border border-white/10 bg-black/35 px-5 py-3 text-sm font-black text-white transition hover:bg-white/[0.08]"
-                >
-                  Premium page
-                </Link>
-              </div>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-3xl border border-white/10 bg-black/35 p-5">
-                <p className="text-xs font-black uppercase tracking-[0.22em] text-zinc-500">
-                  Users
-                </p>
-                <p className="mt-3 text-4xl font-black">{users.length}</p>
-                <p className="mt-1 text-xs font-bold text-zinc-500">
-                  Бүх бүртгэлтэй хэрэглэгч
-                </p>
-              </div>
-
-              <div className="rounded-3xl border border-yellow-400/30 bg-yellow-400 p-5 text-black">
-                <p className="text-xs font-black uppercase tracking-[0.22em] text-black/55">
-                  Premium
-                </p>
-                <p className="mt-3 text-4xl font-black">{premiumUsers.length}</p>
-                <p className="mt-1 text-xs font-bold text-black/55">
-                  Идэвхтэй premium эрх
-                </p>
-              </div>
-
-              <div className="rounded-3xl border border-white/10 bg-black/35 p-5">
-                <p className="text-xs font-black uppercase tracking-[0.22em] text-zinc-500">
-                  Series
-                </p>
-                <p className="mt-3 text-4xl font-black">{comics.length}</p>
-                <p className="mt-1 text-xs font-bold text-zinc-500">
-                  Нийт manga / series
-                </p>
-              </div>
-
-              <div className="rounded-3xl border border-white/10 bg-black/35 p-5">
-                <p className="text-xs font-black uppercase tracking-[0.22em] text-zinc-500">
-                  Chapters
-                </p>
-                <p className="mt-3 text-4xl font-black">{totalChapters}</p>
-                <p className="mt-1 text-xs font-bold text-zinc-500">
-                  Нийт chapter
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <button
-            onClick={() => setActiveTab("users")}
-            className="rounded-[24px] border border-white/10 bg-[#14130f] p-5 text-left transition hover:-translate-y-1 hover:border-yellow-400/40"
-          >
-            <p className="text-xs font-black uppercase tracking-[0.25em] text-yellow-300">
-              Ангилал 01
-            </p>
-            <h3 className="mt-3 text-xl font-black">Хэрэглэгчид</h3>
-            <p className="mt-2 text-sm font-semibold leading-6 text-zinc-500">
-              User role өөрчлөх, admin/editor болгох.
-            </p>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("premium")}
-            className="rounded-[24px] border border-white/10 bg-[#14130f] p-5 text-left transition hover:-translate-y-1 hover:border-yellow-400/40"
-          >
-            <p className="text-xs font-black uppercase tracking-[0.25em] text-yellow-300">
-              Ангилал 02
-            </p>
-            <h3 className="mt-3 text-xl font-black">Premium эрх</h3>
-            <p className="mt-2 text-sm font-semibold leading-6 text-zinc-500">
-              1/2/3/6/12 сарын эрх олгох эсвэл цуцлах.
-            </p>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("series")}
-            className="rounded-[24px] border border-white/10 bg-[#14130f] p-5 text-left transition hover:-translate-y-1 hover:border-yellow-400/40"
-          >
-            <p className="text-xs font-black uppercase tracking-[0.25em] text-yellow-300">
-              Ангилал 03
-            </p>
-            <h3 className="mt-3 text-xl font-black">Series list</h3>
-            <p className="mt-2 text-sm font-semibold leading-6 text-zinc-500">
-              Manga харах, устгах, chapter тоо шалгах.
-            </p>
-          </button>
-
-          <Link
-            href="/editor"
-            className="rounded-[24px] border border-yellow-400/30 bg-yellow-400 p-5 text-left text-black transition hover:-translate-y-1 hover:bg-yellow-300"
-          >
-            <p className="text-xs font-black uppercase tracking-[0.25em] text-black/55">
-              Ангилал 04
-            </p>
-            <h3 className="mt-3 text-xl font-black">Editor studio</h3>
-            <p className="mt-2 text-sm font-bold leading-6 text-black/60">
-              Manga болон chapter нэмэх хэсэг.
-            </p>
-          </Link>
-        </section>
-
         <section className="mt-5 rounded-[28px] border border-white/10 bg-[#14130f] shadow-2xl shadow-black/35">
           <div className="border-b border-white/10 p-4">
             <div className="flex flex-wrap gap-2">
@@ -543,7 +411,7 @@ export default function AdminPage() {
             <div className="grid gap-4 p-5 md:grid-cols-3">
               <div className="rounded-3xl border border-white/10 bg-black/30 p-5">
                 <p className="text-xs font-black uppercase tracking-[0.24em] text-yellow-300">
-                  Admins
+                  Админ
                 </p>
                 <p className="mt-4 text-4xl font-black">{admins.length}</p>
                 <p className="mt-2 text-sm font-semibold text-zinc-500">
@@ -553,11 +421,11 @@ export default function AdminPage() {
 
               <div className="rounded-3xl border border-white/10 bg-black/30 p-5">
                 <p className="text-xs font-black uppercase tracking-[0.24em] text-yellow-300">
-                  Editors
+                  Эдитор
                 </p>
                 <p className="mt-4 text-4xl font-black">{editors.length}</p>
                 <p className="mt-2 text-sm font-semibold text-zinc-500">
-                  Manga нэмэх эрхтэй хэрэглэгч
+                  Манга нэмэх эрхтэй хэрэглэгч
                 </p>
               </div>
 
@@ -578,11 +446,11 @@ export default function AdminPage() {
               <table className="w-full min-w-[1050px] text-left">
                 <thead>
                   <tr className="border-b border-white/10 bg-black/25 text-xs font-black uppercase tracking-[0.18em] text-zinc-500">
-                    <th className="px-5 py-4">User</th>
-                    <th className="px-5 py-4">Role</th>
+                    <th className="px-5 py-4">Хэрэглэгчид</th>
+                    <th className="px-5 py-4">Үүрэг</th>
                     <th className="px-5 py-4">Premium</th>
-                    <th className="px-5 py-4">Expires</th>
-                    <th className="px-5 py-4">Actions</th>
+                    <th className="px-5 py-4">Дуусах хугацаа</th>
+                    <th className="px-5 py-4">Эрх өгөх</th>
                   </tr>
                 </thead>
 
@@ -639,9 +507,9 @@ export default function AdminPage() {
                                 disabled={busy === `role-${user.id}`}
                                 className="rounded-xl border border-white/10 bg-black/45 px-3 py-2 text-xs font-black text-white outline-none focus:border-yellow-400"
                               >
-                                <option value="USER">USER</option>
-                                <option value="EDITOR">EDITOR</option>
-                                <option value="ADMIN">ADMIN</option>
+                                <option value="USER">Хэрэглэгч</option>
+                                <option value="EDITOR">Эдитор</option>
+                                <option value="ADMIN">Админ</option>
                               </select>
                             </div>
                           </td>
@@ -705,7 +573,7 @@ export default function AdminPage() {
             <div className="p-5">
               {comics.length === 0 ? (
                 <div className="rounded-3xl border border-white/10 bg-black/30 p-8 text-center text-sm font-bold text-zinc-500">
-                  Series байхгүй байна.
+                  Манга байхгүй байна.
                 </div>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

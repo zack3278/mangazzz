@@ -18,42 +18,42 @@ const plans: Plan[] = [
   {
     months: 1,
     price: 5000,
-    name: "Rookie",
-    subtitle: "Туршиж үзэх багц",
+    name: "Bronze",
+    subtitle: "1 CAP",
     label: "START",
   },
   {
     months: 2,
     price: 9000,
-    name: "Scout",
-    subtitle: "Богино хугацааны уншлага",
+    name: "Silver",
+    subtitle: "2 CAP",
     label: "BASIC",
-    save: "1,000₮ save",
+    save: "1,000₮ хэмнэнэ",
   },
   {
     months: 3,
     price: 13000,
-    name: "Hunter",
-    subtitle: "Хамгийн тохиромжтой",
+    name: "Gold",
+    subtitle: "3 CAP",
     label: "POPULAR",
-    save: "2,000₮ save",
+    save: "2,000₮ хэмнэнэ",
     best: true,
   },
   {
     months: 6,
     price: 22000,
-    name: "Shadow",
-    subtitle: "Урт хугацааны уншигч",
+    name: "Epic",
+    subtitle: "6 CAP",
     label: "PRO",
-    save: "8,000₮ save",
+    save: "8,000₮ хэмнэнэ",
   },
   {
     months: 12,
     price: 35000,
     name: "Legend",
-    subtitle: "Бүтэн жилийн эрх",
+    subtitle: "12 CAP",
     label: "YEARLY",
-    save: "25,000₮ save",
+    save: "25,000₮ хэмнэнэ",
   },
 ];
 
@@ -200,16 +200,14 @@ export default function PremiumPage() {
               </div>
 
               <h1 className="mt-6 max-w-2xl text-4xl font-black leading-[0.98] tracking-tight sm:text-6xl lg:text-7xl">
-                Unlock the
+                Хязгааргүй 
                 <span className="block bg-gradient-to-r from-yellow-200 via-yellow-400 to-orange-500 bg-clip-text text-transparent">
-                  Manga Vault
+                унш
                 </span>
               </h1>
 
               <p className="mt-5 max-w-xl text-sm font-semibold leading-7 text-zinc-400 sm:text-base">
-                Premium эрхээр хаалттай chapter-уудыг нээж, дуртай мангагаа
-                тасралтгүй уншаарай. Сонгосон багц чинь доорх VIP ticket дээр
-                шууд харагдана.
+                Premium эрхээ нэгээд бүх манга бүлгүүдийг унших боломжтой.
               </p>
 
               <div className="mt-8 grid gap-3 sm:grid-cols-3">
@@ -249,7 +247,7 @@ export default function PremiumPage() {
                   href="/"
                   className="rounded-full border border-white/10 bg-white/[0.04] px-7 py-4 text-sm font-black text-white transition hover:bg-white/[0.08]"
                 >
-                  Нүүр хуудас
+                  Нүүр
                 </Link>
               </div>
             </div>
@@ -270,7 +268,7 @@ export default function PremiumPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-xs font-black uppercase tracking-[0.35em] text-yellow-300">
-                      VIP Ticket
+                      VIP эрх
                     </p>
                     <h2 className="mt-4 text-5xl font-black leading-none sm:text-6xl">
                       {selectedPlan.name}
@@ -308,9 +306,9 @@ export default function PremiumPage() {
 
                 <div className="space-y-3">
                   {[
-                    "Premium chapter-ууд нээгдэнэ",
-                    "Profile дээр эрхийн хугацаа харагдана",
-                    "Wire payment-р төлбөр үүсгэнэ",
+                    "Хязгааргүй унших",
+                    "Хязгааргүй унших",
+                    "Хязгааргүй унших",
                   ].map((text) => (
                     <div
                       key={text}
@@ -344,9 +342,8 @@ export default function PremiumPage() {
           <div className="mb-4 flex items-end justify-between">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.3em] text-yellow-300">
-                Select pass
               </p>
-              <h2 className="mt-2 text-2xl font-black">Багцаа сонго</h2>
+              <h2 className="mt-2 text-2xl font-black">Багцаа сонгох</h2>
             </div>
           </div>
 
