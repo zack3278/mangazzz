@@ -49,6 +49,16 @@ export type WireList<T> = {
   data: T[];
 };
 
+export type WireCheckoutSession = {
+  id?: string;
+  object?: "checkout.session" | string;
+  url?: string;
+  payment_url?: string;
+  checkout_url?: string;
+  payment_intent?: string;
+  data?: any;
+};
+
 type WireCreatePaymentInput = {
   amount: number;
   orderId?: number | string;
@@ -69,7 +79,6 @@ function normalizeWireApiUrl(value?: string) {
     return DEFAULT_WIRE_API_URL;
   }
 
-  // Хуучин/буруу hostname. Энэ нь ENOTFOUND үүсгээд байсан.
   if (raw.includes("wirepayment.mn")) {
     console.warn(
       `Буруу Wire URL илэрлээ: ${raw}. ${DEFAULT_WIRE_API_URL} ашиглаж байна.`
@@ -93,14 +102,14 @@ export function getWireApiUrl() {
   );
 }
 
-function getWireSecretKey() {
+export function getWireSecretKey() {
   const key = process.env.WIRE_API_KEY || process.env.WIRE_SECRET_KEY;
 
   if (!key) {
-    throw new Error("WIRE_API_KEY эсвэл WIRE_SECRET_KEY env дутуу байна");
+    throw new Error("WIRE_API_KEY env дутуу байна");
   }
 
-  return key;
+  return key.trim();
 }
 
 async function parseWireResponse(res: Response) {
@@ -223,34 +232,51 @@ export async function createWirePaymentIntent(input: WireCreatePaymentInput) {
   });
 }
 
-export async function confirmWirePaymentIntent(paymentIntentId: string) {
-  if (!paymentIntentId) {
+export async function createWireCheckoutSession(input: {
+  paymentIntentId: string;
+  successUrl: string;
+  cancelUrl: string;
+  idempotencyKey?: string;
+}) {
+  if (!input.paymentIntentId) {
     throw new Error("Wire paymentIntentId дутуу байна");
   }
 
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    "https://mangazet.site";
-
-  const operator = process.env.WIRE_OPERATOR?.trim();
-
-  const payload: Record<string, unknown> = {
-    return_url: `${siteUrl}/premium/success`,
+  const jsonPayload = {
+    payment_intent: input.paymentIntentId,
+    success_url: input.successUrl,
+    cancel_url: input.cancelUrl,
   };
 
-  if (operator) {
-    payload.operator = operator;
-  }
-
-  return wireRequest<WirePaymentIntent>(
-    `/payment_intents/${encodeURIComponent(paymentIntentId)}/confirm`,
-    {
+  try {
+    return await wireRequest<WireCheckoutSession>("/checkout/sessions", {
       method: "POST",
-      idempotencyKey: `mangazet-confirm-${paymentIntentId}`,
-      body: JSON.stringify(payload),
-    }
-  );
+      idempotencyKey:
+        input.idempotencyKey || `checkout-json-${input.paymentIntentId}`,
+      body: JSON.stringify(jsonPayload),
+    });
+  } catch (jsonError: any) {
+    console.warn("Wire checkout JSON request failed. Retrying as form data.", {
+      message: jsonError?.message,
+      status: jsonError?.status,
+      data: jsonError?.data,
+    });
+
+    const formPayload = new URLSearchParams();
+    formPayload.set("payment_intent", input.paymentIntentId);
+    formPayload.set("success_url", input.successUrl);
+    formPayload.set("cancel_url", input.cancelUrl);
+
+    return wireRequest<WireCheckoutSession>("/checkout/sessions", {
+      method: "POST",
+      idempotencyKey:
+        input.idempotencyKey || `checkout-form-${input.paymentIntentId}`,
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: formPayload,
+    });
+  }
 }
 
 export async function retrieveWirePaymentIntent(paymentIntentId: string) {
@@ -299,6 +325,7 @@ function findFirstString(...values: unknown[]) {
 
 export function getWirePaymentUrl(data: any) {
   return findFirstString(
+    data?.url,
     data?.checkoutUrl,
     data?.checkout_url,
     data?.paymentUrl,
@@ -307,21 +334,8 @@ export function getWirePaymentUrl(data: any) {
     data?.invoice_url,
     data?.redirectUrl,
     data?.redirect_url,
-    data?.url,
 
-    data?.next_action?.checkoutUrl,
-    data?.next_action?.checkout_url,
-    data?.next_action?.paymentUrl,
-    data?.next_action?.payment_url,
-    data?.next_action?.invoiceUrl,
-    data?.next_action?.invoice_url,
-    data?.next_action?.redirectUrl,
-    data?.next_action?.redirect_url,
-    data?.next_action?.redirect_to_url,
-    data?.next_action?.deeplink,
-    data?.next_action?.deep_link,
-    data?.next_action?.url,
-
+    data?.data?.url,
     data?.data?.checkoutUrl,
     data?.data?.checkout_url,
     data?.data?.paymentUrl,
@@ -330,8 +344,19 @@ export function getWirePaymentUrl(data: any) {
     data?.data?.invoice_url,
     data?.data?.redirectUrl,
     data?.data?.redirect_url,
-    data?.data?.url,
 
+    data?.next_action?.url,
+    data?.next_action?.checkoutUrl,
+    data?.next_action?.checkout_url,
+    data?.next_action?.paymentUrl,
+    data?.next_action?.payment_url,
+    data?.next_action?.redirectUrl,
+    data?.next_action?.redirect_url,
+    data?.next_action?.redirect_to_url,
+    data?.next_action?.deeplink,
+    data?.next_action?.deep_link,
+
+    data?.data?.next_action?.url,
     data?.data?.next_action?.checkoutUrl,
     data?.data?.next_action?.checkout_url,
     data?.data?.next_action?.paymentUrl,
@@ -340,8 +365,7 @@ export function getWirePaymentUrl(data: any) {
     data?.data?.next_action?.redirect_url,
     data?.data?.next_action?.redirect_to_url,
     data?.data?.next_action?.deeplink,
-    data?.data?.next_action?.deep_link,
-    data?.data?.next_action?.url
+    data?.data?.next_action?.deep_link
   );
 }
 
@@ -353,17 +377,17 @@ export function getWireQrText(data: any) {
     data?.qpay_qr_text,
     data?.qr,
 
-    data?.next_action?.qrText,
-    data?.next_action?.qr_text,
-    data?.next_action?.qpayQrText,
-    data?.next_action?.qpay_qr_text,
-    data?.next_action?.qr,
-
     data?.data?.qrText,
     data?.data?.qr_text,
     data?.data?.qpayQrText,
     data?.data?.qpay_qr_text,
     data?.data?.qr,
+
+    data?.next_action?.qrText,
+    data?.next_action?.qr_text,
+    data?.next_action?.qpayQrText,
+    data?.next_action?.qpay_qr_text,
+    data?.next_action?.qr,
 
     data?.data?.next_action?.qrText,
     data?.data?.next_action?.qr_text,

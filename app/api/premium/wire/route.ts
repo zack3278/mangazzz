@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
+  createWireCheckoutSession,
   createWirePaymentIntent,
-  confirmWirePaymentIntent,
   getWirePaymentUrl,
   getWireQrText,
 } from "@/lib/wire";
@@ -24,14 +24,18 @@ const PLANS: PremiumPlan[] = [
 function getAllowedOperators() {
   const raw = process.env.WIRE_ALLOWED_OPERATORS?.trim();
 
-  if (!raw) {
-    return undefined;
+  if (raw) {
+    return raw
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
   }
 
-  return raw
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
+  if (process.env.WIRE_API_KEY?.startsWith("sk_test_")) {
+    return ["sandbox"];
+  }
+
+  return undefined;
 }
 
 export async function POST(req: Request) {
@@ -99,7 +103,6 @@ export async function POST(req: Request) {
       "https://mangazet.site";
 
     const invoiceId = `MANGAZET-${user.id}-${Date.now()}-${plan.months}`;
-    const remark = `Mangazet Premium ${plan.months} сар`;
 
     const order = await prisma.premiumOrder.create({
       data: {
@@ -111,12 +114,12 @@ export async function POST(req: Request) {
       },
     });
 
-    const createData = await createWirePaymentIntent({
+    const paymentIntent = await createWirePaymentIntent({
       amount: plan.amount,
       orderId: order.id,
       userId: user.id,
       months: plan.months,
-      remark,
+      remark: `Mangazet Premium ${plan.months} сар`,
       automatic_operator: true,
       allowed_operators: getAllowedOperators(),
       metadata: {
@@ -124,40 +127,70 @@ export async function POST(req: Request) {
         site: "Mangazet",
         email: user.email,
         name: user.name,
-        returnUrl: `${siteUrl}/premium/success`,
+        returnUrl: `${siteUrl}/premium?orderId=${order.id}`,
       },
     });
 
     const paymentIntentId =
-      createData?.id || (createData as any)?.data?.id || null;
+      paymentIntent?.id || (paymentIntent as any)?.data?.id || null;
 
     if (!paymentIntentId) {
       return NextResponse.json(
         {
+          ok: false,
           message: "Wire.mn PaymentIntent ID олдсонгүй",
-          createData,
+          paymentIntent,
         },
         { status: 500 }
       );
     }
 
-    const confirmData = await confirmWirePaymentIntent(paymentIntentId);
+    const checkoutSession = await createWireCheckoutSession({
+      paymentIntentId,
+      successUrl: `${siteUrl}/premium?payment=success&orderId=${order.id}`,
+      cancelUrl: `${siteUrl}/premium?payment=cancel&orderId=${order.id}`,
+      idempotencyKey: `mangazet-checkout-${order.id}`,
+    });
 
     const paymentUrl =
-      getWirePaymentUrl(confirmData) || getWirePaymentUrl(createData);
+      getWirePaymentUrl(checkoutSession) || getWirePaymentUrl(paymentIntent);
 
-    const qrText = getWireQrText(confirmData) || getWireQrText(createData);
+    const qrText =
+      getWireQrText(checkoutSession) || getWireQrText(paymentIntent);
 
     await prisma.premiumOrder.update({
       where: { id: order.id },
       data: {
+        wirePaymentIntentId: paymentIntentId,
+        wireClientSecret: paymentIntent.client_secret || null,
+        wireStatus: paymentIntent.status || null,
+        wireNextAction: paymentIntent.next_action
+          ? JSON.stringify(paymentIntent.next_action)
+          : null,
         qrText: qrText || null,
       },
     });
 
+    if (!paymentUrl && !qrText) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: "Wire.mn checkout үүссэн боловч payment URL эсвэл QR ирсэнгүй",
+          orderId: order.id,
+          invoiceId,
+          paymentIntentId,
+          amount: plan.amount,
+          months: plan.months,
+          paymentIntent,
+          checkoutSession,
+        },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({
       ok: true,
-      message: "Wire.mn payment үүслээ",
+      message: "Wire.mn checkout URL үүслээ",
       orderId: order.id,
       invoiceId,
       paymentIntentId,
@@ -166,12 +199,12 @@ export async function POST(req: Request) {
       qrText,
       amount: plan.amount,
       months: plan.months,
-      status: confirmData?.status || createData?.status || null,
-      createData,
-      confirmData,
+      status: paymentIntent.status || null,
+      paymentIntent,
+      checkoutSession,
     });
   } catch (error: any) {
-    console.error("Create Wire payment error:", error);
+    console.error("Create Wire checkout error:", error);
 
     return NextResponse.json(
       {
@@ -179,7 +212,7 @@ export async function POST(req: Request) {
         message:
           error instanceof Error
             ? error.message
-            : "Wire.mn төлбөр үүсгэхэд серверийн алдаа гарлаа",
+            : "Wire.mn checkout үүсгэхэд серверийн алдаа гарлаа",
         status: error?.status || null,
         data: error?.data || null,
         cause: error?.cause
@@ -192,7 +225,8 @@ export async function POST(req: Request) {
           : null,
         correctWireApiUrl: "https://api.wire.mn/v1",
         missing: {
-          WIRE_API_KEY: !process.env.WIRE_API_KEY && !process.env.WIRE_SECRET_KEY,
+          WIRE_API_KEY: !process.env.WIRE_API_KEY,
+          WIRE_API_URL: !process.env.WIRE_API_URL,
         },
       },
       { status: error?.status || 500 }
